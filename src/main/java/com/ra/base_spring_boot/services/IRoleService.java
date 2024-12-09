@@ -1,10 +1,9 @@
 package com.ra.base_spring_boot.services;
 
-import com.ra.base_spring_boot.exception.CustomException;
 import com.ra.base_spring_boot.model.Role;
 import com.ra.base_spring_boot.model.constants.RoleName;
 
 public interface IRoleService
 {
-    Role findByRoleName(RoleName roleName) throws CustomException;
+    Role findByRoleName(RoleName roleName);
 }

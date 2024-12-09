@@ -1,6 +1,6 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.exception.CustomException;
+import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.model.Role;
 import com.ra.base_spring_boot.model.constants.RoleName;
 import com.ra.base_spring_boot.repository.IRoleRepository;
@@ -16,8 +16,8 @@ public class RoleServiceImpl implements IRoleService
     private final IRoleRepository roleRepository;
 
     @Override
-    public Role findByRoleName(RoleName roleName) throws CustomException
+    public Role findByRoleName(RoleName roleName)
     {
-        return roleRepository.findByRoleName(roleName).orElseThrow(() -> new CustomException("role not found", HttpStatus.NOT_FOUND));
+        return roleRepository.findByRoleName(roleName).orElseThrow(() -> new HttpNotFound("role not found"));
     }
 }

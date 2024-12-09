@@ -3,7 +3,7 @@ package com.ra.base_spring_boot.services.impl;
 import com.ra.base_spring_boot.dto.req.FormLogin;
 import com.ra.base_spring_boot.dto.req.FormRegister;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
-import com.ra.base_spring_boot.exception.CustomException;
+import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.Role;
 import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.model.constants.RoleName;
@@ -19,12 +19,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,7 +37,7 @@ public class AuthServiceImpl implements IAuthService
     private final JwtProvider jwtProvider;
 
     @Override
-    public void register(FormRegister formRegister) throws CustomException
+    public void register(FormRegister formRegister)
     {
         Set<Role> roles = new HashSet<>();
         roles.add(roleService.findByRoleName(RoleName.ROLE_USER));
@@ -54,7 +52,7 @@ public class AuthServiceImpl implements IAuthService
     }
 
     @Override
-    public JwtResponse login(FormLogin formLogin) throws CustomException
+    public JwtResponse login(FormLogin formLogin)
     {
         Authentication authentication;
         try
@@ -63,13 +61,13 @@ public class AuthServiceImpl implements IAuthService
         }
         catch (AuthenticationException e)
         {
-            throw new CustomException("Username or password is incorrect", HttpStatus.BAD_REQUEST);
+            throw new HttpBadRequest("Username or password is incorrect");
         }
 
         MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
         if (!userDetails.getUser().getStatus())
         {
-            throw new CustomException("your account is blocked", HttpStatus.BAD_REQUEST);
+            throw new HttpBadRequest("your account is blocked");
         }
 
 
