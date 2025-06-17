@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -51,5 +52,32 @@ public class AuthController
                         .build()
         );
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> handleLogout(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ResponseWrapper.builder()
+                            .status(HttpStatus.UNAUTHORIZED)
+                            .code(401)
+                            .data("You are not logged in")
+                            .build());
+        }
+
+        // Lấy thông tin user từ JWT
+        String username = authentication.getName(); // từ token
+        System.out.println("Logout request by user: " + username);
+
+        // Nếu muốn: authService.logout(username); hoặc thêm token vào blacklist tại đây
+
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data("Logout successfully")
+                        .build()
+        );
+    }
+
 
 }

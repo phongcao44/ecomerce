@@ -7,6 +7,7 @@ import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.Role;
 import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.model.constants.RoleName;
+import com.ra.base_spring_boot.model.constants.UserStatus;
 import com.ra.base_spring_boot.repository.IUserRepository;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
@@ -42,10 +43,10 @@ public class AuthServiceImpl implements IAuthService
         Set<Role> roles = new HashSet<>();
         roles.add(roleService.findByRoleName(RoleName.ROLE_USER));
         User user = User.builder()
-                .fullName(formRegister.getFullName())
+                .email(formRegister.getEmail())
                 .username(formRegister.getUsername())
                 .password(passwordEncoder.encode(formRegister.getPassword()))
-                .status(true)
+                .status(UserStatus.ACTIVE)
                 .roles(roles)
                 .build();
         userRepository.save(user);
@@ -65,12 +66,10 @@ public class AuthServiceImpl implements IAuthService
         }
 
         MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
-        if (!userDetails.getUser().getStatus())
+        if (userDetails.getUser().getStatus() == UserStatus.INACTIVE)
         {
-            throw new HttpBadRequest("your account is blocked");
+            throw new HttpBadRequest("Your account is blocked");
         }
-
-
 
 
 
@@ -81,5 +80,9 @@ public class AuthServiceImpl implements IAuthService
                 .build();
     }
 
+
+    public void logout () {
+
+    }
 
 }

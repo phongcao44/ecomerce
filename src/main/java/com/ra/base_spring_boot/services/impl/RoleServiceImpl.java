@@ -18,6 +18,6 @@ public class RoleServiceImpl implements IRoleService
     @Override
     public Role findByRoleName(RoleName roleName)
     {
-        return roleRepository.findByRoleName(roleName).orElseThrow(() -> new HttpNotFound("role not found"));
+        return roleRepository.findByName(roleName).orElseThrow(() -> new HttpNotFound("role not found"));
     }
 }

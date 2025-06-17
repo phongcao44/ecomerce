@@ -27,7 +27,7 @@ public class MyUserDetailsService implements UserDetailsService
 
         return MyUserDetails.builder()
                 .user(user)
-                .authorities(user.getRoles().stream().map(role -> new SimpleGrantedAuthority(role.getRoleName().toString())).toList())
+                .authorities(user.getRoles().stream().map(role -> new SimpleGrantedAuthority(role.getName().toString())).toList())
                 .build();
     }
 }
