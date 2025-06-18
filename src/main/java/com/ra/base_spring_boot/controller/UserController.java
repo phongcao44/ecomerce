@@ -21,7 +21,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/auth/users")
+@RequestMapping("/api/v1/admin/users")
 public class UserController {
     @Autowired
     private IUserService userService;
