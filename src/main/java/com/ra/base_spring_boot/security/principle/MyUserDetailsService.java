@@ -20,14 +20,15 @@ public class MyUserDetailsService implements UserDetailsService
     private final IUserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException
-    {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username + " not found"));
-
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException(email + " not found"));
 
         return MyUserDetails.builder()
                 .user(user)
-                .authorities(user.getRoles().stream().map(role -> new SimpleGrantedAuthority(role.getName().toString())).toList())
+                .authorities(user.getRoles().stream()
+                        .map(role -> new SimpleGrantedAuthority(role.getName().toString()))
+                        .toList())
                 .build();
     }
 }
