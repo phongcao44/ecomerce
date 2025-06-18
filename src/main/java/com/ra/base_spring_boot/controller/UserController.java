@@ -57,6 +57,12 @@ public class UserController {
         );
         return new  ResponseEntity<>(roleDTO, HttpStatus.OK);
     }
+    @DeleteMapping("/{userId}/deleteRole/{roleId}")
+    public ResponseEntity<?> handleDeleteRole(@PathVariable long userId, @PathVariable long roleId) {
+        userService.deleteRole(userId, roleId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/{userId}/status")
     public ResponseEntity<?> handleStatusChange(@PathVariable long userId, @RequestBody UserStatusRequest status) {
     userService.changeStatus(userId, status.getStatus());

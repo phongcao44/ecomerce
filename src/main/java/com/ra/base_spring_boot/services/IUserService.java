@@ -14,4 +14,5 @@ public interface IUserService {
     void save(User user);
     void addRole(long userId, long roleId);
     void changeStatus(Long userId,String status);
+    void deleteRole(long userId,long roleId);
 }

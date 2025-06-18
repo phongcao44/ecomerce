@@ -13,6 +13,7 @@ import com.ra.base_spring_boot.services.IRoleService;
 import com.ra.base_spring_boot.services.IUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -61,34 +62,42 @@ public class UserServiceImpl implements IUserService {
         Set<Role> roles = new HashSet<>();
 
         if (addUserRequest.getRoles() == null || addUserRequest.getRoles().isEmpty()) {
-            Role role = iRoleRepository.findByName(RoleName.ROLE_USER)
+            // Gán mặc định ROLE_USER nếu không truyền role
+            Role defaultRole = iRoleRepository.findByName(RoleName.ROLE_USER)
                     .orElseThrow(() -> new RuntimeException("Default role not found"));
-            roles.add(role);
-        }
+            roles.add(defaultRole);
+        } else {
+            for (String str : addUserRequest.getRoles()) {
+                if (str == null || str.trim().isEmpty()) {
+                    continue; // Bỏ qua chuỗi rỗng
+                }
 
-        for(String str : addUserRequest.getRoles()){
-            RoleName roleName;
-            try {
-                roleName = RoleName.valueOf(str.toUpperCase());
-            }catch (IllegalArgumentException e){
-                throw new RuntimeException("Invalid role: " + str);
+                RoleName roleName;
+                try {
+                    roleName = RoleName.valueOf(str.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    throw new RuntimeException("Invalid role: " + str);
+                }
+
+                Role role = iRoleRepository.findByName(roleName)
+                        .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+                roles.add(role);
             }
-            Role role = iRoleRepository.findByName(roleName).orElseThrow(()
-                    -> new RuntimeException("Invalid role: " + roleName));
-            roles.add(role);
         }
 
-    User user = User.builder()
-            .username(addUserRequest.getUsername())
-            .password(passwordEncoder.encode(addUserRequest.getPassword()))
-            .email(addUserRequest.getEmail())
-            .status(UserStatus.ACTIVE)
-            .createdAt(LocalDateTime.now())
-            .updatedAt(LocalDateTime.now())
-            .roles(roles)
-            .build();
-    userRepository.save(user);
+        User user = User.builder()
+                .username(addUserRequest.getUsername())
+                .password(passwordEncoder.encode(addUserRequest.getPassword()))
+                .email(addUserRequest.getEmail())
+                .status(UserStatus.ACTIVE)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .roles(roles)
+                .build();
+
+        userRepository.save(user);
     }
+
 
     @Override
     public void save(User user) {
@@ -97,7 +106,10 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public void addRole(long userId, long roleId) {
-
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        Role role = iRoleRepository.findById(roleId).orElseThrow(() -> new RuntimeException("Role not found"));
+        user.getRoles().add(role);
+        userRepository.save(user);
     }
 
     @Override
@@ -113,7 +125,32 @@ public class UserServiceImpl implements IUserService {
 
     }
 
-        @Override
+    @Override
+    public void deleteRole(long userId, long roleId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        Role role = iRoleRepository.findById(roleId).orElseThrow(() -> new RuntimeException("Role not found"));
+
+        // Lấy user hiện tại đang thực hiện hành động
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+        //Không cho phép tự xóa chính mình
+        if (user.getId().equals(currentUser.getId())) {
+            throw new RuntimeException("Admin cannot remove their own roles.");
+        }
+
+        if (role.getName().equals(RoleName.ROLE_ADMIN)) {
+            boolean isTargetUserAdmin = user.getRoles().stream()
+                    .anyMatch(r -> r.getName().equals(RoleName.ROLE_ADMIN));
+
+            if (isTargetUserAdmin) {
+                throw new RuntimeException("Cannot remove ROLE_ADMIN from an admin user.");
+            }
+        }
+    }
+
+    @Override
     public User findUser(long userId) {
         return userRepository.findById(userId).orElse(null);
     }

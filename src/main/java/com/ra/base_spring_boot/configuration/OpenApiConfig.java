@@ -27,12 +27,12 @@ public class OpenApiConfig {
                 .version(version)
                 .description(description))
                 .servers(List.of(new Server().url(serverUrl).description("Test")))
-/*                .components(new Components().
+                 .components(new Components().
                         addSecuritySchemes("bearerAuth", new SecurityScheme().
                                 type(SecurityScheme.Type.HTTP).
                                 scheme("bearer").
                                 bearerFormat("JWT"))).
-                                security(List.of(new SecurityRequirement().addList("bearerAuth")))*/;
+                                security(List.of(new SecurityRequirement().addList("bearerAuth")));
     }
     @Bean
     public GroupedOpenApi customOpenAPI() {
