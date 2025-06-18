@@ -11,4 +11,6 @@ public interface IAuthService
 
     JwtResponse login(FormLogin formLogin);
 
+    void logout();
+
 }
