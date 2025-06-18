@@ -1,0 +1,65 @@
+package com.ra.base_spring_boot.controller;
+
+
+import com.ra.base_spring_boot.dto.ResponseWrapper;
+import com.ra.base_spring_boot.dto.req.AddUserRequest;
+import com.ra.base_spring_boot.dto.req.UserStatusRequest;
+import com.ra.base_spring_boot.dto.resp.RoleResponse;
+import com.ra.base_spring_boot.dto.resp.ViewUserResponse;
+import com.ra.base_spring_boot.model.Role;
+import com.ra.base_spring_boot.model.User;
+import com.ra.base_spring_boot.model.constants.RoleName;
+import com.ra.base_spring_boot.services.IUserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/v1/auth/users")
+public class UserController {
+    @Autowired
+    private IUserService userService;
+
+    @PostMapping("/add")
+    public ResponseEntity<?> handleAddUser(@RequestBody AddUserRequest addUserRequest) {
+        userService.addUser(addUserRequest);
+        return ResponseEntity.created(URI.create("api/v1/auth/add")).body(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.CREATED)
+                        .code(201)
+                        .data("Add new User")
+                        .build()
+        );
+    }
+    @GetMapping()
+    public ResponseEntity<List<?>> handleGetAllUsers() {
+        List<ViewUserResponse> users = userService.findAll();
+        ViewUserResponse  viewUserResponse = new ViewUserResponse(
+
+        );
+        return new ResponseEntity<>(users, HttpStatus.OK);
+    }
+
+    @PatchMapping("/{userId}/changeRole/{roleId}")
+    public ResponseEntity<?> handleChangeRole(@PathVariable long userId, @PathVariable long roleId) {
+        userService.addRole(userId, roleId);
+        User user = userService.findUser(userId);
+        Set<RoleName> roles = user.getRoles().stream().map(Role::getName).collect(Collectors.toSet());
+        RoleResponse roleDTO = new RoleResponse(
+                userId,
+                roles
+        );
+        return new  ResponseEntity<>(roleDTO, HttpStatus.OK);
+    }
+    @PatchMapping("/{userId}/status")
+    public ResponseEntity<?> handleStatusChange(@PathVariable long userId, @RequestBody UserStatusRequest status) {
+    userService.changeStatus(userId, status.getStatus());
+    return ResponseEntity.ok(status);
+    }
+}
