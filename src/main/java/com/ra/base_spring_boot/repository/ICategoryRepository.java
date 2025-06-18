@@ -14,4 +14,6 @@ public interface ICategoryRepository extends JpaRepository<Category,Long> {
     List<Category> findAllByParentId(Long parentId);
 
     List<Category> findCategoriesByNameContainingIgnoreCase(String keyword);
+
+    List<Category> findByParent(Category parent);
 }

@@ -89,20 +89,14 @@ public class CategoryController {
     }
 
     //add danh mục dùng rieeng cho con
-    @PostMapping("/add/son")
-    public ResponseEntity<?> addCategorySon(@RequestBody CategoryRequest categoryRequest){
-        // ko cho làm cha
-        if (categoryRequest.getParentId() == null) {
-            return ResponseEntity
-                    .badRequest()
-                    .body("con cần cha không đc null");
-        }
-        // kiểm tra cha có ko
-        Optional<Category> parentCategory = categoryRepository.findById(categoryRequest.getParentId());
+    @PostMapping("/add/son/{parentId}")
+    public ResponseEntity<?> addCategorySon(@PathVariable Long parentId,@RequestBody CategoryRequest categoryRequest){
+        // Kiểm tra cha có tồn tại không
+        Optional<Category> parentCategory = categoryRepository.findById(parentId);
         if (parentCategory.isEmpty()) {
             return ResponseEntity
                     .badRequest()
-                    .body("Danh mục cha không tồn tại");
+                    .body("chưa có ba");
         }
 
         Category category = new Category();
@@ -111,7 +105,7 @@ public class CategoryController {
         category.setParent(parentCategory.get());
 
         categoryRepository.save(category);
-        return ResponseEntity.ok("Thêm danh mục thành công");
+        return ResponseEntity.ok("Thêm danh mục con thành công");
     }
 
     //add danh muc danh tieng cho cha
@@ -130,5 +124,113 @@ public class CategoryController {
         category.setParent(null);
         categoryRepository.save(category);
         return ResponseEntity.ok("Thêm danh mục cha thành công");
+    }
+
+    //sửa danh mục cha
+    @PutMapping("/edit/parent/{id}")
+    public ResponseEntity<?> updateParentCategory(@PathVariable Long id, @RequestBody CategoryRequest categoryRequest) {
+        Optional<Category> categoryOptional = categoryRepository.findById(id);
+
+        if (categoryOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new DataError("Không tìm thấy danh mục cha", 404));
+        }
+
+        Category category = categoryOptional.get();
+
+        // Kiểm tra có phaỉ llà cha khong
+        if (category.getParent() != null) {
+            return ResponseEntity.badRequest().body("Danh mục này không phải là danh mục cha");
+        }
+
+        category.setName(categoryRequest.getName());
+        category.setDescription(categoryRequest.getDescription());
+
+        categoryRepository.save(category);
+
+        return ResponseEntity.ok("Cập nhật danh mục cha thành công");
+    }
+
+    // sửa con
+    @PutMapping("/edit/son/{id}")
+    public ResponseEntity<?> updateSubCategory(@PathVariable Long id, @RequestBody CategoryRequest categoryRequest) {
+        Optional<Category> categoryOptional = categoryRepository.findById(id);
+
+        if (categoryOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new DataError("Không tìm thấy danh mục con", 404));
+        }
+
+        Category category = categoryOptional.get();
+
+        // Kiểm tra nếu không có parent, tức là nó không phải danh mục con
+        if (category.getParent() == null) {
+            return ResponseEntity.badRequest().body("Danh mục này không phải danh mục con");
+        }
+
+        // Kiểm tra danh mục cha mới có tồn tại không
+        if (categoryRequest.getParentId() != null) {
+            Optional<Category> parentOptional = categoryRepository.findById(categoryRequest.getParentId());
+            if (parentOptional.isEmpty()) {
+                return ResponseEntity.badRequest().body("Danh mục cha không tồn tại");
+            }
+            category.setParent(parentOptional.get());
+        }
+
+        category.setName(categoryRequest.getName().trim());
+        category.setDescription(categoryRequest.getDescription().trim());
+
+        categoryRepository.save(category);
+
+        return ResponseEntity.ok("Cập nhật danh mục con thành công");
+    }
+
+
+    //dele cha
+    @DeleteMapping("/delete/parent/{id}")
+    public ResponseEntity<?> deleteParentCategory(@PathVariable Long id) {
+        Optional<Category> categoryOptional = categoryRepository.findById(id);
+
+        if (categoryOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new DataError("Không tìm thấy danh mục cha", 404));
+        }
+
+        Category category = categoryOptional.get();
+
+
+        if (category.getParent() != null) {
+            return ResponseEntity.badRequest()
+                    .body("đâu phải cha");
+        }
+
+        List<Category> subCategories = categoryRepository.findByParent(category);
+        if (!subCategories.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("xóa con trc hãy xóa cha");
+        }
+
+        categoryRepository.deleteById(id);
+        return ResponseEntity.ok("Xóa danh mục cha thành công");
+    }
+
+    //xo con
+    @DeleteMapping("/delete/son/{id}")
+    public ResponseEntity<?> deleteSubCategory(@PathVariable Long id) {
+        Optional<Category> categoryOptional = categoryRepository.findById(id);
+
+        if (categoryOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new DataError("Không tìm thấy danh mục", 404));
+        }
+
+        Category category = categoryOptional.get();
+
+        if (category.getParent() == null) {
+            return ResponseEntity.badRequest()
+                    .body("đây là cha không phải con");
+        }
+
+        categoryRepository.deleteById(id);
+        return ResponseEntity.ok("Xóa danh mục con thành công");
     }
 }
