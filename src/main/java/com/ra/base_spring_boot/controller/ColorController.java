@@ -1,11 +1,13 @@
 package com.ra.base_spring_boot.controller;
 
+import com.ra.base_spring_boot.dto.resp.ColorResponse;
 import com.ra.base_spring_boot.model.Color;
 import com.ra.base_spring_boot.repository.IColorRepository;
 import com.ra.base_spring_boot.services.impl.ColorServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +19,8 @@ public class ColorController {
     private ColorServiceImpl colorService;
     @Autowired
     private IColorRepository iColorRepository;
+    @Autowired
+    private RestTemplate restTemplate;
 
     @GetMapping("/list")
     public List<Color> list() {
@@ -60,5 +64,49 @@ public class ColorController {
         }
         iColorRepository.deleteById(colorId);
         return ResponseEntity.ok("xoa thanh cong goy");
+    }
+
+
+    // https://www.thecolorapi.com (api mã màu)
+    // https://www.thecolorapi.com/form-id
+    // https://www.thecolorapi.com/id?hex="mã màu"
+    @PostMapping("/autoadd")
+    public ResponseEntity<?> autoadd(@RequestBody Color color) {
+        if (color == null || color.getHexCode() == null) {
+            return ResponseEntity.badRequest().body("Cần cung cấp mã màu (hexCode)");
+        }
+
+        // Bỏ dấu #
+        String hex = color.getHexCode().replace("#", "").toLowerCase();
+
+        // Chuyển từ 3 ký tự sang 6 ký tự nếu cần
+        if (hex.length() == 3) {
+            hex = "" + hex.charAt(0) + hex.charAt(0)
+                    + hex.charAt(1) + hex.charAt(1)
+                    + hex.charAt(2) + hex.charAt(2);
+        }
+
+        // Set lại hexCode chuẩn hóa
+        color.setHexCode("#" + hex);
+
+        try {
+            // Gọi đến TheColorAPI
+            String url = "https://www.thecolorapi.com/id?hex=" + hex;
+            ColorResponse response = restTemplate.getForObject(url, ColorResponse.class);
+
+            // Lấy tên màu từ response
+            if (response != null && response.getName() != null) {
+                color.setName(response.getName().getValue());
+            } else {
+                color.setName("Không xác định");
+            }
+
+            // Lưu DB
+            Color saved = colorService.save(color);
+            return ResponseEntity.ok(saved);
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Lỗi khi gọi API màu: " + e.getMessage());
+        }
     }
 }
