@@ -1,19 +1,14 @@
 package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.req.AddressRequest;
-import com.ra.base_spring_boot.dto.resp.ProvineResponse;
+import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.model.Address;
 import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.repository.IAddressRepository;
 import com.ra.base_spring_boot.services.IAddressService;
 import com.ra.base_spring_boot.services.IUserService;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
-import java.util.Arrays;
-import java.util.List;
 
 @Service
 public class AddressServiceImpl implements IAddressService {
@@ -45,7 +40,7 @@ public class AddressServiceImpl implements IAddressService {
 
     @Override
     public Address findById(long id) {
-        return iAddressRepository.findById(id).orElse(null);
+        return iAddressRepository.findById(id).orElseThrow(() -> new HttpNotFound("Address not found"));
     }
 
     @Override
