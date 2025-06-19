@@ -16,14 +16,12 @@ import com.ra.base_spring_boot.model.constants.TokenStatus;
 import com.ra.base_spring_boot.model.constants.UserStatus;
 import com.ra.base_spring_boot.repository.IBlackListRepository;
 import com.ra.base_spring_boot.repository.IUserRepository;
-import com.ra.base_spring_boot.repository.PasswordResetTokenRepository;
+import com.ra.base_spring_boot.repository.IPasswordResetTokenRepository;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.IAuthService;
 import com.ra.base_spring_boot.services.IRoleService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -49,13 +47,17 @@ public class AuthServiceImpl implements IAuthService
     private final JwtProvider jwtProvider;
     private final IBlackListRepository blackListTokenRepository;
     private final EmailService emailService;
-    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final IPasswordResetTokenRepository passwordResetTokenRepository;
 
 
 
     @Override
     public void register(FormRegister formRegister)
     {
+        if (userRepository.existsByEmail(formRegister.getEmail())) {
+            throw new HttpBadRequest("Email already exists");
+        }
+
         Set<Role> roles = new HashSet<>();
         roles.add(roleService.findByRoleName(RoleName.ROLE_USER));
         LocalDateTime now = LocalDateTime.now();
