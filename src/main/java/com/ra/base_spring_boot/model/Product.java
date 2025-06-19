@@ -1,7 +1,6 @@
 package com.ra.base_spring_boot.model;
 
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ra.base_spring_boot.model.constants.ProductStatus;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.*;
@@ -37,16 +36,13 @@ public class Product {
     private ProductStatus status;
 
     @ManyToOne
-    @JsonIgnore
     @JoinColumn(name = "category_id")
     private Category category;
 
     @OneToMany(mappedBy = "product")
-    @JsonIgnore
     private List<ProductVariant> variants;
 
     @OneToMany(mappedBy = "product")
-    @JsonIgnore
     private List<ProductImage> images;
 }
 

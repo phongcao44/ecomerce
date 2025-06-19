@@ -1,7 +1,6 @@
 package com.ra.base_spring_boot.model;
 
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,12 +25,10 @@ public class Category {
     private String description;
 
     @ManyToOne
-    //@JsonIgnore
     @JoinColumn(name = "parent_id")
     private Category parent;
 
     @OneToMany(mappedBy = "category")
-    //@JsonIgnore
     private List<Product> products;
 }
 
