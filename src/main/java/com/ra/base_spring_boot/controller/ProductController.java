@@ -3,7 +3,14 @@ package com.ra.base_spring_boot.controller;
 import com.ra.base_spring_boot.dto.DataError;
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.ProductRequestDTO;
+import com.ra.base_spring_boot.dto.resp.CategoryResponse;
 import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
+import com.ra.base_spring_boot.dto.resp.ProductUserResponse;
+import com.ra.base_spring_boot.model.Category;
+import com.ra.base_spring_boot.model.Product;
+import com.ra.base_spring_boot.repository.ICategoryRepository;
+import com.ra.base_spring_boot.repository.IProductRepository;
+import com.ra.base_spring_boot.services.ICategoryService;
 import com.ra.base_spring_boot.services.IProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +27,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/product")
@@ -28,6 +37,12 @@ import java.util.List;
 public class ProductController {
     @Autowired
     private IProductService productService;
+    @Autowired
+    private ICategoryRepository categoryRepository;
+    @Autowired
+    private ICategoryService categoryService;
+    @Autowired
+    private IProductRepository productRepository;
 
     // hiển thị danh sách Product
     @GetMapping
@@ -61,7 +76,7 @@ public class ProductController {
     }
 
     // Thêm mới Product
-    @PostMapping("/add")
+    @PostMapping("/admin/add")
     public ResponseEntity<?> createProduct(@Valid @RequestBody ProductRequestDTO dto) {
         ProductResponseDTO response = productService.save(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(
@@ -75,7 +90,7 @@ public class ProductController {
 
 
     // Cập nhật Product
-    @PutMapping("/update/{id}")
+    @PutMapping("admin/update/{id}")
     public ResponseEntity<?> update(@PathVariable int id, @RequestBody ProductRequestDTO dto) {
         ProductResponseDTO response = productService.update(id, dto);
         if (response != null) {
@@ -85,7 +100,7 @@ public class ProductController {
     }
 
     // Thay đổi trạng thái Product
-    @PutMapping("/change-status/{id}")
+    @PutMapping("admin/change-status/{id}")
     public ResponseEntity<?> changeStatus(@PathVariable int id) {
         ProductResponseDTO response = productService.changeStatus(id);
         if (response != null) {
@@ -102,7 +117,7 @@ public class ProductController {
     }
 
     // xóa sản phẩm theo id
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("admin/delete/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         try {
             productService.delete(id);
@@ -118,5 +133,43 @@ public class ProductController {
         }
     }
 
+    //Huynh Gia Phu
+    //list product by category
+    @GetMapping("/user/products/by-category/{categoryId}")
+    public ResponseEntity<?> getProductsByCategory(@PathVariable Long categoryId) {
+        Optional<Category> selectedCategoryOpt = categoryRepository.findById(categoryId);
+        if (selectedCategoryOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("Không tìm thấy danh mục");
+        }
+
+        Category selectedCategory = selectedCategoryOpt.get();
+        List<Long> categoryIdsToSearch = new ArrayList<>();
+
+        // neu la cha lay toan bo con
+        if (selectedCategory.getParent() == null) {
+            List<Category> children = categoryRepository.findAllByParentId(categoryId);
+            categoryIdsToSearch = children.stream()
+                    .map(Category::getId)
+                    .toList();
+        } else {
+            // neu la con lay 9 nó
+            categoryIdsToSearch.add(categoryId);
+        }
+
+        List<Product> products = productRepository.findByCategoryIdIn(categoryIdsToSearch);
+
+
+        List<ProductUserResponse> responses = products.stream()
+                .map(product -> new ProductUserResponse(
+                        product.getId(),
+                        product.getBrand(),
+                        product.getDescription(),
+                        product.getName()
+                ))
+                .toList();
+
+        return ResponseEntity.ok(responses);
+
+    }
 
 }

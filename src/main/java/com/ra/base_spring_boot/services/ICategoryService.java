@@ -20,6 +20,6 @@ public interface ICategoryService {
 
     List<SearchCategoryRespone> searchCategory(String keyword);
 
-
+    Category findById(Long id);
 
 }

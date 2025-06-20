@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.controller;
 
+import com.ra.base_spring_boot.dto.req.ColorRequest;
 import com.ra.base_spring_boot.dto.resp.ColorResponse;
 import com.ra.base_spring_boot.model.Color;
 import com.ra.base_spring_boot.repository.IColorRepository;
@@ -71,7 +72,7 @@ public class ColorController {
     // https://www.thecolorapi.com/form-id
     // https://www.thecolorapi.com/id?hex="mã màu"
     @PostMapping("/autoadd")
-    public ResponseEntity<?> autoadd(@RequestBody Color color) {
+    public ResponseEntity<?> autoadd(@RequestBody ColorRequest color) {
         if (color == null || color.getHexCode() == null) {
             return ResponseEntity.badRequest().body("Cần cung cấp mã màu (hexCode)");
         }
@@ -94,15 +95,20 @@ public class ColorController {
             String url = "https://www.thecolorapi.com/id?hex=" + hex;
             ColorResponse response = restTemplate.getForObject(url, ColorResponse.class);
 
-            // Lấy tên màu từ response
-            if (response != null && response.getName() != null) {
-                color.setName(response.getName().getValue());
-            } else {
-                color.setName("Không xác định");
-            }
+//            // Lấy tên màu từ response
+//            if (response != null && response.getName() != null) {
+//                color.setName(response.getName().getValue());
+//            } else {
+//                color.setName("Không xác định");
+//            }
+            Color colornew = new Color();
+            colornew.setHexCode("#" + hex);
+            colornew.setName((response != null && response.getName() != null)
+                    ? response.getName().getValue()
+                    : "Không xác định");
 
             // Lưu DB
-            Color saved = colorService.save(color);
+            Color saved = colorService.save(colornew);
             return ResponseEntity.ok(saved);
 
         } catch (Exception e) {
