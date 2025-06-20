@@ -4,6 +4,9 @@ import com.ra.base_spring_boot.model.base.BaseObject;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+
 @Entity
 @Getter
 @Setter
@@ -26,4 +29,10 @@ public class Banner extends BaseObject {
 
     @Column(name = "position")
     private String position;
+
+    @Column(name = "time_start")
+    private OffsetDateTime  startAt;
+
+    @Column(name = "time_end")
+    private OffsetDateTime endAt;
 }

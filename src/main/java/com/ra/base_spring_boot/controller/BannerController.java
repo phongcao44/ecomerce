@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.controller;
 
+import com.ra.base_spring_boot.dto.req.BannerRequest;
 import com.ra.base_spring_boot.model.Banner;
 import com.ra.base_spring_boot.services.IBannerService;
 import org.springframework.http.MediaType;
@@ -21,17 +22,13 @@ public class BannerController {
     public ResponseEntity<List<Banner>> getAllBanners(){
         return ResponseEntity.ok(iBannerService.getAll());
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Banner> createBanner(
-            @RequestParam String title,
-            @RequestParam String position,
-            @RequestParam Boolean status,
-            @RequestParam("image") MultipartFile image
+BannerRequest request
     ) {
-        return ResponseEntity.ok(iBannerService.create(title, position, status, image));
+        return ResponseEntity.ok(iBannerService.create(request.getTitle(), request.getPosition(),request.isStatus(), request.getStartAt(),request.getEndAt(),request.getImage()));
     }
-    @CrossOrigin(origins = "*")
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Banner> updateBanner(
             @PathVariable Integer id,

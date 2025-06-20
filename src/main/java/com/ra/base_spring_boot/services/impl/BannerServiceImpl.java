@@ -9,8 +9,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class BannerServiceImpl implements IBannerService {
@@ -54,12 +58,14 @@ public class BannerServiceImpl implements IBannerService {
         }
     }
     @Override
-    public Banner create(String title, String position, Boolean status, MultipartFile image) {
+    public Banner create(String title, String position, Boolean status, OffsetDateTime startTime, OffsetDateTime  endTime, MultipartFile image) {
         Map uploadResult = uploadImageToCloudinary(image);
         Banner banner = Banner.builder()
                 .title(title)
                 .position(position)
                 .status(status)
+                .startAt(startTime)          // <- Cần thêm dòng này
+                .endAt(endTime)
                 .bannerUrl((String) uploadResult.get("secure_url"))
                 .publicId((String) uploadResult.get("public_id"))
                 .build();
@@ -116,6 +122,14 @@ public class BannerServiceImpl implements IBannerService {
         } catch (IOException e) {
             throw new RuntimeException("Xoá ảnh trên Cloudinary thất bại", e);
         }
+    }
+    public List<Banner> getAllVisibleBanners() {
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        return bannerRepository.findAll().stream()
+                .filter(b -> (b.getStartAt() == null || !now.isBefore(b.getStartAt())) &&
+                        (b.getEndAt() == null || !now.isAfter(b.getEndAt())))
+                .collect(Collectors.toList());
+
     }
 
 
