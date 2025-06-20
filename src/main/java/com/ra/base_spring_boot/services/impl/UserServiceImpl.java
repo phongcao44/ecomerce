@@ -147,6 +147,8 @@ public class UserServiceImpl implements IUserService {
                 throw new RuntimeException("Cannot remove ROLE_ADMIN from an admin user.");
             }
         }
+        user.getRoles().remove(role);
+        userRepository.save(user);
     }
 
     @Override

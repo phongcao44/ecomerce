@@ -1,10 +1,15 @@
 spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
   application:
     name: base_spring_boot
   datasource:
     url: jdbc:mysql://localhost:3306/base_core?createDatabaseIfNotExist=true
     username: root
-    password: 123456
+    password: Nhutkep@123
   jooq:
     sql-dialect: org.hibernate.dialect.MySQL8Dialect
   jpa:
