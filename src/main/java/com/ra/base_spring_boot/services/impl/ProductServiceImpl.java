@@ -99,10 +99,10 @@ public class ProductServiceImpl implements IProductService {
         if (product == null) return null;
 
         // Chỉ chuyển đổi giữa Active và InActive
-        if (product.getStatus() == ProductStatus.ACTIVE) {
-            product.setStatus(ProductStatus.INACTIVE);
-        } else if (product.getStatus() == ProductStatus.INACTIVE) {
-            product.setStatus(ProductStatus.ACTIVE);
+        if (product.getStatus() == ProductStatus.IN_STOCK) {
+            product.setStatus(ProductStatus.OUT_OF_STOCK);
+        } else if (product.getStatus() == ProductStatus.OUT_OF_STOCK) {
+            product.setStatus(ProductStatus.IN_STOCK);
         } else {
             // Không thay đổi nếu là OUT_OF_STOCK hoặc DISCONTINUED
             return null;
