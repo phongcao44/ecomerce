@@ -10,11 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 @Builder
-public class FormLogin
-{
-    @NotBlank(message = "Không được để trống")
-    private String email;
-
-    @NotBlank(message = "Không được để trống")
-    private String password;
+public class ResetPasswordRequest {
+    @NotBlank(message = "không được để trống")
+    private String newPassword;
 }
