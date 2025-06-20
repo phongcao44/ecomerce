@@ -12,6 +12,8 @@ import lombok.*;
 @Builder
 @Table(name = "banners")
 public class Banner extends BaseObject {
+    @Column(name = "public_id")
+    private String publicId;
 
     @Column(name = "banner_url")
     private String bannerUrl;
