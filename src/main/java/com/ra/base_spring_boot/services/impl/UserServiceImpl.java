@@ -132,7 +132,7 @@ public class UserServiceImpl implements IUserService {
 
         // Lấy user hiện tại đang thực hiện hành động
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByUsername(currentUsername)
+        User currentUser = userRepository.findByEmail(currentUsername)
                 .orElseThrow(() -> new RuntimeException("Current user not found"));
 
         //Không cho phép tự xóa chính mình
