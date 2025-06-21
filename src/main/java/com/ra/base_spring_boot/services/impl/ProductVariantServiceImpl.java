@@ -1,12 +1,10 @@
 package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.req.ProductVariantRequestDTO;
+import com.ra.base_spring_boot.dto.resp.ProductVariantDetailDTO;
 import com.ra.base_spring_boot.dto.resp.ProductVariantResponseDTO;
 import com.ra.base_spring_boot.exception.HttpNotFound;
-import com.ra.base_spring_boot.model.Color;
-import com.ra.base_spring_boot.model.Product;
-import com.ra.base_spring_boot.model.ProductVariant;
-import com.ra.base_spring_boot.model.Size;
+import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.repository.IColorRepository;
 import com.ra.base_spring_boot.repository.IProductRepository;
 import com.ra.base_spring_boot.repository.IProductVariantRepository;
@@ -32,6 +30,7 @@ public class ProductVariantServiceImpl implements IProductVariantService {
     private IColorRepository colorRepository;
     @Autowired
     private ISizeRepository sizeRepository;
+
 
 
     @Override
@@ -130,5 +129,29 @@ public class ProductVariantServiceImpl implements IProductVariantService {
             throw new HttpNotFound("ProductVariantId Not Found");
         }
         productVariantRepository.deleteById(id);
+    }
+
+    @Override
+    public ProductVariantDetailDTO getVariantDetail(Long variantId) {
+        ProductVariant variant = productVariantRepository.findById(variantId)
+                .orElseThrow(() -> new RuntimeException("Variant not found"));
+
+        Product product = variant.getProduct();
+        Color color = variant.getColor();
+        Size size = variant.getSize();
+
+        return ProductVariantDetailDTO.builder()
+                .variantId(variant.getId())
+                .productName(product.getName())
+                .productDescription(product.getDescription())
+                .brand(product.getBrand())
+                .price(product.getPrice())
+                .priceOverride(variant.getPriceOverride())
+                .stockQuantity(variant.getStockQuantity())
+                .colorName(color.getName())
+                .colorHex(color.getHexCode())
+                .sizeName(size.getSizeName())
+                .sizeDescription(size.getDescription())
+                .build();
     }
 }
