@@ -134,7 +134,6 @@ public class UserServiceImpl implements IUserService {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByEmail(currentUsername)
                 .orElseThrow(() -> new RuntimeException("Current user not found"));
-
         //Không cho phép tự xóa chính mình
         if (user.getId().equals(currentUser.getId())) {
             throw new RuntimeException("Admin cannot remove their own roles.");
