@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.services.impl;
 
+import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
 import com.ra.base_spring_boot.dto.resp.WishListResponse;
 import com.ra.base_spring_boot.model.Product;
 import com.ra.base_spring_boot.model.User;
@@ -8,8 +9,11 @@ import com.ra.base_spring_boot.repository.IProductRepository;
 import com.ra.base_spring_boot.repository.IWishListRepository;
 import com.ra.base_spring_boot.services.IUserService;
 import com.ra.base_spring_boot.services.IWishListService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 
+import java.awt.print.Pageable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -79,7 +83,6 @@ public class WishListServiceImpl implements IWishListService {
 
 
 
-
     @Override
     public List<WishListResponse> findAllWishlist(long userId) {
         List<Wishlist> wishlists = iWishListRepository.findAllByUser_Id(userId);
@@ -92,7 +95,6 @@ public class WishListServiceImpl implements IWishListService {
                         .userId(userId)
                         .build()
         ).collect(Collectors.toList());
-
     }
 
 

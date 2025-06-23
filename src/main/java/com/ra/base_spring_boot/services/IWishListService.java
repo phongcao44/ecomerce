@@ -5,6 +5,7 @@ import com.ra.base_spring_boot.model.Product;
 import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.model.Wishlist;
 
+import java.awt.print.Pageable;
 import java.util.List;
 
 public interface IWishListService {
