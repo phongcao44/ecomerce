@@ -5,6 +5,7 @@ import com.ra.base_spring_boot.dto.DataError;
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.ProductVariantRequestDTO;
 import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
+import com.ra.base_spring_boot.dto.resp.ProductVariantDetailDTO;
 import com.ra.base_spring_boot.dto.resp.ProductVariantResponseDTO;
 import com.ra.base_spring_boot.model.ProductVariant;
 import com.ra.base_spring_boot.services.IProductVariantService;
@@ -97,5 +98,13 @@ public class ProductVariantController {
                         .data("Delete Successfully")
                         .build()
         );
+    }
+
+    //huỳnh gia phúc
+    //chi tiết sản phẩm
+    @GetMapping("/detail/{id}")
+    public ResponseEntity<?> getProductVariantDetail(@PathVariable Long id) {
+        ProductVariantDetailDTO dto = productVariantService.getVariantDetail(id);
+        return ResponseEntity.ok(dto);
     }
 }
