@@ -1,18 +1,16 @@
 package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.req.CartItemRequestDTO;
+import com.ra.base_spring_boot.dto.req.OrderRequestDTO;
 import com.ra.base_spring_boot.dto.resp.CartItemResponseDTO;
 import com.ra.base_spring_boot.dto.resp.CartResponseDTO;
-import com.ra.base_spring_boot.exception.HttpForbiden;
+import com.ra.base_spring_boot.dto.resp.OrderCheckoutResponseDTO;
+import com.ra.base_spring_boot.dto.resp.OrderItemDetailDTO;
 import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.exception.HttpUnAuthorized;
-import com.ra.base_spring_boot.model.Cart;
-import com.ra.base_spring_boot.model.CartItem;
-import com.ra.base_spring_boot.model.ProductVariant;
-import com.ra.base_spring_boot.repository.ICartItemRepository;
-import com.ra.base_spring_boot.repository.ICartRepository;
-import com.ra.base_spring_boot.repository.IProductVariantRepository;
-import com.ra.base_spring_boot.repository.IUserRepository;
+import com.ra.base_spring_boot.model.*;
+import com.ra.base_spring_boot.model.constants.OrderStatus;
+import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.services.ICartService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +32,13 @@ public class CartServiceImpl implements ICartService {
     private final IProductVariantRepository productVariantRepository;
 
     private final IUserRepository userRepository;
+
+    private final IOrderRepository orderRepository;
+
+    private final IAddressRepository addressRepository;
+
+    private final IOrderItemRepository orderItemRepository;
+
 
     private Cart getOrCreateCart(Long userId) {
         var user = userRepository.findById(userId)
@@ -65,7 +71,7 @@ public class CartServiceImpl implements ICartService {
                     .size(variant.getSize().getSizeName())
                     .quantity(item.getQuantity())
                     .price(price)
-                    .totalPrice(price.multiply(BigDecimal.valueOf(item.getQuantity()))) // ✅ dùng price vừa gán
+                    .totalPrice(price.multiply(BigDecimal.valueOf(item.getQuantity()))) // tổng giá tiền = price * quantity
                     .build();
         }).toList();
 
@@ -79,7 +85,6 @@ public class CartServiceImpl implements ICartService {
                 .items(items)
                 .build();
     }
-
 
 
     @Override
@@ -155,5 +160,106 @@ public class CartServiceImpl implements ICartService {
         cartItemRepository.deleteByCart(cart);
     }
 
-}
+    @Override
+    public OrderCheckoutResponseDTO checkout(Long userId, OrderRequestDTO request) {
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new HttpNotFound("User Not Found"));
 
+        var address = addressRepository.findById(request.getAddressId())
+                .orElseThrow(() -> new HttpNotFound("Shipping Address Not Found"));
+
+        Cart cart = getOrCreateCart(userId);
+        List<CartItem> items = cartItemRepository.findAllByCart(cart);
+
+        if (items.isEmpty()) {
+            throw new HttpNotFound("Cart Is Empty");
+        }
+
+        Order order = Order.builder()
+                .user(user)
+                .paymentMethod(request.getPaymentMethod())
+                .createdAt(LocalDateTime.now())
+                .status(OrderStatus.PENDING)
+                .shippingAddress(address)
+                .build();
+        orderRepository.save(order);
+
+        List<OrderItem> orderItems = new ArrayList<>();
+        BigDecimal total = BigDecimal.ZERO;
+
+        OrderItem orderItem = null;
+        for (CartItem item : items) {
+            ProductVariant variant = item.getVariant();
+            Integer qty = item.getQuantity();
+            BigDecimal price = variant.getPriceOverride(); // trường họp not null
+//          BigDecimal price = variant.getPriceOverride() != null ? variant.getPriceOverride() : variant.getPriceOverride();
+
+            orderItem = OrderItem.builder()
+                    .order(order)
+                    .variant(variant)
+                    .quantity(qty)
+                    .priceAtTime(price)
+                    .build();
+            orderItemRepository.save(orderItem);
+
+            total = total.add(price.multiply(BigDecimal.valueOf(qty)));
+            orderItems.add(orderItem);
+        }
+
+        order.setTotalAmount(total);
+        orderRepository.save(order);
+
+        cartItemRepository.deleteAll(items);
+
+        return OrderCheckoutResponseDTO.fromOrder(order, orderItems);
+    }
+
+    @Override
+    public OrderCheckoutResponseDTO checkoutByCartItemId(Long userId, Long cartItemId, OrderRequestDTO request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new HttpNotFound("User Not Found"));
+
+        Address address = addressRepository.findById(request.getAddressId())
+                .orElseThrow(() -> new HttpNotFound("Shipping Address Not Found"));
+
+        CartItem item = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new HttpNotFound("Cart Item Not Found"));
+
+        // Kiểm tra quyền
+        if (!item.getCart().getUser().getId().equals(userId)) {
+            throw new HttpUnAuthorized("Access Denied");
+        }
+
+        // Tạo order
+        Order order = Order.builder()
+                .user(user)
+                .shippingAddress(address)
+                .paymentMethod(request.getPaymentMethod())
+                .createdAt(LocalDateTime.now())
+                .status(OrderStatus.PENDING)
+                .build();
+        orderRepository.save(order);
+
+        // Tạo order item
+        ProductVariant variant = item.getVariant();
+        BigDecimal price = variant.getPriceOverride() != null
+                ? variant.getPriceOverride()
+                : variant.getProduct().getPrice();
+
+        OrderItem orderItem = OrderItem.builder()
+                .order(order)
+                .variant(variant)
+                .quantity(item.getQuantity())
+                .priceAtTime(price)
+                .build();
+        orderItemRepository.save(orderItem);
+
+        order.setTotalAmount(price.multiply(BigDecimal.valueOf(item.getQuantity())));
+        orderRepository.save(order);
+
+        // Xoá cart item
+        cartItemRepository.delete(item);
+
+        return OrderCheckoutResponseDTO.fromOrder(order, List.of(orderItem));
+    }
+}
