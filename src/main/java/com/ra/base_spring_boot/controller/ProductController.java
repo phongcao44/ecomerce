@@ -44,6 +44,7 @@ public class ProductController {
     @Autowired
     private IProductRepository productRepository;
 
+
     // hiển thị danh sách Product
     @GetMapping
     public ResponseEntity<List<ProductResponseDTO>> index() {
@@ -142,6 +143,7 @@ public class ProductController {
             return ResponseEntity.badRequest().body("Không tìm thấy danh mục");
         }
 
+
         Category selectedCategory = selectedCategoryOpt.get();
         List<Long> categoryIdsToSearch = new ArrayList<>();
 
@@ -172,4 +174,36 @@ public class ProductController {
 
     }
 
+
+        Category selectedCategory = selectedCategoryOpt.get();
+        List<Long> categoryIdsToSearch = new ArrayList<>();
+
+        // neu la cha lay toan bo con
+        if (selectedCategory.getParent() == null) {
+            List<Category> children = categoryRepository.findAllByParentId(categoryId);
+            categoryIdsToSearch = children.stream()
+                    .map(Category::getId)
+                    .toList();
+        } else {
+            // neu la con lay 9 nó
+            categoryIdsToSearch.add(categoryId);
+        }
+
+        List<Product> products = productRepository.findByCategoryIdIn(categoryIdsToSearch);
+
+
+        List<ProductUserResponse> responses = products.stream()
+                .map(product -> new ProductUserResponse(
+                        product.getId(),
+                        product.getName(),
+                        product.getDescription(),
+                        product.getPrice(),
+                        product.getBrand()
+                ))
+                .toList();
+
+        return ResponseEntity.ok(responses);
+
+    }
 }
+
