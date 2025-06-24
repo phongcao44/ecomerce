@@ -4,34 +4,18 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-
 import java.math.BigDecimal;
-
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
 @Builder
-public class ProductUserResponse {
-    private Long id;
+@Data
 
-
-    private String name;
-
-    private String description;
-
+public class WishListResponse {
+    private long productId;
+    private long userId;
     private BigDecimal price;
+    private String productName;
 
-    private String brand;
-
-
-
-
-    private String brand;
-
-    private String description;
-
-    private String name;
 
 }

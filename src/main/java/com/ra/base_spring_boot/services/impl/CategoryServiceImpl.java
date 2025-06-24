@@ -65,6 +65,11 @@ public class CategoryServiceImpl implements ICategoryService {
     }
 
     @Override
+    public Category findById(Long id) {
+        return categoryRepository.findById(id).orElse(null);
+    }
+
+    @Override
     public Category save(Category category) {
         return null;
     }
