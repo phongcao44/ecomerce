@@ -25,14 +25,19 @@ public class FlashSaleItem {
     @JoinColumn(name = "flash_sale_id")
     private FlashSale flashSale;
 
-    @ManyToOne
-    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    //@JsonIgnore
     @JoinColumn(name = "variant_id")
     private ProductVariant variant;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "discount_type", nullable = false)
     private DiscountType discountType;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    //@JsonIgnore
+    @JoinColumn(name = "product_id")
+    private Product product;
 
 
     @Column(name = "discounted_price")

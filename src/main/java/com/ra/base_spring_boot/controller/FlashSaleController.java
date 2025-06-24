@@ -5,9 +5,11 @@ import com.ra.base_spring_boot.dto.resp.FlashSaleItemRespone;
 import com.ra.base_spring_boot.dto.resp.FlashSaleResponse;
 import com.ra.base_spring_boot.model.FlashSale;
 import com.ra.base_spring_boot.model.FlashSaleItem;
+import com.ra.base_spring_boot.model.Product;
 import com.ra.base_spring_boot.model.ProductVariant;
 import com.ra.base_spring_boot.repository.IFlashSaleItemRepository;
 import com.ra.base_spring_boot.repository.IFlashSaleRepository;
+import com.ra.base_spring_boot.repository.IProductRepository;
 import com.ra.base_spring_boot.repository.IProductVariantRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/flash_sale")
@@ -27,6 +30,8 @@ public class FlashSaleController {
     public IFlashSaleItemRepository flashSaleItemRepository;
     @Autowired
     public IProductVariantRepository productVariantRepository;
+    @Autowired
+    public IProductRepository productRepository;
 
     //flash_sale
     @GetMapping("/list")
@@ -85,8 +90,29 @@ public class FlashSaleController {
         if (items.isEmpty()) {
             return new ResponseEntity<>("Không tìm thấy sản phẩm nào trong flash sale này", HttpStatus.NOT_FOUND);
         }
+        List<FlashSaleItemRespone> response = items.stream().map(item -> {
+            FlashSaleItemRespone dto = new FlashSaleItemRespone();
+            dto.setId(item.getId());
 
-        return new ResponseEntity<>(items, HttpStatus.OK);
+            if (item.getProduct() != null) {
+                dto.setProductId(item.getProduct().getId());
+                //dto.setProductName(item.getProduct().getName());
+            }
+
+            if (item.getVariant() != null) {
+                dto.setVariantId(item.getVariant().getId());
+               // dto.setVariantName(item.getVariant().getVariantName());
+            }
+
+            dto.setDiscountedPrice(item.getDiscountedPrice());
+            dto.setQuantityLimit(item.getQuantityLimit());
+            dto.setSoldQuantity(item.getSoldQuantity());
+            dto.setDiscountType(item.getDiscountType());
+
+            return dto;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/flash_sale_items/add")
@@ -97,10 +123,14 @@ public class FlashSaleController {
         //lay variant
         ProductVariant variant = productVariantRepository.findById(request.getVariantId()).
                 orElseThrow(() -> new RuntimeException("không thấy productID này"));
+        //lấy product
+        Product product = productRepository.findById(request.getProductId()).
+                orElseThrow(() -> new RuntimeException("khonng tim thay productid"));
         //tạo flashsaleitem mới
         FlashSaleItem flashSaleItem = FlashSaleItem.builder()
                 .flashSale(flashSale)
                 .variant(variant)
+                .product(product)
                 .quantityLimit(request.getQuantity())
                 .soldQuantity(0)
                 .discountedPrice(request.getPrice())
@@ -109,14 +139,21 @@ public class FlashSaleController {
         return new ResponseEntity<>("thêm tành công", HttpStatus.OK);
     }
     @PostMapping("/flash_sale_items/edit/{id}")
-    public ResponseEntity<?> editFlashSaleItems(@RequestBody FlashSaleItemRespone request, @PathVariable Long id) {
+    public ResponseEntity<?> editFlashSaleItems(@RequestBody FlashSaleItemRequest request, @PathVariable Long id) {
         Optional<FlashSaleItem> flashSaleItem = flashSaleItemRepository.findById(id);
         if (flashSaleItem.isEmpty()) {
             return new ResponseEntity<>("Không tìm thấy sản phẩm nào trong flash sale này", HttpStatus.NOT_FOUND);
         }else{
             FlashSaleItem editflashSaleItem = flashSaleItem.get();
-          //  editflashSaleItem.getFlashSale().setId(id);
-            editflashSaleItem.getVariant().setId(request.getVariantId());
+            // Tạo mới Variant và Product với ID từ request(khóa 9 thì tạo mới)
+            ProductVariant variant = new ProductVariant();
+            variant.setId(request.getVariantId());
+            editflashSaleItem.setVariant(variant);
+
+            Product product = new Product();
+            product.setId(request.getProductId());
+            editflashSaleItem.setProduct(product);
+            //(thuộc tính thi gán lại)
             editflashSaleItem.setQuantityLimit(request.getQuantity());
             editflashSaleItem.setSoldQuantity(request.getSoldQuantity());
             editflashSaleItem.setDiscountedPrice(request.getPrice());

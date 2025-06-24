@@ -17,9 +17,11 @@ public class FlashSaleItemRequest {
 
     private Long variantId;
 
+    private Long ProductId;
+
     private Integer quantity;
 
-    //private Integer soldQuantity;
+    private Integer soldQuantity;
 
     private BigDecimal price;
 

@@ -14,14 +14,33 @@ import java.math.BigDecimal;
 public class FlashSaleItemRespone {
     //ko đổi chương trình km
    // private Long flashSaleId;
+//
+//    private Long variantId;
+//
+//    private Long ProductId;
+//
+//    private Integer quantity;
+//
+//    private Integer soldQuantity;
+//
+//    private BigDecimal price;
+//
+//    private DiscountType discountType;
+    private Long id;
+
+    private Long productId;
+
+    //private String productName;
 
     private Long variantId;
 
-    private Integer quantity;
+    //private String variantName;
+
+    private BigDecimal discountedPrice;
+
+    private Integer quantityLimit;
 
     private Integer soldQuantity;
-
-    private BigDecimal price;
 
     private DiscountType discountType;
 }
