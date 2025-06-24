@@ -5,6 +5,7 @@ import com.ra.base_spring_boot.dto.resp.RatingSummaryResponse;
 import com.ra.base_spring_boot.dto.resp.ReviewResponse;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.RateService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,7 +21,7 @@ public class ReviewController {
     private final RateService reviewService;
 
     @PostMapping
-    public ResponseEntity<?> createReview(@RequestBody ReviewRequest request,
+    public ResponseEntity<?> createReview(@Valid @RequestBody ReviewRequest request,
                                           @AuthenticationPrincipal MyUserDetails user) {
         reviewService.createReview(request, user.getUser().getId());
         return ResponseEntity.ok("Review created successfully.");

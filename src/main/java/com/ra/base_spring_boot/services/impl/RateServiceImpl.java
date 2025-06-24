@@ -6,11 +6,15 @@ import com.ra.base_spring_boot.dto.resp.ReviewResponse;
 import com.ra.base_spring_boot.model.Product;
 import com.ra.base_spring_boot.model.Review;
 import com.ra.base_spring_boot.model.User;
+import com.ra.base_spring_boot.repository.IOrderRepository;
 import com.ra.base_spring_boot.repository.IProductRepository;
 import com.ra.base_spring_boot.repository.IUserRepository;
 import com.ra.base_spring_boot.repository.RateRepository;
 import com.ra.base_spring_boot.services.RateService;
+import org.apache.coyote.BadRequestException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,11 +26,12 @@ public class RateServiceImpl implements RateService {
     private final RateRepository reviewRepo;
     private final IProductRepository productRepo;
     private final IUserRepository userRepo;
-
-    public  RateServiceImpl(RateRepository reviewRepo, IProductRepository productRepo, IUserRepository userRepo) {
+    private final IOrderRepository orderRepo;
+    public  RateServiceImpl(RateRepository reviewRepo, IProductRepository productRepo, IUserRepository userRepo,IOrderRepository orderRepo) {
         this.reviewRepo = reviewRepo;
         this.productRepo = productRepo;
         this.userRepo = userRepo;
+        this.orderRepo = orderRepo;
     }
     @Override
     public Double getAverageRatingByProductId(Long productId) {
@@ -45,6 +50,14 @@ public class RateServiceImpl implements RateService {
 
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (orderRepo.countPurchasedProductByUser(userId, product.getId()) == 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "You can't review this product because you haven't purchased it."
+            );
+        }
+
 
         Review review = Review.builder()
                 .rating(request.getRating())
@@ -89,5 +102,7 @@ public class RateServiceImpl implements RateService {
                 .starCountMap(starMap)
                 .build();
     }
+
+
 
 }
