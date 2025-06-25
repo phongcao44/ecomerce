@@ -24,5 +24,4 @@ public class ProductUserResponse {
 
     private String brand;
 
-
 }
