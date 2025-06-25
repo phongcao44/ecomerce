@@ -69,7 +69,7 @@ public class ProductController {
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "limit", defaultValue = "3") int limit,
             @RequestParam(name = "sortBy", defaultValue = "price") String sortBy,
-            @RequestParam(name = "orderBy", defaultValue = "asc") String orderBy){
+            @RequestParam(name = "orderBy", defaultValue = "asc") String orderBy) {
         Sort sort = orderBy.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, limit, sort);
         Page<ProductResponseDTO> products = productService.pagination(pageable);
@@ -110,7 +110,7 @@ public class ProductController {
         return new ResponseEntity<>(new DataError("Product Not Found", 404), HttpStatus.NOT_FOUND);
     }
 
-// tìm kiếm
+    // tìm kiếm
     @GetMapping("/search")
     public ResponseEntity<List<ProductResponseDTO>> search(@RequestParam(name = "keyword") String keyword) {
         List<ProductResponseDTO> products = productService.search(keyword);
@@ -143,54 +143,21 @@ public class ProductController {
             return ResponseEntity.badRequest().body("Không tìm thấy danh mục");
         }
 
-
         Category selectedCategory = selectedCategoryOpt.get();
         List<Long> categoryIdsToSearch = new ArrayList<>();
 
-        // neu la cha lay toan bo con
+        // nếu là danh mục cha, lấy toàn bộ con
         if (selectedCategory.getParent() == null) {
             List<Category> children = categoryRepository.findAllByParentId(categoryId);
             categoryIdsToSearch = children.stream()
                     .map(Category::getId)
                     .toList();
         } else {
-            // neu la con lay 9 nó
+            // nếu là con thì lấy chính nó
             categoryIdsToSearch.add(categoryId);
         }
 
         List<Product> products = productRepository.findByCategoryIdIn(categoryIdsToSearch);
-
-
-        List<ProductUserResponse> responses = products.stream()
-                .map(product -> new ProductUserResponse(
-                        product.getId(),
-                        product.getBrand(),
-                        product.getDescription(),
-                        product.getName()
-                ))
-                .toList();
-
-        return ResponseEntity.ok(responses);
-
-    }
-
-
-        Category selectedCategory = selectedCategoryOpt.get();
-        List<Long> categoryIdsToSearch = new ArrayList<>();
-
-        // neu la cha lay toan bo con
-        if (selectedCategory.getParent() == null) {
-            List<Category> children = categoryRepository.findAllByParentId(categoryId);
-            categoryIdsToSearch = children.stream()
-                    .map(Category::getId)
-                    .toList();
-        } else {
-            // neu la con lay 9 nó
-            categoryIdsToSearch.add(categoryId);
-        }
-
-        List<Product> products = productRepository.findByCategoryIdIn(categoryIdsToSearch);
-
 
         List<ProductUserResponse> responses = products.stream()
                 .map(product -> new ProductUserResponse(
@@ -203,7 +170,5 @@ public class ProductController {
                 .toList();
 
         return ResponseEntity.ok(responses);
-
     }
 }
-
