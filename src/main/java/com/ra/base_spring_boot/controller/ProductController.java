@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static java.util.stream.Collectors.toList;
+
 @RestController
 @RequestMapping("/api/v1/product")
 @RequiredArgsConstructor
@@ -143,7 +145,6 @@ public class ProductController {
             return ResponseEntity.badRequest().body("Không tìm thấy danh mục");
         }
 
-
         Category selectedCategory = selectedCategoryOpt.get();
         List<Long> categoryIdsToSearch = new ArrayList<>();
 
@@ -159,38 +160,6 @@ public class ProductController {
         }
 
         List<Product> products = productRepository.findByCategoryIdIn(categoryIdsToSearch);
-
-
-        List<ProductUserResponse> responses = products.stream()
-                .map(product -> new ProductUserResponse(
-                        product.getId(),
-                        product.getBrand(),
-                        product.getDescription(),
-                        product.getName()
-                ))
-                .toList();
-
-        return ResponseEntity.ok(responses);
-
-    }
-
-
-        Category selectedCategory = selectedCategoryOpt.get();
-        List<Long> categoryIdsToSearch = new ArrayList<>();
-
-        // neu la cha lay toan bo con
-        if (selectedCategory.getParent() == null) {
-            List<Category> children = categoryRepository.findAllByParentId(categoryId);
-            categoryIdsToSearch = children.stream()
-                    .map(Category::getId)
-                    .toList();
-        } else {
-            // neu la con lay 9 nó
-            categoryIdsToSearch.add(categoryId);
-        }
-
-        List<Product> products = productRepository.findByCategoryIdIn(categoryIdsToSearch);
-
 
         List<ProductUserResponse> responses = products.stream()
                 .map(product -> new ProductUserResponse(
@@ -201,9 +170,7 @@ public class ProductController {
                         product.getBrand()
                 ))
                 .toList();
-
         return ResponseEntity.ok(responses);
-
     }
 }
 
