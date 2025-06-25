@@ -19,4 +19,3 @@ public interface IOrderRepository extends JpaRepository<Order, Long> {
             @Param("productId") Long productId
     );
 
-}

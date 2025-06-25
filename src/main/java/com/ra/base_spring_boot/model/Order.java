@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ra.base_spring_boot.model.constants.OrderStatus;
 import com.ra.base_spring_boot.model.constants.PaymentMethod;
 import jakarta.persistence.*;
@@ -21,6 +22,7 @@ public class Order {
     private Long id;
 
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "user_id")
     private User user;
 
@@ -39,6 +41,7 @@ public class Order {
     private LocalDateTime createdAt;
 
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "shipping_address_id")
     private Address shippingAddress;
 
