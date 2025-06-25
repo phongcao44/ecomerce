@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/banner")
+@RequestMapping("/api/v1/admin/banner")
 public class BannerController {
     private final IBannerService iBannerService;
     public BannerController(IBannerService iBannerService) {

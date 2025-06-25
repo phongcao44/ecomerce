@@ -26,12 +26,4 @@ public class ProductUserResponse {
     private String brand;
 
 
-
-
-    private String brand;
-
-    private String description;
-
-    private String name;
-
 }

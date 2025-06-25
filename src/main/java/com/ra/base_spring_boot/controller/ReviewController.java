@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/user/reviews")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class ReviewController {
 
@@ -26,17 +26,17 @@ public class ReviewController {
         reviewService.createReview(request, user.getUser().getId());
         return ResponseEntity.ok("Review created successfully.");
     }
-    @GetMapping("/product/{productId}/average-rating")
+    @GetMapping("/user/review/product/{productId}/average-rating")
     public ResponseEntity<Double> getAverageRating(@PathVariable Long productId) {
         Double avgRating = reviewService.getAverageRatingByProductId(productId);
         return ResponseEntity.ok(avgRating);
     }
 
-    @GetMapping("/product/{productId}")
+    @GetMapping("/user/review/product/{productId}")
     public ResponseEntity<List<ReviewResponse>> getProductReviews(@PathVariable Long productId) {
         return ResponseEntity.ok(reviewService.getReviewsByProductId(productId));
     }
-    @GetMapping("/product/{productId}/rating-summary")
+    @GetMapping("/user/review/product/{productId}/rating-summary")
     public ResponseEntity<RatingSummaryResponse> getRatingSummary(@PathVariable Long productId) {
         return ResponseEntity.ok(reviewService.getRatingSummaryByProductId(productId));
     }
