@@ -18,10 +18,8 @@ public class ProductVariantRequestDTO {
     @NotNull(message = "Không được để trống")
     private Long productId;
 
-    @NotNull(message = "Không được để trống")
     private Long colorId;
 
-    @NotNull(message = "Không được để trống")
     private Long sizeId;
 
     @NotNull(message = "Không được để trống")

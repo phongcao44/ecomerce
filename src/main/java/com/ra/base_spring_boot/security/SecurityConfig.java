@@ -55,6 +55,7 @@ public class SecurityConfig
                         url -> url
                                 .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.toString())
                                 .requestMatchers("/api/v1/user/**").hasAuthority(RoleName.ROLE_USER.toString())
+                                .requestMatchers("/api/v1/product-variants").hasAnyAuthority(RoleName.ROLE_ADMIN.toString(), RoleName.ROLE_USER.toString())
                                 .anyRequest().permitAll()
                 )
                 .authenticationProvider(authenticationProvider())

@@ -151,4 +151,50 @@ public class PostServiceImpl implements IPostService {
                 .authorName(post.getUser().getUsername())
                 .build();
     }
+
+    @Override
+    public List<PostResponseDTO> getAllVisiblePosts() {
+        return postRepository.findAll()
+                .stream()
+                .map(post -> PostResponseDTO.builder()
+                        .id(post.getId())
+                        .title(post.getTitle())
+                        .image(post.getImage())
+                        .content(post.getContent())
+                        .description(post.getDescription())
+                        .location(post.getLocation())
+                        .createdAt(post.getCreatedAt())
+                        .updatedAt(post.getUpdatedAt())
+                        .authorName(post.getUser().getUsername())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+
+    @Override
+    public List<PostResponseDTO> getRelatedPosts(Long postId) {
+        Post currentPost = postRepository.findById(postId)
+                .orElseThrow(() -> new HttpNotFound("Post Not Found"));
+
+        List<Post> related = postRepository
+                .findTop4ByLocationAndIdNot(currentPost.getLocation(), currentPost.getId());
+
+//        if (related.isEmpty()) {
+//            throw new HttpNotFound("No Related Posts");
+//        }
+        return related.stream()
+                .map(post -> PostResponseDTO.builder()
+                        .id(post.getId())
+                        .title(post.getTitle())
+                        .description(post.getDescription())
+                        .image(post.getImage())
+                        .content(post.getContent())
+                        .location(post.getLocation())
+                        .createdAt(post.getCreatedAt())
+                        .updatedAt(post.getUpdatedAt())
+                        .authorName(post.getUser().getUsername())
+                        .build())
+                .collect(Collectors.toList());
+    }
 }
+

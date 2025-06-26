@@ -130,7 +130,7 @@ public class ProductController {
                             .build()
             );
         } catch (RuntimeException e) {
-            return new ResponseEntity<>(new DataError("Product Not Found", 404), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new DataError("This product has variations you need to delete the variations first or is on flash sale ", 404), HttpStatus.NOT_FOUND);
         }
     }
 

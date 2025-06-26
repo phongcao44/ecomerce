@@ -14,19 +14,21 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/product-variants")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class ProductVariantController {
     @Autowired
     private IProductVariantService productVariantService;
 
 
-    @GetMapping
+    @GetMapping("/product-variants/list")
     public ResponseEntity<ResponseWrapper<List<ProductVariantResponseDTO>>> findAll() {
         List<ProductVariantResponseDTO> variants = productVariantService.findAll();
         return ResponseEntity.ok(
@@ -38,7 +40,7 @@ public class ProductVariantController {
         );
     }
 
-    @GetMapping("/{productId}")
+    @GetMapping("/product-variants/{productId}")
     public ResponseEntity<?> getByProduct(@PathVariable Long productId) {
         List<ProductVariantResponseDTO> productVariants = productVariantService.findByProductId(productId);
 
@@ -63,7 +65,7 @@ public class ProductVariantController {
     }
 
 
-    @PostMapping("/add")
+    @PostMapping("/admin/add")
     public ResponseEntity<ResponseWrapper<ProductVariantResponseDTO>> create(@RequestBody ProductVariantRequestDTO productVariantRequestDTO) {
         ProductVariantResponseDTO response = productVariantService.create(productVariantRequestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(
@@ -75,7 +77,7 @@ public class ProductVariantController {
         );
     }
 
-    @PutMapping("/update/{id}")
+    @PutMapping("/admin/update/{id}")
     public ResponseEntity<?> update(@PathVariable Long id,
                                     @Valid @RequestBody ProductVariantRequestDTO dto) {
         ProductVariantResponseDTO response = productVariantService.update(id, dto);
@@ -88,7 +90,7 @@ public class ProductVariantController {
         );
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/admin/delete/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         productVariantService.delete(id);
         return ResponseEntity.ok(
@@ -102,7 +104,7 @@ public class ProductVariantController {
 
     //huỳnh gia phúc
     //chi tiết sản phẩm
-    @GetMapping("/detail/{id}")
+    @GetMapping("/product-variants/detail/{id}")
     public ResponseEntity<?> getProductVariantDetail(@PathVariable Long id) {
         ProductVariantDetailDTO dto = productVariantService.getVariantDetail(id);
         return ResponseEntity.ok(dto);
