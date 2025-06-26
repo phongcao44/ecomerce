@@ -1,6 +1,7 @@
 package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.req.ContactFormRequest;
+import com.ra.base_spring_boot.dto.resp.ContactResponse;
 import com.ra.base_spring_boot.email.EmailService;
 import com.ra.base_spring_boot.model.Contact;
 import com.ra.base_spring_boot.model.User;
@@ -11,7 +12,9 @@ import com.ra.base_spring_boot.services.IUserService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ContactServiceImpl implements IContactService {
@@ -42,8 +45,17 @@ public class ContactServiceImpl implements IContactService {
     }
 
     @Override
-    public List<Contact> findAll() {
-        return contactRepository.findAll();
+    public List<ContactResponse> findAll() {
+        List<Contact> contacts = contactRepository.findAll();
+        return contacts.stream().map(
+                contact -> ContactResponse.builder()
+                        .id(contact.getId())
+                        .email(contact.getEmail())
+                        .comment(contact.getMessage())
+                        .phone(contact.getPhone())
+                        .name(contact.getName())
+                        .build()
+        ).collect(Collectors.toList());
     }
 
     @Override

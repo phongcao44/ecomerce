@@ -13,36 +13,38 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/contact")
+@RequestMapping("/api/v1")
 public class ContactController {
     private final IContactService iContactService;
     public ContactController(IContactService iContactService) {
         this.iContactService = iContactService;
     }
-    @PostMapping
+    @PostMapping("/user")
     public ResponseEntity<?> sendContactForm(@AuthenticationPrincipal MyUserDetails user, @RequestBody ContactFormRequest request) {
         Long userId = (user != null && user.getUser() != null) ? user.getUser().getId() : null;
         iContactService.create(userId, request);
         return ResponseEntity.ok(ResponseWrapper.builder()
-                 .status(HttpStatus.OK)
-                 .code(200)
-                 .build());
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data("success")
+                        .build());
     }
 
-    @GetMapping
+    @GetMapping("admin/contacts")
     public ResponseEntity<List<?>> getContacts() {
         return ResponseEntity.ok(iContactService.findAll());
     }
 
-    @DeleteMapping
+    @DeleteMapping("/admin")
     public ResponseEntity<?> deleteContact(long id) {
         if(iContactService.findById(id) == null){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         return ResponseEntity.ok(ResponseWrapper.builder()
-        .status(HttpStatus.OK)
-        .code(200)
-        .build());
+                          .status(HttpStatus.OK)
+                          .code(200)
+                          .data("deleted")
+                            .build());
     }
 
 }
