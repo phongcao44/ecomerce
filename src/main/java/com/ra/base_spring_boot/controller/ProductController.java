@@ -168,8 +168,11 @@ public class ProductController {
                         product.getDescription(),
                         product.getPrice(),
                         product.getBrand()
-                ))
+                        ))
                 .toList();
         return ResponseEntity.ok(responses);
     }
+
+
+
 }
