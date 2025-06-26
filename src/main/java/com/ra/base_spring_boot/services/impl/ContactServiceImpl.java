@@ -11,6 +11,7 @@ import com.ra.base_spring_boot.services.IUserService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class ContactServiceImpl implements IContactService {
@@ -38,6 +39,21 @@ public class ContactServiceImpl implements IContactService {
         emailService.sendContactEmail(contact);
 
         return newContact;
+    }
+
+    @Override
+    public List<Contact> findAll() {
+        return contactRepository.findAll();
+    }
+
+    @Override
+    public Contact findById(long id) {
+        return contactRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public void delete(long id) {
+        contactRepository.deleteById(id);
     }
 
 }
