@@ -16,7 +16,6 @@ import java.math.BigDecimal;
 public class ProductUserResponse {
     private Long id;
 
-
     private String name;
 
     private String description;
@@ -24,6 +23,5 @@ public class ProductUserResponse {
     private BigDecimal price;
 
     private String brand;
-
 
 }
