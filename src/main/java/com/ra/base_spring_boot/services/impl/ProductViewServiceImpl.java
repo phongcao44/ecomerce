@@ -1,8 +1,10 @@
 package com.ra.base_spring_boot.services.impl;
 
+import com.ra.base_spring_boot.dto.resp.ProductViewResponse;
 import com.ra.base_spring_boot.model.Product;
 import com.ra.base_spring_boot.model.ProductView;
 import com.ra.base_spring_boot.model.User;
+import com.ra.base_spring_boot.repository.IProductRepository;
 import com.ra.base_spring_boot.repository.IProductViewRepository;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.IProductViewService;
@@ -15,12 +17,17 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.util.Locale.filter;
 
 @Service
 public class ProductViewServiceImpl implements IProductViewService {
     @Autowired
     private IProductViewRepository productViewRepository;
+    @Autowired
+    private IProductRepository productRepository;
         @Override
         public void trackProductView(Long productId, HttpServletRequest request) {
             String sessionId = request.getSession().getId();
@@ -56,7 +63,9 @@ public class ProductViewServiceImpl implements IProductViewService {
                 productViewRepository.save(view);
             }
         }
-        private String getClientIp(HttpServletRequest request) {
+
+
+    private String getClientIp(HttpServletRequest request) {
             String ip = request.getHeader("X-Forwarded-For");
             return (ip != null && !ip.isBlank() && !"unknown".equalsIgnoreCase(ip)) ?
                     ip : request.getRemoteAddr();
@@ -76,4 +85,44 @@ public class ProductViewServiceImpl implements IProductViewService {
         }
         return null;
     }
+
+    @Override
+    public List<ProductViewResponse> getTopViewProducts(Long limit) {
+        return calculateStats()
+                .stream()
+                .sorted(Comparator.comparing(ProductViewResponse::getViewCount).reversed())
+                .limit(limit)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ProductViewResponse> getLestViewProducts(Long limit) {
+        return calculateStats()
+                .stream()
+                .sorted(Comparator.comparing(ProductViewResponse::getViewCount))
+                .limit(limit)
+                .collect(Collectors.toList());
+    }
+
+    public List<ProductViewResponse> calculateStats() {
+            List<ProductView> productViews = productViewRepository.findAll();
+        //đếm số lượt xem productid
+            //map theo producid và số lượt xem
+            Map<Long, Long> viewCountByProduct = productViews.
+                    stream().
+                    filter(view -> view.getUser() != null && view.getUser().getId() != null).
+                    collect(Collectors.groupingBy(
+                            view -> view.getProduct().getId(),
+                            Collectors.counting()));
+            //có lượt xem rồi h gép ngược lại sản phủm
+            List<Product> productview = productRepository.findAll();
+
+            return productview.stream().
+                    map(product -> new ProductViewResponse(
+                            product.getId(),
+                            product.getName(),
+                            viewCountByProduct.getOrDefault(product.getId(),0L)
+                    ) ).collect(Collectors.toList());
+    }
+
 }

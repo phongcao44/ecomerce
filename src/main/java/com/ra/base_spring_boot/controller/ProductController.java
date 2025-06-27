@@ -6,6 +6,7 @@ import com.ra.base_spring_boot.dto.req.ProductRequestDTO;
 import com.ra.base_spring_boot.dto.resp.CategoryResponse;
 import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
 import com.ra.base_spring_boot.dto.resp.ProductUserResponse;
+import com.ra.base_spring_boot.dto.resp.ProductViewResponse;
 import com.ra.base_spring_boot.model.Category;
 import com.ra.base_spring_boot.model.Product;
 import com.ra.base_spring_boot.model.ProductView;
@@ -15,6 +16,7 @@ import com.ra.base_spring_boot.repository.IProductRepository;
 import com.ra.base_spring_boot.services.ICategoryService;
 import com.ra.base_spring_boot.services.IProductService;
 import com.ra.base_spring_boot.services.IProductViewService;
+import com.ra.base_spring_boot.services.impl.ProductViewServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -186,5 +188,14 @@ public class ProductController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/top-viewed")
+    public List<ProductViewResponse> getTopViewedProducts(@RequestParam(defaultValue = "10") Long limit) {
+        return productViewService.getTopViewProducts(limit);
+    }
+
+    @GetMapping("/least-viewed")
+    public List<ProductViewResponse> getLeastViewedProducts(@RequestParam(defaultValue = "10") Long limit) {
+        return productViewService.getLestViewProducts(limit);
+    }
 }
 
