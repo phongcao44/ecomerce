@@ -8,8 +8,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+
 @Service
-public class IOrderServiceImpl implements IOrderService {
+public class OrderServiceImpl implements IOrderService {
     @Autowired
     private IOrderRepository orderRepository;
 
@@ -27,4 +28,5 @@ public class IOrderServiceImpl implements IOrderService {
     public Order save(Order order) {
         return orderRepository.save(order);
     }
+
 }
