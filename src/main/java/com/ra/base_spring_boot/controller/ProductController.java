@@ -80,7 +80,7 @@ public class ProductController {
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "limit", defaultValue = "3") int limit,
             @RequestParam(name = "sortBy", defaultValue = "price") String sortBy,
-            @RequestParam(name = "orderBy", defaultValue = "asc") String orderBy){
+            @RequestParam(name = "orderBy", defaultValue = "asc") String orderBy) {
         Sort sort = orderBy.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, limit, sort);
         Page<ProductResponseDTO> products = productService.pagination(pageable);
@@ -121,7 +121,7 @@ public class ProductController {
         return new ResponseEntity<>(new DataError("Product Not Found", 404), HttpStatus.NOT_FOUND);
     }
 
-// tìm kiếm
+    // tìm kiếm
     @GetMapping("/search")
     public ResponseEntity<List<ProductResponseDTO>> search(@RequestParam(name = "keyword") String keyword) {
         List<ProductResponseDTO> products = productService.search(keyword);
@@ -157,14 +157,14 @@ public class ProductController {
         Category selectedCategory = selectedCategoryOpt.get();
         List<Long> categoryIdsToSearch = new ArrayList<>();
 
-        // neu la cha lay toan bo con
+        // nếu là danh mục cha, lấy toàn bộ con
         if (selectedCategory.getParent() == null) {
             List<Category> children = categoryRepository.findAllByParentId(categoryId);
             categoryIdsToSearch = children.stream()
                     .map(Category::getId)
                     .toList();
         } else {
-            // neu la con lay 9 nó
+            // nếu là con thì lấy chính nó
             categoryIdsToSearch.add(categoryId);
         }
 
@@ -177,10 +177,11 @@ public class ProductController {
                         product.getDescription(),
                         product.getPrice(),
                         product.getBrand()
-                ))
+                        ))
                 .toList();
         return ResponseEntity.ok(responses);
     }
+
 
     @PostMapping("/{id}/view")
     public ResponseEntity<?> viewProduct(@PathVariable Long id, HttpServletRequest request) {
@@ -199,3 +200,7 @@ public class ProductController {
     }
 }
 
+
+
+
+}
