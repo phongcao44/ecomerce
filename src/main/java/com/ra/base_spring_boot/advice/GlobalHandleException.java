@@ -162,6 +162,11 @@ public class GlobalHandleException
                         .build()
         );
     }
-
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<?> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity
+                .badRequest()
+                .body(Map.of("message", ex.getMessage()));
+    }
 
 }

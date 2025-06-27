@@ -54,6 +54,7 @@ public class FlashSale {
     }
     @PreUpdate
     protected void onUpdate() {
+
         this.updatedAt = LocalDateTime.now();
     }
 }

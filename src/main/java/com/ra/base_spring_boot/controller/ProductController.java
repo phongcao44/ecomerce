@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static java.util.stream.Collectors.toList;
+
 @RestController
 @RequestMapping("/api/v1/product")
 @RequiredArgsConstructor
@@ -166,9 +168,11 @@ public class ProductController {
                         product.getDescription(),
                         product.getPrice(),
                         product.getBrand()
-                ))
+                        ))
                 .toList();
-
         return ResponseEntity.ok(responses);
     }
+
+
+
 }
