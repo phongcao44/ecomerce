@@ -5,13 +5,20 @@ import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.ProductRequestDTO;
 import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
 import com.ra.base_spring_boot.dto.resp.ProductUserResponse;
+import com.ra.base_spring_boot.dto.resp.ProductViewResponse;
+
 import com.ra.base_spring_boot.dto.resp.Top5Product;
 import com.ra.base_spring_boot.model.Category;
 import com.ra.base_spring_boot.model.Product;
+import com.ra.base_spring_boot.model.ProductView;
+import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.repository.ICategoryRepository;
 import com.ra.base_spring_boot.repository.IProductRepository;
 import com.ra.base_spring_boot.services.ICategoryService;
 import com.ra.base_spring_boot.services.IProductService;
+import com.ra.base_spring_boot.services.IProductViewService;
+import com.ra.base_spring_boot.services.impl.ProductViewServiceImpl;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +34,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +51,8 @@ public class ProductController {
     private ICategoryService categoryService;
     @Autowired
     private IProductRepository productRepository;
+    @Autowired
+    private IProductViewService productViewService;
 
 
     // hiển thị danh sách Product
@@ -177,9 +187,32 @@ public class ProductController {
         return ResponseEntity.ok(topProduct);
     }
 
+
+    @PostMapping("/{id}/view")
+    public ResponseEntity<?> viewProduct(@PathVariable Long id, HttpServletRequest request) {
+        productViewService.trackProductView(id, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/top-viewed")
+    public List<ProductViewResponse> getTopViewedProducts(@RequestParam(defaultValue = "10") Long limit) {
+        return productViewService.getTopViewProducts(limit);
+    }
+
+    @GetMapping("/least-viewed")
+    public List<ProductViewResponse> getLeastViewedProducts(@RequestParam(defaultValue = "10") Long limit) {
+        return productViewService.getLestViewProducts(limit);
+    }
+}
+
+
+
+
+
     @GetMapping("/admin/products/topLeastSell")
     public ResponseEntity<List<?>> getTopLeastSellProduct() {
         List<Top5Product> topProduct = productService.getTop5LestSellingProducts();
         return ResponseEntity.ok(topProduct);
     }
+
 }
