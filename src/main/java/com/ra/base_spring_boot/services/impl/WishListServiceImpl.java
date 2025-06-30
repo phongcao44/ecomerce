@@ -9,8 +9,6 @@ import com.ra.base_spring_boot.repository.IProductRepository;
 import com.ra.base_spring_boot.repository.IWishListRepository;
 import com.ra.base_spring_boot.services.IUserService;
 import com.ra.base_spring_boot.services.IWishListService;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 
 import java.awt.print.Pageable;

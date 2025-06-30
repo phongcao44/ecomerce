@@ -3,9 +3,9 @@ package com.ra.base_spring_boot.controller;
 import com.ra.base_spring_boot.dto.DataError;
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.ProductRequestDTO;
-import com.ra.base_spring_boot.dto.resp.CategoryResponse;
 import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
 import com.ra.base_spring_boot.dto.resp.ProductUserResponse;
+import com.ra.base_spring_boot.dto.resp.Top5Product;
 import com.ra.base_spring_boot.model.Category;
 import com.ra.base_spring_boot.model.Product;
 import com.ra.base_spring_boot.repository.ICategoryRepository;
@@ -31,10 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static java.util.stream.Collectors.toList;
-
 @RestController
-@RequestMapping("/api/v1/product")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class ProductController {
     @Autowired
@@ -79,7 +77,7 @@ public class ProductController {
     }
 
     // Thêm mới Product
-    @PostMapping("/admin/add")
+    @PostMapping("/admin/product/add")
     public ResponseEntity<?> createProduct(@Valid @RequestBody ProductRequestDTO dto) {
         ProductResponseDTO response = productService.save(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(
@@ -93,7 +91,7 @@ public class ProductController {
 
 
     // Cập nhật Product
-    @PutMapping("admin/update/{id}")
+    @PutMapping("admin/product/update/{id}")
     public ResponseEntity<?> update(@PathVariable int id, @RequestBody ProductRequestDTO dto) {
         ProductResponseDTO response = productService.update(id, dto);
         if (response != null) {
@@ -103,7 +101,7 @@ public class ProductController {
     }
 
     // Thay đổi trạng thái Product
-    @PutMapping("admin/change-status/{id}")
+    @PutMapping("admin/product/change-status/{id}")
     public ResponseEntity<?> changeStatus(@PathVariable int id) {
         ProductResponseDTO response = productService.changeStatus(id);
         if (response != null) {
@@ -113,14 +111,14 @@ public class ProductController {
     }
 
     // tìm kiếm
-    @GetMapping("/search")
+    @GetMapping("/product/search")
     public ResponseEntity<List<ProductResponseDTO>> search(@RequestParam(name = "keyword") String keyword) {
         List<ProductResponseDTO> products = productService.search(keyword);
         return new ResponseEntity<>(products, HttpStatus.OK);
     }
 
     // xóa sản phẩm theo id
-    @DeleteMapping("admin/delete/{id}")
+    @DeleteMapping("admin/product/delete/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         try {
             productService.delete(id);
@@ -173,6 +171,15 @@ public class ProductController {
         return ResponseEntity.ok(responses);
     }
 
+    @GetMapping("/admin/products/bestSell")
+    public ResponseEntity<List<?>> getBestSellProduct() {
+        List<Top5Product> topProduct = productService.getTop5BestSellingProducts();
+        return ResponseEntity.ok(topProduct);
+    }
 
-
+    @GetMapping("/admin/products/topLeastSell")
+    public ResponseEntity<List<?>> getTopLeastSellProduct() {
+        List<Top5Product> topProduct = productService.getTop5LestSellingProducts();
+        return ResponseEntity.ok(topProduct);
+    }
 }
