@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface IOrderRepository extends JpaRepository<Order, Long> {
-<<<<<<< src/main/java/com/ra/base_spring_boot/repository/IOrderRepository.java
     List<Order> findAllByStatusAndCreatedAtBetween(OrderStatus status, LocalDateTime from, LocalDateTime to);
     List<Order> findAllByStatus(OrderStatus status);
     @Query("""

@@ -203,16 +203,17 @@ public class ProductController {
     public List<ProductViewResponse> getLeastViewedProducts(@RequestParam(defaultValue = "10") Long limit) {
         return productViewService.getLestViewProducts(limit);
     }
-}
-
-
-
-
 
     @GetMapping("/admin/products/topLeastSell")
     public ResponseEntity<List<?>> getTopLeastSellProduct() {
         List<Top5Product> topProduct = productService.getTop5LestSellingProducts();
         return ResponseEntity.ok(topProduct);
     }
-
 }
+
+
+
+
+
+
+

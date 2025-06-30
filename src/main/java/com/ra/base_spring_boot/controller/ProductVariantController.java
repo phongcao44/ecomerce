@@ -90,7 +90,7 @@ public class ProductVariantController {
         );
     }
 
-    @DeleteMapping("/admin/delete/{id}")
+    @DeleteMapping("/admin/delete_product-variant/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         productVariantService.delete(id);
         return ResponseEntity.ok(
