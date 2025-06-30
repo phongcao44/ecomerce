@@ -9,7 +9,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/base_core?createDatabaseIfNotExist=true
     username: root
-    password: Nhutkep@123
+    password: 123456
   jooq:
     sql-dialect: org.hibernate.dialect.MySQL8Dialect
   jpa:
@@ -26,8 +26,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: nhutlmce@gmail.com
-    password: nmkpatdrcqgkpumw
+    username: yasuaphongcao@gmail.com
+    password: vbktkcsodemogsol
     protocol: smtp
     properties:
       mail:

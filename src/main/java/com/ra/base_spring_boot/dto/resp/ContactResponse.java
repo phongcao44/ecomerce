@@ -5,23 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-
-import java.math.BigDecimal;
-
-
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 @Builder
-public class ProductUserResponse {
+public class ContactResponse {
     private Long id;
-
     private String name;
-
-    private String description;
-
-    private BigDecimal price;
-
-    private String brand;
-
+    private String comment;
+    private String phone;
+    private String email;
 }
