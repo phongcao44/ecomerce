@@ -18,4 +18,9 @@ public interface IPostService {
     List<PostResponseDTO> getAllPosts();
 
     PostResponseDTO getPostById(Long id);
+
+    List<PostResponseDTO> getAllVisiblePosts();
+
+    List<PostResponseDTO> getRelatedPosts(Long postId);
+
 }

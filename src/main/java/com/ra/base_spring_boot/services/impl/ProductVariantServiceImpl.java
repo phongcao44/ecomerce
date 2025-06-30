@@ -40,8 +40,8 @@ public class ProductVariantServiceImpl implements IProductVariantService {
         return variants.stream().map(variant -> ProductVariantResponseDTO.builder()
                 .id(variant.getId())
                 .productName(variant.getProduct().getName())
-                .colorName(variant.getColor().getName())
-                .sizeName(variant.getSize().getSizeName())
+                .colorName(variant.getColor() !=null ? variant.getColor().getName():null)
+                .sizeName(variant.getSize() !=null ? variant.getSize().getSizeName():null)
                 .stockQuantity(variant.getStockQuantity())
                 .priceOverride(variant.getPriceOverride())
                 .build()
@@ -55,8 +55,8 @@ public class ProductVariantServiceImpl implements IProductVariantService {
         return variants.stream().map(variant -> ProductVariantResponseDTO.builder()
                 .id(variant.getId())
                 .productName(variant.getProduct().getName())
-                .colorName(variant.getColor().getName())
-                .sizeName(variant.getSize().getSizeName())
+                .colorName(variant.getColor() !=null ? variant.getColor().getName() : null)
+                .sizeName(variant.getSize() != null ? variant.getSize().getSizeName() : null)
                 .stockQuantity(variant.getStockQuantity())
                 .priceOverride(variant.getPriceOverride())
                 .build()).collect(Collectors.toList());
@@ -67,10 +67,21 @@ public class ProductVariantServiceImpl implements IProductVariantService {
     public ProductVariantResponseDTO create(ProductVariantRequestDTO dto) {
         Product product = productRepository.findById(dto.getProductId())
                 .orElseThrow(() -> new HttpNotFound("ProductId Not Found"));
-        Color color = colorRepository.findById(dto.getColorId())
-                .orElseThrow(() -> new HttpNotFound("ColorId Not Found"));
-        Size size = sizeRepository.findById(dto.getSizeId())
-                .orElseThrow(() -> new HttpNotFound("SizeId Not Found"));
+
+        Long colorId = (dto.getColorId() != null && dto.getColorId() == 0L) ? null : dto.getColorId();
+        Long sizeId = (dto.getSizeId() != null && dto.getSizeId() == 0L) ? null : dto.getSizeId();
+
+        Color color = null;
+        if (colorId != null) {
+            color = colorRepository.findById(colorId)
+                    .orElseThrow(() -> new HttpNotFound("ColorId Not Found"));
+        }
+
+        Size size = null;
+        if (sizeId != null) {
+            size = sizeRepository.findById(sizeId)
+                    .orElseThrow(() -> new HttpNotFound("SizeId Not Found"));
+        }
 
         ProductVariant variant = ProductVariant.builder()
                 .product(product)
@@ -85,8 +96,8 @@ public class ProductVariantServiceImpl implements IProductVariantService {
         return ProductVariantResponseDTO.builder()
                 .id(variant.getId())
                 .productName(product.getName())
-                .colorName(color.getName())
-                .sizeName(size.getSizeName())
+                .colorName(color !=null ? color.getName() : null)
+                .sizeName(size !=null ? size.getSizeName() : null)
                 .stockQuantity(variant.getStockQuantity())
                 .priceOverride(variant.getPriceOverride())
                 .build();
@@ -100,10 +111,21 @@ public class ProductVariantServiceImpl implements IProductVariantService {
 
         Product product = productRepository.findById(dto.getProductId())
                 .orElseThrow(() -> new HttpNotFound("ProductId Not Found"));
-        Color color = colorRepository.findById(dto.getColorId())
-                .orElseThrow(() -> new HttpNotFound("ColorId Not Found"));
-        Size size = sizeRepository.findById(dto.getSizeId())
-                .orElseThrow(() -> new HttpNotFound("SizeId Not Found"));
+
+        Long colorId = (dto.getColorId() != null && dto.getColorId() == 0L) ? null : dto.getColorId();
+        Long sizeId = (dto.getSizeId() != null && dto.getSizeId() == 0L) ? null : dto.getSizeId();
+
+        Color color = null;
+        if (colorId != null) {
+            color = colorRepository.findById(colorId)
+                    .orElseThrow(() -> new HttpNotFound("ColorId Not Found"));
+        }
+
+        Size size = null;
+        if (sizeId != null) {
+            size = sizeRepository.findById(sizeId)
+                    .orElseThrow(() -> new HttpNotFound("SizeId Not Found"));
+        }
 
         variant.setProduct(product);
         variant.setColor(color);
@@ -116,8 +138,8 @@ public class ProductVariantServiceImpl implements IProductVariantService {
         return ProductVariantResponseDTO.builder()
                 .id(variant.getId())
                 .productName(product.getName())
-                .colorName(color.getName())
-                .sizeName(size.getSizeName())
+                .colorName(color !=null ? color.getName() : null)
+                .sizeName(size !=null ? size.getSizeName() : null)
                 .stockQuantity(variant.getStockQuantity())
                 .priceOverride(variant.getPriceOverride())
                 .build();
@@ -148,10 +170,10 @@ public class ProductVariantServiceImpl implements IProductVariantService {
                 .price(product.getPrice())
                 .priceOverride(variant.getPriceOverride())
                 .stockQuantity(variant.getStockQuantity())
-                .colorName(color.getName())
-                .colorHex(color.getHexCode())
-                .sizeName(size.getSizeName())
-                .sizeDescription(size.getDescription())
+                .colorName(color !=null ? color.getName() : null)
+                .colorHex(color !=null ? color.getHexCode() : null)
+                .sizeName(size !=null ? size.getSizeName() : null)
+                .sizeDescription(size !=null ? size.getDescription() : null)
                 .build();
     }
 }

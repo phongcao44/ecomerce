@@ -3,6 +3,9 @@ package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.req.ProductRequestDTO;
 import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
+import com.ra.base_spring_boot.exception.HttpBadRequest;
+import com.ra.base_spring_boot.exception.HttpForbiden;
+import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.dto.resp.Top5Product;
 import com.ra.base_spring_boot.model.Category;
 import com.ra.base_spring_boot.model.Product;
@@ -70,7 +73,7 @@ public class ProductServiceImpl implements IProductService {
     @Override
     public ProductResponseDTO save(ProductRequestDTO dto) {
         Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new HttpNotFound("Category Not Found"));
 
         Product product = Product.builder()
                 .name(dto.getName())
@@ -128,10 +131,10 @@ public class ProductServiceImpl implements IProductService {
     @Override
     public ProductResponseDTO update(long id, ProductRequestDTO dto) {
         Product existing = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new HttpNotFound("Product Not Found"));
 
         Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new HttpNotFound("Category Not Found"));
 
         existing.setName(dto.getName());
         existing.setDescription(dto.getDescription());
@@ -195,7 +198,7 @@ public class ProductServiceImpl implements IProductService {
     @Override
     public void delete(Long id) {
         if (!productRepository.existsById(id)) {
-            throw new RuntimeException("Product not found");
+            throw new HttpForbiden("This product has variations you need to delete the variations first");
         }
         productRepository.deleteById(id);
     }

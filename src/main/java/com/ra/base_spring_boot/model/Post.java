@@ -23,7 +23,7 @@ public class Post {
     @Column(columnDefinition = "TEXT")
     private String content; // Nội dung chính
 
-    @Column(length = 1000)
+    @Column(length = 100000000)
     private String description;
 
     private String location; // Vị trí (Vị trí đăng, vị trí liên quan)
