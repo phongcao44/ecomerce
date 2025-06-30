@@ -6,6 +6,7 @@ import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.exception.HttpForbiden;
 import com.ra.base_spring_boot.exception.HttpNotFound;
+import com.ra.base_spring_boot.dto.resp.Top5Product;
 import com.ra.base_spring_boot.model.Category;
 import com.ra.base_spring_boot.model.Product;
 import com.ra.base_spring_boot.model.constants.ProductStatus;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -199,5 +201,19 @@ public class ProductServiceImpl implements IProductService {
             throw new HttpForbiden("This product has variations you need to delete the variations first");
         }
         productRepository.deleteById(id);
+    }
+
+    @Override
+    public List<Top5Product> getTop5BestSellingProducts() {
+        List<Object[]> top5 = productRepository.findTop5BestSellingProducts(PageRequest.of(0, 5));
+        return top5.stream().map(
+                row -> Top5Product.from((Product) row[0], (Long) row[1])).toList();
+    }
+
+    @Override
+    public List<Top5Product> getTop5LestSellingProducts() {
+        List<Object[]> top5 = productRepository.findTop5LeastSellingOrUnsoldProducts(PageRequest.of(0, 5));
+        return top5.stream().map(
+                row -> Top5Product.from((Product) row[0], (Long) row[1])).toList();
     }
 }

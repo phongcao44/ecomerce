@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.services;
 
 import com.ra.base_spring_boot.dto.req.ProductRequestDTO;
 import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
+import com.ra.base_spring_boot.dto.resp.Top5Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -30,5 +31,7 @@ public interface IProductService {
 
     void delete(Long id);
 
+    List<Top5Product> getTop5BestSellingProducts();
+    List<Top5Product> getTop5LestSellingProducts();
 }
 
