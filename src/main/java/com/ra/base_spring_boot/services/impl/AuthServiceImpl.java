@@ -21,6 +21,7 @@ import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.IAuthService;
 import com.ra.base_spring_boot.services.IRoleService;
+import com.ra.base_spring_boot.services.IVoucherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -48,7 +49,7 @@ public class AuthServiceImpl implements IAuthService
     private final IBlackListRepository blackListTokenRepository;
     private final EmailService emailService;
     private final IPasswordResetTokenRepository passwordResetTokenRepository;
-
+    private final IVoucherService voucherService;
 
 
     @Override
@@ -71,6 +72,7 @@ public class AuthServiceImpl implements IAuthService
                 .updatedAt(now)
                 .build();
         userRepository.save(user);
+        voucherService.assignWelcomeVoucher(user);
     }
 
     @Override
