@@ -6,7 +6,7 @@ import com.ra.base_spring_boot.dto.resp.ReviewResponse;
 
 import java.util.List;
 
-public interface RateService {
+public interface IRateService {
         void createReview(ReviewRequest request, Long userId);
         List<ReviewResponse> getReviewsByProductId(Long productId);
         Double getAverageRatingByProductId(Long productId);

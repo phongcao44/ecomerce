@@ -4,15 +4,13 @@ import com.ra.base_spring_boot.dto.DataError;
 import com.ra.base_spring_boot.dto.req.ReviewRequest;
 import com.ra.base_spring_boot.dto.resp.RatingSummaryResponse;
 import com.ra.base_spring_boot.dto.resp.ReviewResponse;
-import com.ra.base_spring_boot.repository.RateRepository;
+import com.ra.base_spring_boot.repository.IRateRepository;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
-import com.ra.base_spring_boot.services.RateService;
+import com.ra.base_spring_boot.services.IRateService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,8 +21,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReviewController {
 
-    private final RateService reviewService;
-    private final RateRepository rateRepository;
+    private final IRateService reviewService;
+    private final IRateRepository rateRepository;
 
 
     @PostMapping
