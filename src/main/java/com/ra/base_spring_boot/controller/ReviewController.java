@@ -55,7 +55,7 @@ public class ReviewController {
         return ResponseEntity.ok(reviews);
     }
 
-    @DeleteMapping("/admin/delete/{id}")
+    @DeleteMapping("/admin/delete_review/{id}")
     public ResponseEntity<?> deleteReview(@PathVariable Long id){
         if(rateRepository.existsById(id)){
             rateRepository.deleteById(id);

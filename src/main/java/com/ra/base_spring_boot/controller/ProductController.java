@@ -56,7 +56,7 @@ public class ProductController {
 
 
     // hiển thị danh sách Product
-    @GetMapping
+    @GetMapping("/product/list")
     public ResponseEntity<List<ProductResponseDTO>> index() {
         List<ProductResponseDTO> products = productService.findAll();
         return new ResponseEntity<>(products, HttpStatus.OK);
@@ -194,25 +194,23 @@ public class ProductController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/top-viewed")
+    @GetMapping("/admin/product/top-viewed")
     public List<ProductViewResponse> getTopViewedProducts(@RequestParam(defaultValue = "10") Long limit) {
         return productViewService.getTopViewProducts(limit);
     }
 
-    @GetMapping("/least-viewed")
+    @GetMapping("/admin/prouduct/least-viewed")
     public List<ProductViewResponse> getLeastViewedProducts(@RequestParam(defaultValue = "10") Long limit) {
         return productViewService.getLestViewProducts(limit);
     }
-}
-
-
-
-
 
     @GetMapping("/admin/products/topLeastSell")
     public ResponseEntity<List<?>> getTopLeastSellProduct() {
         List<Top5Product> topProduct = productService.getTop5LestSellingProducts();
         return ResponseEntity.ok(topProduct);
     }
-
 }
+
+
+
+

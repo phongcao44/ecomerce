@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.controller;
 
+import com.ra.base_spring_boot.dto.req.SizeRequest;
 import com.ra.base_spring_boot.model.Size;
 import com.ra.base_spring_boot.repository.ICategoryRepository;
 import com.ra.base_spring_boot.repository.ISizeRepository;
@@ -12,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1/size")
+@RequestMapping("/api/v1")
 public class SizeController {
     @Autowired
     public ISizeService iSizeService;
@@ -23,8 +24,8 @@ public class SizeController {
         return iSizeService.findAll();
     }
 
-    @PostMapping("/add")
-    public ResponseEntity<?> save(@RequestBody Size size) {
+    @PostMapping("/admin/size/add")
+    public ResponseEntity<?> save(@RequestBody SizeRequest size) {
         List<Size> optional = iSizeService.findAll();
         //bat loi nhap du lieu rong ""
         for(Size s: optional){
@@ -33,33 +34,37 @@ public class SizeController {
             }
         }
         if(size == null ||
-                size.getSizeName() == null ||
+                size.getName() == null ||
                 size.getDescription() == null) {
            return ResponseEntity.badRequest().body("can nhap ten name va description");
         }
-       Size saved = iSizeService.save(size);
+        Size sizeEntity = new Size();
+        sizeEntity.setSizeName(size.getName());
+        sizeEntity.setDescription(size.getDescription());
+        Size saved = iSizeService.save(sizeEntity);
+
         return ResponseEntity.ok(saved);
     }
 
-    @PutMapping("/edit/{sizeId}")
-    public ResponseEntity<?> edit(@PathVariable Long sizeId, @RequestBody Size newsize) {
+    @PutMapping("/admin/size/edit/{sizeId}")
+    public ResponseEntity<?> edit(@PathVariable Long sizeId, @RequestBody SizeRequest newsize) {
         Optional<Size> idcheck = iSizeRepository.findById(sizeId);
         if(idcheck.isEmpty()) {
             return ResponseEntity.badRequest().body("id khong có");
         }
         if(newsize == null ||
-        newsize.getSizeName() == null ||
+        newsize.getName() == null ||
                 newsize.getDescription() == null) {
             return ResponseEntity.badRequest().body("can nhap ten name va description");
         }
         return iSizeRepository.findById(sizeId).map(size ->{
-            size.setSizeName(newsize.getSizeName());
+            size.setSizeName(newsize.getName());
             size.setDescription(newsize.getDescription());
             Size saved = iSizeRepository.save(size);
             return ResponseEntity.ok(saved);
                 }).orElseThrow();
     }
-    @DeleteMapping("/delete/{sizeId}")
+    @DeleteMapping("/admin/size/delete/{sizeId}")
     public ResponseEntity<?> delete(@PathVariable Long sizeId) {
         Optional<Size> idcheck = iSizeRepository.findById(sizeId);
         if(idcheck.isEmpty()) {
