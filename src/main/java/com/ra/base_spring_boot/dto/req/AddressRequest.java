@@ -11,9 +11,9 @@ import lombok.NoArgsConstructor;
 @Builder
 public class AddressRequest {
 
-    private String province;
-    private String ward;
-    private String district;
+    private int provinceId;
+    private String wardId;
+    private int districtId;
     private String phone;
     private String recipientName;
     private String fullAddress;

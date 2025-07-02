@@ -46,6 +46,7 @@ dependencies {
     implementation 'commons-validator:commons-validator:1.7'
     implementation 'com.cloudinary:cloudinary-http44:1.37.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation 'org.json:json:20240303'
 
 }
 
