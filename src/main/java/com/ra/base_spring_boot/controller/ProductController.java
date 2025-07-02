@@ -181,7 +181,7 @@ public class ProductController {
         return ResponseEntity.ok(responses);
     }
 
-    @GetMapping("/admin/products/bestSell")
+    @GetMapping("/products/bestSell")
     public ResponseEntity<List<?>> getBestSellProduct() {
         List<Top5Product> topProduct = productService.getTop5BestSellingProducts();
         return ResponseEntity.ok(topProduct);
@@ -204,7 +204,9 @@ public class ProductController {
         return productViewService.getLestViewProducts(limit);
     }
 
-    @GetMapping("/admin/products/topLeastSell")
+
+
+    @GetMapping("/products/topLeastSell")
     public ResponseEntity<List<?>> getTopLeastSellProduct() {
         List<Top5Product> topProduct = productService.getTop5LestSellingProducts();
         return ResponseEntity.ok(topProduct);

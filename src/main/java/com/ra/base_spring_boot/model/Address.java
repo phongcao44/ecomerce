@@ -27,12 +27,15 @@ public class Address {
     @Column(name = "full_address")
     private String fullAddress;
 
+    private String wardCode;
     @Column(name = "ward")
     private String ward;
 
+    private Integer districtId;
     @Column(name = "district")
     private String district;
 
+    private Integer provinceId;
     @Column(name = "province")
     private String province;
 }

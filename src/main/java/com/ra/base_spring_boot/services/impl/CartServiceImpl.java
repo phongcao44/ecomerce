@@ -262,4 +262,23 @@ public class CartServiceImpl implements ICartService {
 
         return OrderCheckoutResponseDTO.fromOrder(order, List.of(orderItem));
     }
+    @Override
+    public BigDecimal getCartTotal(Long userId) {
+        Cart cart = getOrCreateCart(userId);
+        List<CartItem> items = cartItemRepository.findAllByCart(cart);
+
+        BigDecimal total = BigDecimal.ZERO;
+
+        for (CartItem item : items) {
+            ProductVariant variant = item.getVariant();
+            BigDecimal price = variant.getPriceOverride() != null
+                    ? variant.getPriceOverride()
+                    : variant.getProduct().getPrice();
+
+            total = total.add(price.multiply(BigDecimal.valueOf(item.getQuantity())));
+        }
+
+        return total;
+    }
+
 }

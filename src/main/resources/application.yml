@@ -50,3 +50,5 @@ open:
     version: v1.0
     description: TEST API
     serverUrl: http://localhost:8080
+ghn:
+  token: 2b984e8b-56f2-11f0-a792-aa91a84883e3

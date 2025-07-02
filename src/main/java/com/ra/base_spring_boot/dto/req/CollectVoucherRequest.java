@@ -9,12 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 @Builder
-public class AddressRequest {
-
-    private int provinceId;
-    private String wardId;
-    private int districtId;
-    private String phone;
-    private String recipientName;
-    private String fullAddress;
+public class CollectVoucherRequest {
+    private Long userId;
+    private String voucherCode;
 }
