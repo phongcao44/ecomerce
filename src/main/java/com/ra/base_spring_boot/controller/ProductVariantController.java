@@ -65,7 +65,7 @@ public class ProductVariantController {
     }
 
 
-    @PostMapping("/admin/add")
+    @PostMapping("/admin/product-variants/add")
     public ResponseEntity<ResponseWrapper<ProductVariantResponseDTO>> create(@RequestBody ProductVariantRequestDTO productVariantRequestDTO) {
         ProductVariantResponseDTO response = productVariantService.create(productVariantRequestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(
@@ -77,7 +77,7 @@ public class ProductVariantController {
         );
     }
 
-    @PutMapping("/admin/update/{id}")
+    @PutMapping("/admin/product-variants/update/{id}")
     public ResponseEntity<?> update(@PathVariable Long id,
                                     @Valid @RequestBody ProductVariantRequestDTO dto) {
         ProductVariantResponseDTO response = productVariantService.update(id, dto);
@@ -90,7 +90,8 @@ public class ProductVariantController {
         );
     }
 
-    @DeleteMapping("/admin/delete_product-variant/{id}")
+
+    @DeleteMapping("/admin/product-variants/delete/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         productVariantService.delete(id);
         return ResponseEntity.ok(
