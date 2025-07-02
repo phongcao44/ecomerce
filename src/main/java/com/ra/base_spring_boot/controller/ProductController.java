@@ -205,14 +205,16 @@ public class ProductController {
     }
 
 
-
-
-
-
     @GetMapping("/products/topLeastSell")
     public ResponseEntity<List<?>> getTopLeastSellProduct() {
         List<Top5Product> topProduct = productService.getTop5LestSellingProducts();
         return ResponseEntity.ok(topProduct);
     }
-
 }
+
+
+
+
+
+
+

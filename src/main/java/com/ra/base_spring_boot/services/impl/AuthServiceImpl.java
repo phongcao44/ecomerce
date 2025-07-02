@@ -59,11 +59,15 @@ public class AuthServiceImpl implements IAuthService
             throw new HttpBadRequest("Email already exists");
         }
 
+        String email = formRegister.getEmail();
+        if (!email.toLowerCase().endsWith("@gmail.com")) {
+            throw new HttpBadRequest("Invalid email format");
+        }
         Set<Role> roles = new HashSet<>();
         roles.add(roleService.findByRoleName(RoleName.ROLE_USER));
         LocalDateTime now = LocalDateTime.now();
         User user = User.builder()
-                .email(formRegister.getEmail())
+                .email(email)
                 .username(formRegister.getUsername())
                 .password(passwordEncoder.encode(formRegister.getPassword()))
                 .status(UserStatus.ACTIVE)

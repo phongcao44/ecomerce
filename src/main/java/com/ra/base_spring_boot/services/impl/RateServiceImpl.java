@@ -9,9 +9,8 @@ import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.repository.IOrderRepository;
 import com.ra.base_spring_boot.repository.IProductRepository;
 import com.ra.base_spring_boot.repository.IUserRepository;
-import com.ra.base_spring_boot.repository.RateRepository;
-import com.ra.base_spring_boot.services.RateService;
-import org.apache.coyote.BadRequestException;
+import com.ra.base_spring_boot.repository.IRateRepository;
+import com.ra.base_spring_boot.services.IRateService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -22,12 +21,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-public class RateServiceImpl implements RateService {
-    private final RateRepository reviewRepo;
+public class RateServiceImpl implements IRateService {
+    private final IRateRepository reviewRepo;
     private final IProductRepository productRepo;
     private final IUserRepository userRepo;
     private final IOrderRepository orderRepo;
-    public  RateServiceImpl(RateRepository reviewRepo, IProductRepository productRepo, IUserRepository userRepo,IOrderRepository orderRepo) {
+    public  RateServiceImpl(IRateRepository reviewRepo, IProductRepository productRepo, IUserRepository userRepo, IOrderRepository orderRepo) {
         this.reviewRepo = reviewRepo;
         this.productRepo = productRepo;
         this.userRepo = userRepo;
