@@ -16,4 +16,5 @@ public class VoucherRequest {
     private LocalDate endDate;
     private int quantity;
     private double minOrderAmount;
+    private long voucherId;
 }

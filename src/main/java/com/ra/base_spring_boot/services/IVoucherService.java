@@ -16,4 +16,5 @@ public interface IVoucherService {
     void assignWelcomeVoucher(User user);
     void collectVoucher(Long userId, String code);
     List<VoucherResponse> getCollectibleVouchers(Long userId);
+    List<VoucherResponse> getAllVouchers();
 }

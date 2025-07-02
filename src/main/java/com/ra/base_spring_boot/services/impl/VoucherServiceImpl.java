@@ -129,7 +129,7 @@ public class VoucherServiceImpl implements IVoucherService {
 
     @Override
     public VoucherResponse update(VoucherRequest voucherRequest) {
-        Voucher voucher = iVoucherRepository.findByCode(voucherRequest.getCode())
+        Voucher voucher = iVoucherRepository.findById(voucherRequest.getVoucherId())
                 .orElseThrow(() -> new RuntimeException("Voucher not exist!"));
 
         voucher.setCode(voucherRequest.getCode());
@@ -215,6 +215,12 @@ public class VoucherServiceImpl implements IVoucherService {
                 .collectible(voucher.isCollectible())
                 .build();
     }
-
+    @Override
+    public List<VoucherResponse> getAllVouchers(){
+        List<Voucher> vouchers = iVoucherRepository.findAll();
+        return  vouchers.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
 
 }

@@ -29,26 +29,39 @@ public class VoucherController {
         return ResponseEntity.ok(voucherService.create(request));
     }
 
-    @PostMapping("user/apply")
+    @PostMapping("user/voucher/apply")
     public ResponseEntity<VoucherResponse> applyVoucher(@AuthenticationPrincipal MyUserDetails userDetails,
             @RequestParam String code) {
         return ResponseEntity.ok(voucherService.applyVoucher(userDetails.getUser().getId(),code));
     }
-    @PostMapping("user/collect")
+    @PostMapping("user/voucher/collect")
     public ResponseEntity<?> collectVoucher(@RequestBody CollectVoucherRequest request) {
         voucherService.collectVoucher(request.getUserId(), request.getVoucherCode());
         return ResponseEntity.ok("Add voucher to store!");
     }
 
-    @GetMapping("user/available")
+    @GetMapping("user/voucher/available")
     public List<VoucherResponse> getCollectibleVouchers(@AuthenticationPrincipal MyUserDetails userDetails) {
-        List<VoucherResponse> vouchers = voucherService.getCollectibleVouchers(userDetails.getUser().getId());
-        return vouchers;
+        return voucherService.getCollectibleVouchers(userDetails.getUser().getId());
     }
 
-    @GetMapping("user/viewVoucher")
+    @GetMapping("user/voucher/viewVoucher")
     public List<VoucherResponse> getVouchers(@AuthenticationPrincipal MyUserDetails userDetails) {
-        List<VoucherResponse> vouchers = voucherService.findVoucherByUserId(userDetails.getUser().getId());
-        return vouchers;
+        return voucherService.findVoucherByUserId(userDetails.getUser().getId());
+    }
+    @PutMapping("admin/voucher/update")
+    public ResponseEntity<VoucherResponse> update(
+            @RequestBody VoucherRequest request) {
+        return ResponseEntity.ok(voucherService.update(request));
+    }
+    @DeleteMapping("admin/voucher/delete")
+    public ResponseEntity<?> delete(@RequestBody VoucherRequest request) {
+        voucherService.delete(request.getVoucherId());
+        return ResponseEntity.ok("Deleted");
+    }
+    @GetMapping("admin/voucher/all")
+    public ResponseEntity<List<VoucherResponse>> getAllVouchers() {
+        List<VoucherResponse> responses = voucherService.getAllVouchers();
+        return ResponseEntity.ok(responses);
     }
 }
