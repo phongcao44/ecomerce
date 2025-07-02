@@ -172,11 +172,11 @@ public class PaymentController {
     @GetMapping("/payment-info")
     public ResponseEntity<?> getPaymentInfo(@RequestParam(value = "vnp_Amount") String amount,
                                             @RequestParam(value = "vnp_BankCode") String bankCode,
-                                            @RequestParam(value = "vnp_OrderInfo") String vnp_TxnRef,
+                                            @RequestParam(value = "vnp_OrderInfo") String orderInfo,
                                             @RequestParam(value = "vnp_ResponseCode") String responseCode)
     {
         // Tách orderId từ chuỗi vnp_OrderInfo: "Thanh toan don hang:123"
-        String[] parts = vnp_TxnRef.split(":");
+        String[] parts = orderInfo.split(":");
         if (parts.length < 2) {
             return ResponseEntity.badRequest().body("Invalid vnp_OrderInfo format");
         }
@@ -206,7 +206,7 @@ public class PaymentController {
            payment.setPaymentMethod(PaymentMethod.CREDIT_CARD);
            payment.setPaymentTime(LocalDateTime.now());
            payment.setStatus(PaymentStatus.FAILED);
-           return ResponseEntity.status(HttpStatus.NOT_FOUND).body("co truc tracj goy");
+          // return ResponseEntity.status(HttpStatus.NOT_FOUND).body("co truc tracj goy");
        }
        Payment savepayment = paymentRepository.save(payment);
       // orderRepository.deleteById(orderId);
