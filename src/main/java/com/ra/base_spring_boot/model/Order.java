@@ -52,4 +52,11 @@ public class Order {
     @JoinColumn(name = "voucher_id")
     private Voucher voucher;
 
+    @Column(name = "used_point")
+    private Integer usedPoints;
+    @Column(name = "discount_percent")
+    private Double discountPercent;
+    @Column(name = "discount_amount")
+    private Double discountAmount;
+
 }

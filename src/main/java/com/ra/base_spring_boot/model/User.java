@@ -51,4 +51,7 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private Set<UserVoucher> userVouchers;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private UserPoint userPoint;
+
 }
