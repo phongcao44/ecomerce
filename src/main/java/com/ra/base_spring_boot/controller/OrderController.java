@@ -11,19 +11,22 @@ import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.model.constants.OrderStatus;
 import com.ra.base_spring_boot.repository.IOrderItemRepository;
 import com.ra.base_spring_boot.repository.IOrderRepository;
+import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.IOrderService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/order")
+@RequestMapping("/api/v1")
 public class OrderController {
     @Autowired
     private IOrderService orderService;
@@ -32,7 +35,7 @@ public class OrderController {
     @Autowired
     private IOrderItemRepository iOrderItemRepository;
 
-    @GetMapping("/list")
+    @GetMapping("/order/list")
     public ResponseEntity<?> findAll() {
         List<Order> orderEntities = iOrderRepository.findAll();
         if (orderEntities.isEmpty()) {
@@ -71,7 +74,7 @@ public class OrderController {
         return ResponseEntity.ok(orderResponses);
     }
 
-    @PutMapping("/edit/{id}")
+    @PutMapping("/order/edit/{id}")
     public ResponseEntity<?> edit(@PathVariable Long id, @RequestBody OrderStatus status) {
         try {
             return iOrderRepository.findById(id).<ResponseEntity<?>>map(order -> {
@@ -103,7 +106,7 @@ public class OrderController {
         }
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/order/delete/{id}")
     @Transactional
     //Có @Transactional: tất cả sẽ rollback → đảm bảo hoặc tất cả cùng thành công, hoặc tất cả bị hủy
     public ResponseEntity<?> delete(@PathVariable Long id){
@@ -115,5 +118,29 @@ public class OrderController {
             iOrderRepository.deleteById(id);
             return new ResponseEntity<>("xóa goy", HttpStatus.OK);
         }
+    }
+
+    @GetMapping("/user/order/list")
+    public ResponseEntity<?> getMyOrders(@RequestParam(required = false) OrderStatus status,
+                                         @AuthenticationPrincipal MyUserDetails userDetails) {
+        Long userId = userDetails.getUser().getId();
+
+        List<Order> orders;
+        if (status != null) {
+            orders = orderService.findByUserIdAndStatus(userId, status);
+        } else {
+            orders = orderService.findByUserId(userId);
+        }
+
+        if (orders.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Bạn chưa có đơn hàng nào.");
+        }
+        return ResponseEntity.ok(orders);
+    }
+
+
+    @GetMapping("/admin/order/rate/cancelled_and_returned")
+    public ResponseEntity<Map<String, Double>> getRate() {
+        return ResponseEntity.ok(orderService.getCancelAndReturnRate());
     }
 }
