@@ -29,20 +29,17 @@ public class DistancePriceController {
     @Autowired
     private IOrderRepository iOrderRepository;
 
-    @PostMapping("/calculate/{orderId}")
-    public ResponseEntity<?> calculateShippingFee(@PathVariable Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
-
-        ShippingFee shippingFee = shippingFeeService.calculateAndSaveShippingFee(order);
-
-        ShippingFeeResponse response = ShippingFeeResponse.builder()
-                .id(shippingFee.getId())
-                .price(shippingFee.getTotal())
-                .build();
-
-        return ResponseEntity.ok(response);
-    }
+//    @PostMapping("/calculate/{userId}")
+//    public ResponseEntity<?> calculateShippingFee(@PathVariable Long userId) {
+////        ShippingFee shippingFee = shippingFeeService.calculateAndSaveShippingFee(userId);
+////
+////        ShippingFeeResponse response = ShippingFeeResponse.builder()
+////                .id(shippingFee.getId())
+////                .price(shippingFee.getTotal())
+////                .build();
+////
+////        return ResponseEntity.ok(response);
+//    }
     @PutMapping("/edit-by-shipper/{id}")
     public ResponseEntity<?> edit(@PathVariable Long id, @RequestBody OrderStatus status) {
         try {

@@ -3,6 +3,7 @@ package com.ra.base_spring_boot.controller;
 import com.ra.base_spring_boot.dto.DataError;
 import com.ra.base_spring_boot.dto.req.AddParentCategoryRequest;
 import com.ra.base_spring_boot.dto.req.CategoryRequest;
+import com.ra.base_spring_boot.dto.resp.CategoryDetailResponse;
 import com.ra.base_spring_boot.dto.resp.CategoryResponse;
 import com.ra.base_spring_boot.model.Category;
 import com.ra.base_spring_boot.repository.ICategoryRepository;
@@ -217,4 +218,10 @@ public class CategoryController {
         categoryRepository.deleteById(id);
         return ResponseEntity.ok("Xóa danh mục con thành công");
     }
+
+    @GetMapping("/categories/tree")
+    public ResponseEntity<?> getCategoryTree() {
+        return ResponseEntity.ok(categoryService.getCategoryTree());
+    }
+
 }

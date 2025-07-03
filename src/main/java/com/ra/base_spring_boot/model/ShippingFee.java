@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ra.base_spring_boot.model.Order;
 import jakarta.persistence.*;
 import lombok.*;
@@ -18,6 +19,10 @@ public class ShippingFee {
 
 
     private double total;
+
+//    @ManyToOne
+//    @JoinColumn(name = "user_id")
+//    private User user;
 
     @OneToOne
     @JoinColumn(name = "order_id")

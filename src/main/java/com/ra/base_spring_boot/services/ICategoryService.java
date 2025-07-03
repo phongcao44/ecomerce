@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.services;
 
+import com.ra.base_spring_boot.dto.resp.CategoryDetailResponse;
 import com.ra.base_spring_boot.dto.resp.CategoryResponse;
 import com.ra.base_spring_boot.dto.resp.SearchCategoryRespone;
 import com.ra.base_spring_boot.model.Category;
@@ -21,5 +22,8 @@ public interface ICategoryService {
     List<SearchCategoryRespone> searchCategory(String keyword);
 
     Category findById(Long id);
+
+    List<CategoryDetailResponse> getCategoryTree();
+
 
 }

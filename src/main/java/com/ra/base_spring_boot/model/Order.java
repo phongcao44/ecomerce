@@ -40,6 +40,10 @@ public class Order {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
+    private ShippingFee shippingFee;
+
     @ManyToOne
     @JsonIgnore
     @JoinColumn(name = "shipping_address_id")

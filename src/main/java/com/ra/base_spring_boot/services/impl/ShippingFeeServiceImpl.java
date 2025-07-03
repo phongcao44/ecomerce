@@ -6,6 +6,7 @@ import com.ra.base_spring_boot.model.DistributionCenter;
 import com.ra.base_spring_boot.model.Order;
 import com.ra.base_spring_boot.model.ShippingFee;
 import com.ra.base_spring_boot.repository.DistributionCenterRepository;
+import com.ra.base_spring_boot.repository.IAddressRepository;
 import com.ra.base_spring_boot.repository.ShippingFeeRepository;
 import com.ra.base_spring_boot.services.ShippingFeeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,21 +28,20 @@ public class ShippingFeeServiceImpl implements ShippingFeeService {
     ShippingFeeRepository shippingFeeRepository;
     @Autowired
     DistributionCenterRepository distributionCenterRepository;
+    @Autowired
+    IAddressRepository addressRepository;
 
     private final String GHN_TOKEN = "3bffc186-56f0-11f0-a89f-2e7d777c887f";
     private final String GHN_SHOP_ID = "5868452";
 
     @Override
-    public ShippingFee calculateAndSaveShippingFee(Order order) {
-        Address address = order.getShippingAddress();
+    public ShippingFee calculateAndSaveShippingFee(Long userId, Address address) {
+//        DistributionCenter center = distributionCenterRepository.findByUser_Id(userId)
+//                .orElseThrow(() -> new RuntimeException("Không tìm thấy Distribution Center"));
+//
+//        Integer fromDistrictId = center.getDistributor();
+//        String fromWardCode = center.getWard();
 
-        // ✅ Lấy DistributionCenter theo order
-        DistributionCenter center = distributionCenterRepository.findByOrder(order)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy Distribution Center cho đơn hàng"));
-
-        // ✅ Giả sử DistributionCenter có trường district (id) và wardCode
-        Integer fromDistrictId = center.getDistributor(); // hoặc center.getDistrict();
-        String fromWardCode = center.getWard(); // phải là wardCode
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -49,8 +49,8 @@ public class ShippingFeeServiceImpl implements ShippingFeeService {
         headers.set("ShopId", GHN_SHOP_ID);
 
         Map<String, Object> body = new HashMap<>();
-        body.put("from_district_id", fromDistrictId);
-        body.put("from_ward_code", fromWardCode);
+        body.put("from_district_id", 1462);
+        body.put("from_ward_code", "21605");
         body.put("service_id", 53320);
         body.put("service_type_id", 1);
         body.put("to_district_id", address.getDistrictId());
@@ -72,7 +72,6 @@ public class ShippingFeeServiceImpl implements ShippingFeeService {
         JsonNode data = response.getBody().get("data");
 
         ShippingFee shippingFee = ShippingFee.builder()
-                .order(order)
                 .total(data.get("total").asInt())
                 .build();
 

@@ -23,6 +23,10 @@ public class DistributionCenter {
     private DeliveryPartners partner;
 
     @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToOne
     @JoinColumn(name = "order_id")
     private Order order;
 

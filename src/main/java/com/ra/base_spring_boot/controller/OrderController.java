@@ -166,42 +166,10 @@ public class OrderController {
                     .build();
 
             return ResponseEntity.ok(response);
-
-    }
-
-    @PutMapping("/edit/{id}")
-    public ResponseEntity<?> edit(@PathVariable Long id, @RequestBody OrderStatus status) {
-        try {
-            return iOrderRepository.findById(id).<ResponseEntity<?>>map(order -> {
-                order.setStatus(status);
-
-                // Nếu trạng thái chuyển sang DELIVERED thì xử lý trừ kho
-                if (status == OrderStatus.DELIVERED) {
-                    order.getOrderItems().forEach(item -> {
-                        ProductVariant variant = item.getVariant();
-                        Integer currentStock = variant.getStockQuantity();
-                        Integer newStock = currentStock - item.getQuantity();
-
-                        if (newStock < 0) {
-                            throw new RuntimeException("Sản phẩm " + variant.getId() + " không đủ tồn kho.");
-                        }
-
-                        variant.setStockQuantity(newStock);
-                    });
-                }
-
-                // Lưu đơn hàng
-                Order updatedOrder = orderService.save(order);
-                return new ResponseEntity<>(updatedOrder, HttpStatus.OK);
-            }).orElseGet(() ->
-                    new ResponseEntity<>(new DataError("Không tìm thấy đơn hàng", 404), HttpStatus.NOT_FOUND)
-            );
-
-        } catch (Exception e) {
-            return new ResponseEntity<>(new DataError("Lỗi xử lý: " + e.getMessage(), 500), HttpStatus.INTERNAL_SERVER_ERROR);
+        }catch (Exception e) {
+            return new ResponseEntity<>(new DataError(e.getMessage(), 400), HttpStatus.BAD_REQUEST);
         }
     }
-
 
     @DeleteMapping("/admin/order/delete/{id}")
     @Transactional
