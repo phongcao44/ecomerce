@@ -25,7 +25,6 @@ public class PointServiceImpl implements IPointService {
         userPoint.setTotalPoints(userPoint.getTotalPoints() + earnedPoints);
         userPoint.setRankPoints(userPoint.getRankPoints() + earnedPoints);
         userPoint.setUserRank(calculateNewRank(userPoint.getRankPoints()));
-
         pointRepository.save(userPoint);
     }
 
@@ -44,5 +43,7 @@ public class PointServiceImpl implements IPointService {
         else if (rankPoints >= 500) return UserRank.BAC;
         else return UserRank.DONG;
     }
+
+
 }
 
