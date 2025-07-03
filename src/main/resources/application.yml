@@ -42,7 +42,7 @@ jwt:
   secret:
     key: Ascmkkqdnmsdfrtgsyuhidj21ue120938219321ndsad
   expired:
-    access: 864000
+    access: 28800000
 
 open:
   api:
