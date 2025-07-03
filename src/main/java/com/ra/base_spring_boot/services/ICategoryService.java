@@ -25,5 +25,6 @@ public interface ICategoryService {
 
     List<CategoryDetailResponse> getCategoryTree();
 
+    List<CategoryResponse> findAllParents(Long sonId);
 
 }

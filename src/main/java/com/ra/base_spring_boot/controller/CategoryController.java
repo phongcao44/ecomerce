@@ -45,8 +45,11 @@ public class CategoryController {
     //list tìm cha va ong noi
     @GetMapping("/list/son_of_parent/{sonId}")
     public ResponseEntity<?> getson(@PathVariable Long sonId) {
-        Optional<Category> category = categoryRepository.findById(sonId);
-        return new ResponseEntity<>(category, HttpStatus.OK);
+        List<CategoryResponse> parentLine = categoryService.findAllParents(sonId);
+        if (parentLine.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy danh mục con");
+        }
+        return ResponseEntity.ok(parentLine);
     }
         // danh mục con của cha
     @GetMapping("/categories/list/son/{parentId}")

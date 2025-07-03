@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.repository;
 
+import com.ra.base_spring_boot.dto.resp.CategoryResponse;
 import com.ra.base_spring_boot.model.Category;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,5 +21,6 @@ public interface ICategoryRepository extends JpaRepository<Category,Long> {
     List<Category> findByParentIsNull();
 
     boolean existsByName(String name);
+
 
 }

@@ -12,10 +12,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -107,5 +104,25 @@ public class CategoryServiceImpl implements ICategoryService {
         }
 
         return roots;
+    }
+
+    @Override
+    public List<CategoryResponse> findAllParents(Long sonId) {
+        List<CategoryResponse> result = new ArrayList<>();
+        Optional<Category> optional = categoryRepository.findById(sonId);
+
+        while (optional.isPresent()) {
+            Category current = optional.get();
+            result.add(CategoryResponse.builder()
+                    .id(current.getId())
+                    .name(current.getName())
+                    .description(current.getDescription())
+                    .parentId(current.getParent() != null ? current.getParent().getId() : null)
+                    .build());
+
+            optional = Optional.ofNullable(current.getParent());
+        }
+
+        return result;
     }
 }
