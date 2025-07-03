@@ -1,9 +1,19 @@
 package com.ra.base_spring_boot.controller;
 
 import com.ra.base_spring_boot.dto.DataError;
+
 import com.ra.base_spring_boot.dto.req.UpdateOrderStatusRequest;
 import com.ra.base_spring_boot.dto.resp.*;
 import com.ra.base_spring_boot.model.*;
+
+import com.ra.base_spring_boot.dto.resp.AddressResponse;
+import com.ra.base_spring_boot.dto.resp.OrderResponse;
+import com.ra.base_spring_boot.dto.resp.UserResponse;
+import com.ra.base_spring_boot.model.Address;
+import com.ra.base_spring_boot.model.Order;
+import com.ra.base_spring_boot.model.ProductVariant;
+import com.ra.base_spring_boot.model.User;
+
 import com.ra.base_spring_boot.model.constants.OrderStatus;
 import com.ra.base_spring_boot.repository.IOrderItemRepository;
 import com.ra.base_spring_boot.repository.IOrderRepository;
@@ -60,7 +70,9 @@ public class OrderController {
 
             return OrderResponse.builder()
                     .orderId(order.getId())
+
                     .userId(order.getId())
+
                     .createdAt(order.getCreatedAt())
                     .paymentMethod(order.getPaymentMethod())
                     .status(order.getStatus())
@@ -69,6 +81,7 @@ public class OrderController {
                     .build();
         }).collect(Collectors.toList());
         return ResponseEntity.ok(orderResponses);
+
 
     }
 
@@ -153,6 +166,37 @@ public class OrderController {
                     .build();
 
             return ResponseEntity.ok(response);
+
+    }
+
+    @PutMapping("/edit/{id}")
+    public ResponseEntity<?> edit(@PathVariable Long id, @RequestBody OrderStatus status) {
+        try {
+            return iOrderRepository.findById(id).<ResponseEntity<?>>map(order -> {
+                order.setStatus(status);
+
+                // Nếu trạng thái chuyển sang DELIVERED thì xử lý trừ kho
+                if (status == OrderStatus.DELIVERED) {
+                    order.getOrderItems().forEach(item -> {
+                        ProductVariant variant = item.getVariant();
+                        Integer currentStock = variant.getStockQuantity();
+                        Integer newStock = currentStock - item.getQuantity();
+
+                        if (newStock < 0) {
+                            throw new RuntimeException("Sản phẩm " + variant.getId() + " không đủ tồn kho.");
+                        }
+
+                        variant.setStockQuantity(newStock);
+                    });
+                }
+
+                // Lưu đơn hàng
+                Order updatedOrder = orderService.save(order);
+                return new ResponseEntity<>(updatedOrder, HttpStatus.OK);
+            }).orElseGet(() ->
+                    new ResponseEntity<>(new DataError("Không tìm thấy đơn hàng", 404), HttpStatus.NOT_FOUND)
+            );
+
         } catch (Exception e) {
             return new ResponseEntity<>(new DataError("Lỗi xử lý: " + e.getMessage(), 500), HttpStatus.INTERNAL_SERVER_ERROR);
         }

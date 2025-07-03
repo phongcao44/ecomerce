@@ -1,6 +1,7 @@
 package com.ra.base_spring_boot.controller;
 
 import com.ra.base_spring_boot.dto.DataError;
+import com.ra.base_spring_boot.dto.req.AddParentCategoryRequest;
 import com.ra.base_spring_boot.dto.req.CategoryRequest;
 import com.ra.base_spring_boot.dto.resp.CategoryResponse;
 import com.ra.base_spring_boot.model.Category;
@@ -20,14 +21,14 @@ import java.util.Optional;
 
 
 @RestController
-@RequestMapping("/api/v1/categories")
+@RequestMapping("/api/v1")
 public class CategoryController {
     @Autowired
     public ICategoryService categoryService;
     @Autowired
     public ICategoryRepository categoryRepository;
     // list danh mục cha
-    @GetMapping("/list/parent")
+    @GetMapping("/categories/list/parent")
         public ResponseEntity<Page<CategoryResponse>> getCategories(@RequestParam(name = "page",defaultValue = "0") int page,
                                                               @RequestParam(name = "limit",defaultValue = "3") int limit,
                                                               @RequestParam(name = "sortBy",defaultValue = "id") String sortBy,
@@ -47,7 +48,7 @@ public class CategoryController {
         return new ResponseEntity<>(category, HttpStatus.OK);
     }
         // danh mục con của cha
-    @GetMapping("/list/son/{parentId}")
+    @GetMapping("/categories/list/son/{parentId}")
     public ResponseEntity<?> getSubCategories(@PathVariable Long parentId) {
         List<CategoryResponse> children = categoryService.pageablesub(parentId);
         if (children.isEmpty()) {
@@ -59,7 +60,7 @@ public class CategoryController {
     }
 
     //tìm kiếm
-    @GetMapping("/search")
+    @GetMapping("/categories/search")
     //search?keyword=""
     public ResponseEntity<?> searchCategory(@RequestParam("keyword") String keyword){
         List<?> category = categoryService.searchCategory(keyword);
@@ -72,30 +73,9 @@ public class CategoryController {
         return new ResponseEntity<>(category,HttpStatus.OK);
     }
 
-    //add danh mục dùng chung
-    @PostMapping("/add")
-    public ResponseEntity<?> addCategory(@RequestBody CategoryRequest categoryRequest) {
-        Category category = new Category();
-        category.setName(categoryRequest.getName());
-        category.setDescription(categoryRequest.getDescription());
-
-        if (categoryRequest.getParentId() != null) {
-            Optional<Category> parentCategory = categoryRepository.findById(categoryRequest.getParentId());
-            if (parentCategory.isPresent()) {
-                category.setParent(parentCategory.get());
-            } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Danh mục cha không tồn tại");
-            }
-    }else {
-        category.setParent(null);
-    }
-        categoryRepository.save(category);
-        return ResponseEntity.ok("them thanh cong goy");
-    }
-
     //add danh mục dùng rieeng cho con
-    @PostMapping("/add/son/{parentId}")
-    public ResponseEntity<?> addCategorySon(@PathVariable Long parentId,@RequestBody CategoryRequest categoryRequest){
+    @PostMapping("/admin/categories/add/son/{parentId}")
+    public ResponseEntity<?> addCategorySon(@PathVariable Long parentId,@RequestBody AddParentCategoryRequest categoryRequest){
         // Kiểm tra cha có tồn tại không
         Optional<Category> parentCategory = categoryRepository.findById(parentId);
         if (parentCategory.isEmpty()) {
@@ -114,28 +94,27 @@ public class CategoryController {
     }
 
     //add danh muc danh tieng cho cha
-    @PostMapping("/add/parent")
-    public ResponseEntity<?> addCategoryParent(@RequestBody CategoryRequest categoryRequest){
-        if (categoryRequest.getParentId() != null) {
-            return ResponseEntity
-                    .badRequest()
-                    .body("đây là cha xóa parent đê");
-        }
-
+    @PostMapping("/admin/categories/add/parent")
+    public ResponseEntity<?> addCategoryParent(@RequestBody AddParentCategoryRequest addParentCategoryRequestRequest){
         // Tạo danh mục cha
+        if (categoryRepository.existsByName(addParentCategoryRequestRequest.getName())) {
+            throw new IllegalArgumentException("Tên danh mục đã tồn tại");
+        }
         Category category = new Category();
-        category.setName(categoryRequest.getName());
-        category.setDescription(categoryRequest.getDescription());
-        category.setParent(null);
+        category.setName(addParentCategoryRequestRequest.getName());
+        category.setDescription(addParentCategoryRequestRequest.getDescription());
+        category.setParent(null); // danh mục cha
         categoryRepository.save(category);
         return ResponseEntity.ok("Thêm danh mục cha thành công");
     }
 
     //sửa danh mục cha
-    @PutMapping("/edit/parent/{id}")
-    public ResponseEntity<?> updateParentCategory(@PathVariable Long id, @RequestBody CategoryRequest categoryRequest) {
+    @PutMapping("/admin/categories/edit/parent/{id}")
+    public ResponseEntity<?> updateParentCategory(@PathVariable Long id, @RequestBody AddParentCategoryRequest categoryRequest) {
         Optional<Category> categoryOptional = categoryRepository.findById(id);
-
+        if (categoryRepository.existsByName(categoryRequest.getName())) {
+            throw new IllegalArgumentException("Tên danh mục đã tồn tại");
+        }
         if (categoryOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new DataError("Không tìm thấy danh mục cha", 404));
         }
@@ -156,7 +135,7 @@ public class CategoryController {
     }
 
     // sửa con
-    @PutMapping("/edit/son/{id}")
+    @PutMapping("/admin/categories/edit/son/{id}")
     public ResponseEntity<?> updateSubCategory(@PathVariable Long id, @RequestBody CategoryRequest categoryRequest) {
         Optional<Category> categoryOptional = categoryRepository.findById(id);
 
@@ -191,7 +170,7 @@ public class CategoryController {
 
 
     //dele cha
-    @DeleteMapping("/delete/parent/{id}")
+    @DeleteMapping("/admin/categories/delete/parent/{id}")
     public ResponseEntity<?> deleteParentCategory(@PathVariable Long id) {
         Optional<Category> categoryOptional = categoryRepository.findById(id);
 
@@ -219,7 +198,7 @@ public class CategoryController {
     }
 
     //xo con
-    @DeleteMapping("/delete/son/{id}")
+    @DeleteMapping("/admin/categories/delete/son/{id}")
     public ResponseEntity<?> deleteSubCategory(@PathVariable Long id) {
         Optional<Category> categoryOptional = categoryRepository.findById(id);
 

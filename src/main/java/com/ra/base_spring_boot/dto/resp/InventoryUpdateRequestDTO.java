@@ -1,18 +1,18 @@
 package com.ra.base_spring_boot.dto.resp;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 @Builder
+public class InventoryUpdateRequestDTO {
+    private Long variantId;
 
-public class UserResponse {
-    private Long id;
-    private String username;
-    private String email;
-
+    private Integer addedQuantity;
 }

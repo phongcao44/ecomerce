@@ -3,7 +3,6 @@ package com.ra.base_spring_boot.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
@@ -12,7 +11,9 @@ import lombok.*;
 @Builder
 @Table(name = "distribution_Center")
 
+
 public class DistributionCenter {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -36,5 +37,6 @@ public class DistributionCenter {
     private Integer distributor;
 
     private String ward;
+
 
 }

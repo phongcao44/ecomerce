@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.dto.resp;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,4 +31,5 @@ public class OrderDetailResponse {
     private AddressSummary shippingAddress;
     private List<OrderItemDetail> items;
     private VoucherSummary voucher;
+
 }

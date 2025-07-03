@@ -1,18 +1,16 @@
 package com.ra.base_spring_boot.dto.req;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
-@Setter
 @Builder
-public class CategoryRequest {
-   // private Long id;
-
+@Data
+public class SizeRequest {
     private String name;
 
     private String description;
-
-    private Long parentId;
 }

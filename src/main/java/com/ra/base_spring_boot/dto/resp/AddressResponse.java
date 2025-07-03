@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class AddressResponse {
     private Long id;
 
+
     private Long userId;
 
     private String fulladdress;
@@ -23,5 +24,7 @@ public class AddressResponse {
     private String recipient_name;
 
     private String ward;
+
+
 
 }

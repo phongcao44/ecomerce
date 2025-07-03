@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1/color")
+@RequestMapping("/api/v1")
 public class ColorController {
     @Autowired
     private ColorServiceImpl colorService;
@@ -23,11 +23,11 @@ public class ColorController {
     @Autowired
     private RestTemplate restTemplate;
 
-    @GetMapping("/list")
+    @GetMapping("/color/list")
     public List<Color> list() {
        return iColorRepository.findAll();
     }
-    @PostMapping("/add")
+    @PostMapping("/admin/color/add")
     public ResponseEntity<?> add(@RequestBody Color color) {
         if(color == null ||
                 color.getName() == null ||
@@ -37,7 +37,7 @@ public class ColorController {
         Color savedColor = colorService.save(color);
         return ResponseEntity.ok(savedColor);
     }
-    @PutMapping("/edit/{colorId}")
+    @PutMapping("/admin/color/edit/{colorId}")
     public ResponseEntity<?> edit(@PathVariable Long colorId,@RequestBody Color newcolor) {
         //kiem tra id
         Optional<Color> colorcheck = iColorRepository.findById(colorId);
@@ -71,7 +71,7 @@ public class ColorController {
     // https://www.thecolorapi.com (api mã màu)
     // https://www.thecolorapi.com/form-id
     // https://www.thecolorapi.com/id?hex="mã màu"
-    @PostMapping("/autoadd")
+    @PostMapping("/admin/color/autoadd")
     public ResponseEntity<?> autoadd(@RequestBody ColorRequest color) {
         if (color == null || color.getHexCode() == null) {
             return ResponseEntity.badRequest().body("Cần cung cấp mã màu (hexCode)");

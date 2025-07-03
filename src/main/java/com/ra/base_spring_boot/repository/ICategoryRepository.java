@@ -16,4 +16,7 @@ public interface ICategoryRepository extends JpaRepository<Category,Long> {
     List<Category> findCategoriesByNameContainingIgnoreCase(String keyword);
 
     List<Category> findByParent(Category parent);
+
+    boolean existsByName(String name);
+
 }
