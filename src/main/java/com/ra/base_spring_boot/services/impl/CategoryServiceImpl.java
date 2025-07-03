@@ -1,6 +1,7 @@
 package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.resp.CategoryDetailResponse;
+import com.ra.base_spring_boot.dto.resp.CategoryFlatResponse;
 import com.ra.base_spring_boot.dto.resp.CategoryResponse;
 import com.ra.base_spring_boot.dto.resp.SearchCategoryRespone;
 import com.ra.base_spring_boot.model.Category;
@@ -126,6 +127,36 @@ public class CategoryServiceImpl implements ICategoryService {
 
         return result;
     }
+
+    @Override
+    public List<CategoryFlatResponse> getFlattenCategoryList() {
+        List<Category> allCategories = categoryRepository.findAll();
+        List<CategoryFlatResponse> flatList = new ArrayList<>();
+
+        for (Category category : allCategories) {
+            int level = 1;
+            Category current = category.getParent();
+            while (current != null) {
+                level++;
+                current = current.getParent();
+            }
+
+            flatList.add(CategoryFlatResponse.builder()
+                    .id(category.getId())
+                    .name(category.getName())
+                    .description(category.getDescription())
+                    .level(level)
+                    .parentId(category.getParent() != null ? category.getParent().getId() : null)
+                    .parentName(category.getParent() != null ? category.getParent().getName() : null)
+                    .build());
+        }
+
+        // Sắp xếp theo level (nếu cần)
+        flatList.sort(Comparator.comparingInt(CategoryFlatResponse::getLevel));
+
+        return flatList;
+    }
+
     public int getCategoryLevel(Category category) {
         int level = 1;
         Category current = category;

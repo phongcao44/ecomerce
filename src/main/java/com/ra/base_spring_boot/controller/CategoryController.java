@@ -249,4 +249,10 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.getCategoryTree());
     }
 
+    @GetMapping("/categories/flat")
+    public ResponseEntity<?> getFlatCategoryList() {
+        return ResponseEntity.ok(categoryService.getFlattenCategoryList());
+    }
+
+
 }
