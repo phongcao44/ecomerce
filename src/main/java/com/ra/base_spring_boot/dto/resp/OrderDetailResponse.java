@@ -1,31 +1,35 @@
 package com.ra.base_spring_boot.dto.resp;
 
-import com.ra.base_spring_boot.model.constants.OrderStatus;
-import com.ra.base_spring_boot.model.constants.PaymentMethod;
-import lombok.*;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
+@Data
 @Builder
 public class OrderDetailResponse {
     private Long orderId;
-
-    private PaymentMethod paymentMethod;
-
+    private String status;
+    private String paymentStatus;
+    private String paymentMethod;
+    private String fulfillmentStatus;
     private LocalDateTime createdAt;
 
-    private OrderStatus status;
-
+    private BigDecimal subTotal;
+    private BigDecimal discountAmount;
+    private BigDecimal shippingFee;
     private BigDecimal totalAmount;
 
-    private UserResponse userId;
-
-    private AddressResponse  shippingAddress;
-
+    private UserResponse customer;
+    private AddressSummary shippingAddress;
+    private List<OrderItemDetail> items;
+    private VoucherSummary voucher;
 
 }

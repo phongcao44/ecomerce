@@ -41,7 +41,12 @@ public class CategoryController {
         Page<CategoryResponse> categoryPage = categoryService.pageable(pageable);
         return new ResponseEntity<>(categoryPage, HttpStatus.OK);
         }
-
+    //list tìm cha va ong noi
+    @GetMapping("/list/son_of_parent/{sonId}")
+    public ResponseEntity<?> getson(@PathVariable Long sonId) {
+        Optional<Category> category = categoryRepository.findById(sonId);
+        return new ResponseEntity<>(category, HttpStatus.OK);
+    }
         // danh mục con của cha
     @GetMapping("/categories/list/son/{parentId}")
     public ResponseEntity<?> getSubCategories(@PathVariable Long parentId) {

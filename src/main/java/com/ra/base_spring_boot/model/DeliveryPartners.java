@@ -4,6 +4,7 @@ import com.ra.base_spring_boot.model.constants.DeliveryPartnersStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -13,8 +14,9 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 @Table(name = "delivery_partners")
-public class DeliveryPartners {
 
+
+public class DeliveryPartners {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,4 +34,5 @@ public class DeliveryPartners {
     private DeliveryPartnersStatus status;
 
     private LocalDateTime createdAt;
+
 }

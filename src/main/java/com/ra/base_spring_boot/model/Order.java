@@ -45,6 +45,7 @@ public class Order {
     @JoinColumn(name = "shipping_address_id")
     private Address shippingAddress;
 
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> orderItems;
 

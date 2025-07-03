@@ -5,14 +5,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Builder
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
-@Builder
-
-public class UserResponse {
+public class ProductImageDTO {
     private Long id;
-    private String username;
-    private String email;
-
+    private String image_url;
+    private Boolean is_main;
+    private Long variant_id;
 }
