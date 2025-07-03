@@ -1,7 +1,9 @@
 package com.ra.base_spring_boot.controller;
 
 import com.ra.base_spring_boot.dto.DataError;
+import com.ra.base_spring_boot.dto.req.UpdateOrderStatusRequest;
 import com.ra.base_spring_boot.dto.resp.AddressResponse;
+import com.ra.base_spring_boot.dto.resp.OrderItemDetailDTO;
 import com.ra.base_spring_boot.dto.resp.OrderResponse;
 import com.ra.base_spring_boot.dto.resp.UserResponse;
 import com.ra.base_spring_boot.model.Address;
@@ -35,7 +37,7 @@ public class OrderController {
     @Autowired
     private IOrderItemRepository iOrderItemRepository;
 
-    @GetMapping("/order/list")
+    @GetMapping("/admin/order/list")
     public ResponseEntity<?> findAll() {
         List<Order> orderEntities = iOrderRepository.findAll();
         if (orderEntities.isEmpty()) {
@@ -74,37 +76,93 @@ public class OrderController {
         return ResponseEntity.ok(orderResponses);
     }
 
-    @PutMapping("/order/edit/{id}")
-    public ResponseEntity<?> edit(@PathVariable Long id, @RequestBody OrderStatus status) {
+    @PutMapping("/admin/order/edit/{id}")
+    @Transactional
+    public ResponseEntity<?> edit(@PathVariable Long id,
+                                  @RequestBody UpdateOrderStatusRequest request) {
         try {
-            return iOrderRepository.findById(id).<ResponseEntity<?>>map(order -> {
-                order.setStatus(status);
+            Optional<Order> optionalOrder = iOrderRepository.findById(id);
+            if (optionalOrder.isEmpty()) {
+                return new ResponseEntity<>(new DataError("Không tìm thấy đơn hàng", 404), HttpStatus.NOT_FOUND);
+            }
 
-                // Nếu trạng thái chuyển sang DELIVERED thì xử lý trừ kho
-                if (status == OrderStatus.DELIVERED) {
-                    order.getOrderItems().forEach(item -> {
-                        ProductVariant variant = item.getVariant();
-                        Integer currentStock = variant.getStockQuantity();
-                        Integer newStock = currentStock - item.getQuantity();
+            Order order = optionalOrder.get();
+            OrderStatus status = request.getStatus();
+            OrderStatus currentStatus = order.getStatus();
 
-                        if (newStock < 0) {
-                            throw new RuntimeException("Sản phẩm " + variant.getId() + " không đủ tồn kho.");
-                        }
+            // Kiểm tra trạng thái hợp lệ
+            if (currentStatus == OrderStatus.DELIVERED &&
+                    status != OrderStatus.RETURNED &&
+                    status != OrderStatus.CANCELLED) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new DataError("Đơn hàng đã giao chỉ được đổi sang RETURNED hoặc CANCELLED", 400));
+            }
 
-                        variant.setStockQuantity(newStock);
-                    });
+            // Cập nhật trạng thái
+            order.setStatus(status);
+
+            // Nếu chuyển sang DELIVERED → trừ kho
+            if (status == OrderStatus.DELIVERED) {
+                for (var item : order.getOrderItems()) {
+                    ProductVariant variant = item.getVariant();
+                    int currentStock = variant.getStockQuantity();
+                    int newStock = currentStock - item.getQuantity();
+
+                    if (newStock < 0) {
+                        throw new RuntimeException("Sản phẩm " + variant.getId() + " không đủ tồn kho.");
+                    }
+
+                    variant.setStockQuantity(newStock);
                 }
+            }
 
-                // Lưu đơn hàng
-                Order updatedOrder = orderService.save(order);
-                return new ResponseEntity<>(updatedOrder, HttpStatus.OK);
-            }).orElseGet(() ->
-                    new ResponseEntity<>(new DataError("Không tìm thấy đơn hàng", 404), HttpStatus.NOT_FOUND)
-            );
+            // Lưu lại đơn hàng
+            Order updatedOrder = orderService.save(order);
+
+            // UserResponse
+            User user = updatedOrder.getUser();
+            UserResponse userDto = UserResponse.builder()
+                    .id(user.getId())
+                    .username(user.getUsername())
+                    .email(user.getEmail())
+                    .build();
+
+            // AddressResponse
+            Address address = updatedOrder.getShippingAddress();
+            AddressResponse addressResponse = AddressResponse.builder()
+                    .id(address.getId())
+                    .userId(address.getUser().getId())
+                    .fulladdress(address.getFullAddress())
+                    .phone(address.getPhone())
+                    .province(address.getProvince())
+                    .recipient_name(address.getRecipientName())
+                    .ward(address.getWard())
+                    .build();
+
+            // Danh sách sản phẩm (OrderItemDetailDTO)
+            List<OrderItemDetailDTO> orderItemDetailResponses = updatedOrder.getOrderItems().stream()
+                    .map(OrderItemDetailDTO::fromOrderItem)
+                    .collect(Collectors.toList());
+
+            // Trả về OrderResponse
+            OrderResponse response = OrderResponse.builder()
+                    .orderId(updatedOrder.getId())
+                    .userId(user.getId())
+                    .createdAt(updatedOrder.getCreatedAt())
+                    .paymentMethod(updatedOrder.getPaymentMethod())
+                    .status(updatedOrder.getStatus())
+                    .totalAmount(updatedOrder.getTotalAmount())
+                    .shippingAddress(addressResponse)
+                    .orderItems(orderItemDetailResponses)
+                    .build();
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return new ResponseEntity<>(new DataError("Lỗi xử lý: " + e.getMessage(), 500), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 
     @DeleteMapping("/order/delete/{id}")
     @Transactional
@@ -125,19 +183,47 @@ public class OrderController {
                                          @AuthenticationPrincipal MyUserDetails userDetails) {
         Long userId = userDetails.getUser().getId();
 
-        List<Order> orders;
-        if (status != null) {
-            orders = orderService.findByUserIdAndStatus(userId, status);
-        } else {
-            orders = orderService.findByUserId(userId);
-        }
+        List<Order> orders = (status != null)
+                ? orderService.findByUserIdAndStatus(userId, status)
+                : orderService.findByUserId(userId);
 
         if (orders.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Bạn chưa có đơn hàng nào.");
         }
-        return ResponseEntity.ok(orders);
-    }
 
+        List<OrderResponse> responses = orders.stream().map(order -> {
+            User user = order.getUser();
+            Address address = order.getShippingAddress();
+
+            UserResponse userDto = UserResponse.builder()
+                    .id(user.getId())
+                    .username(user.getUsername())
+                    .email(user.getEmail())
+                    .build();
+
+            AddressResponse addressResponse = AddressResponse.builder()
+                    .id(address.getId())
+                    .userId(address.getUser().getId())
+                    .fulladdress(address.getFullAddress())
+                    .phone(address.getPhone())
+                    .province(address.getProvince())
+                    .recipient_name(address.getRecipientName())
+                    .ward(address.getWard())
+                    .build();
+
+            return OrderResponse.builder()
+                    .orderId(order.getId())
+                    .userId(user.getId())
+                    .createdAt(order.getCreatedAt())
+                    .paymentMethod(order.getPaymentMethod())
+                    .status(order.getStatus())
+                    .totalAmount(order.getTotalAmount())
+                    .shippingAddress(addressResponse)
+                    .build();
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(responses);
+    }
 
     @GetMapping("/admin/order/rate/cancelled_and_returned")
     public ResponseEntity<Map<String, Double>> getRate() {

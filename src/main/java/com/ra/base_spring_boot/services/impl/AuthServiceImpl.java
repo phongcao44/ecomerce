@@ -63,10 +63,6 @@ public class AuthServiceImpl implements IAuthService
             throw new IllegalArgumentException("Email phải kết thúc bằng @gmail.com");
         }
 
-        String email = formRegister.getEmail();
-        if (!email.toLowerCase().endsWith("@gmail.com")) {
-            throw new HttpBadRequest("Invalid email format");
-        }
         Set<Role> roles = new HashSet<>();
         roles.add(roleService.findByRoleName(RoleName.ROLE_USER));
         LocalDateTime now = LocalDateTime.now();
