@@ -8,6 +8,7 @@ import lombok.*;
 @Setter
 @Builder
 public class CategoryResponse {
+    private Integer level;
 
     private Long id;
 

@@ -118,11 +118,23 @@ public class CategoryServiceImpl implements ICategoryService {
                     .name(current.getName())
                     .description(current.getDescription())
                     .parentId(current.getParent() != null ? current.getParent().getId() : null)
+                    .level(getCategoryLevel(current))
                     .build());
 
             optional = Optional.ofNullable(current.getParent());
         }
 
         return result;
+    }
+    public int getCategoryLevel(Category category) {
+        int level = 1;
+        Category current = category;
+
+        while (current.getParent() != null) {
+            level++;
+            current = current.getParent();
+        }
+
+        return level;
     }
 }

@@ -77,6 +77,28 @@ public class CategoryController {
         return new ResponseEntity<>(category,HttpStatus.OK);
     }
 
+    //add danh mục dùng chung
+    @PostMapping("/add")
+    public ResponseEntity<?> addCategory(@RequestBody CategoryRequest categoryRequest) {
+        Category category = new Category();
+        category.setName(categoryRequest.getName());
+        category.setDescription(categoryRequest.getDescription());
+
+        if (categoryRequest.getParentId() != null) {
+            Optional<Category> parentCategory = categoryRepository.findById(categoryRequest.getParentId());
+            if (parentCategory.isPresent()) {
+                category.setParent(parentCategory.get());
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Danh mục cha không tồn tại");
+            }
+        }else {
+            category.setParent(null);
+        }
+        categoryRepository.save(category);
+        return ResponseEntity.ok("them thanh cong goy");
+    }
+
+
     //add danh mục dùng rieeng cho con
     @PostMapping("/admin/categories/add/son/{parentId}")
     public ResponseEntity<?> addCategorySon(@PathVariable Long parentId,@RequestBody AddParentCategoryRequest categoryRequest){
