@@ -7,12 +7,8 @@ import lombok.*;
 @Getter
 @Setter
 @Builder
-public class CategoryRequest {
-   // private Long id;
-
+public class AddParentCategoryRequest {
     private String name;
 
     private String description;
-
-    private Long parentId;
 }
