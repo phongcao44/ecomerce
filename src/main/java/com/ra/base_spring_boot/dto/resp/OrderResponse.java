@@ -7,6 +7,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 public class OrderResponse {
     private Long orderId;
 
-    private UserResponse userId;
+    private Long userId;
 
     private PaymentMethod paymentMethod;
 
@@ -27,5 +28,7 @@ public class OrderResponse {
     private OrderStatus status;
 
     private BigDecimal totalAmount;
+
+    private List<OrderItemDetailDTO> orderItems;
 
 }
