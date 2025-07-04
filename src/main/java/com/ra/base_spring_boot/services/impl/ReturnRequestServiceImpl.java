@@ -1,0 +1,128 @@
+package com.ra.base_spring_boot.services.impl;
+
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import com.ra.base_spring_boot.dto.req.ReturnRequestDTO;
+import com.ra.base_spring_boot.dto.resp.ReturnRequestResponseDTO;
+import com.ra.base_spring_boot.exception.HttpBadRequest;
+import com.ra.base_spring_boot.exception.HttpNotFound;
+import com.ra.base_spring_boot.model.Order;
+import com.ra.base_spring_boot.model.ReturnRequest;
+import com.ra.base_spring_boot.model.constants.OrderStatus;
+import com.ra.base_spring_boot.model.constants.ReturnStatus;
+import com.ra.base_spring_boot.repository.IOrderRepository;
+import com.ra.base_spring_boot.model.User;
+import com.ra.base_spring_boot.repository.IReturnRequestRepository;
+import com.ra.base_spring_boot.services.IReturnRequestService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+@Service
+@RequiredArgsConstructor
+public class ReturnRequestServiceImpl implements IReturnRequestService {
+
+    private final IReturnRequestRepository returnRequestRepository;
+
+    private final IOrderRepository orderRepository;
+
+    private final Cloudinary cloudinary;
+
+    private String uploadMedia(MultipartFile file) {
+        try {
+            Map uploadResult = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", "returns",
+                            "resource_type", "auto" // Cho phép cả ảnh và video
+                    )
+            );
+            return (String) uploadResult.get("secure_url");
+        } catch (IOException e) {
+            throw new RuntimeException("Upload media failed", e);
+        }
+    }
+
+    @Override
+    public ReturnRequestResponseDTO create(ReturnRequestDTO dto, User user) {
+        Order order = orderRepository.findById(dto.getOrderId())
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy đơn hàng"));
+
+        if (!order.getUser().getId().equals(user.getId())) {
+            throw new HttpBadRequest("Bạn không có quyền gửi yêu cầu cho đơn này");
+        }
+
+        if (dto.getMedia() == null || dto.getMedia().isEmpty()) {
+            throw new HttpBadRequest("Vui lòng chọn ảnh/video minh chứng");
+        }
+
+        if (order.getStatus() != OrderStatus.DELIVERED) {
+            throw new HttpBadRequest("Chỉ có thể yêu cầu trả hàng với đơn đã giao");
+        }
+
+        String mediaUrl = uploadMedia(dto.getMedia());
+
+        ReturnRequest request = ReturnRequest.builder()
+                .user(user)
+                .order(order)
+                .reason(dto.getReason())
+                .mediaUrl(mediaUrl)
+                .status(ReturnStatus.PENDING)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        returnRequestRepository.save(request);
+
+        return ReturnRequestResponseDTO.builder()
+                .id(request.getId())
+                .orderId(order.getId())
+                .reason(request.getReason())
+                .mediaUrl(request.getMediaUrl())
+                .status(request.getStatus())
+                .createdAt(request.getCreatedAt())
+                .build();
+    }
+
+    @Override
+    public List<ReturnRequestResponseDTO> getByUser(User user) {
+        List<ReturnRequest> requests = returnRequestRepository.findByUserId(user.getId());
+        if (requests.isEmpty()) {
+            throw new HttpNotFound("Không có yêu cầu đổi/trả nào");
+        }
+
+        return requests.stream()
+                .map(r -> ReturnRequestResponseDTO.builder()
+                        .id(r.getId())
+                        .orderId(r.getOrder().getId())
+                        .reason(r.getReason())
+                        .mediaUrl(r.getMediaUrl())
+                        .status(r.getStatus())
+                        .createdAt(r.getCreatedAt())
+                        .build())
+                .toList();
+    }
+
+    @Override
+    public ReturnRequestResponseDTO getById(Long id, User user) {
+        ReturnRequest returned = returnRequestRepository.findById(id)
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy yêu cầu"));
+
+        if (!returned.getUser().getId().equals(user.getId())) {
+            throw new HttpBadRequest("Không có quyền truy cập");
+        }
+
+        return ReturnRequestResponseDTO.builder()
+                .id(returned.getId())
+                .orderId(returned.getOrder().getId())
+                .reason(returned.getReason())
+                .mediaUrl(returned.getMediaUrl())
+                .status(returned.getStatus())
+                .createdAt(returned.getCreatedAt())
+                .build();
+    }
+}
