@@ -9,7 +9,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 public interface IBannerService {
-    Banner update(Integer id, String title, String position, Boolean status, MultipartFile image);
+    Banner update(Integer id, String title, String position, Boolean status, OffsetDateTime startTime, OffsetDateTime  endTime, MultipartFile image);
     Banner create(String title, String position, Boolean status, OffsetDateTime startTime, OffsetDateTime  endTime, MultipartFile image);
     void delete(Integer id);
     List<Banner> getAll();

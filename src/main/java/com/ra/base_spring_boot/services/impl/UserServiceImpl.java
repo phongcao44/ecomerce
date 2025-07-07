@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -155,4 +156,40 @@ public class UserServiceImpl implements IUserService {
     public User findUser(long userId) {
         return userRepository.findById(userId).orElse(null);
     }
+    public void processOAuthPostLogin(String email, String name) {
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+        if (optionalUser.isEmpty()) {
+            User newUser = new User();
+            newUser.setEmail(email);
+            newUser.setUsername(name);
+            userRepository.save(newUser);
+        }
+    }
+    @Override
+    public User findOrCreate(String email, String name) {
+        Role defaultRole = iRoleRepository.findByName(RoleName.ROLE_USER)
+                .orElseThrow(() -> new RuntimeException("Default role not found"));
+        System.out.println(">>> Calling findOrCreate with: " + email + ", " + name);
+
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        if (existingUser.isPresent()) {
+            System.out.println("User exists: " + email);
+            return existingUser.get();
+        }
+
+        System.out.println("Creating new user: " + email);
+        User user = new User();
+        user.setEmail(email);
+        user.setUsername(name);
+        user.setRoles(Set.of(defaultRole));
+        user.setStatus(UserStatus.ACTIVE);
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+        User savedUser = userRepository.save(user);
+        System.out.println("Saved user ID: " + savedUser.getId());
+
+        return userRepository.save(user);
+    }
+
+
 }

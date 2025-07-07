@@ -64,7 +64,7 @@ public class BannerServiceImpl implements IBannerService {
                 .title(title)
                 .position(position)
                 .status(status)
-                .startAt(startTime)          // <- Cần thêm dòng này
+                .startAt(startTime)
                 .endAt(endTime)
                 .bannerUrl((String) uploadResult.get("secure_url"))
                 .publicId((String) uploadResult.get("public_id"))
@@ -77,7 +77,7 @@ public class BannerServiceImpl implements IBannerService {
     }
 
     @Override
-    public Banner update(Integer id, String title, String position, Boolean status, MultipartFile image) {
+    public Banner update(Integer id, String title, String position, Boolean status, OffsetDateTime startTime, OffsetDateTime  endTime, MultipartFile image) {
         Banner existing = getById(id);
 
         if (image != null && !image.isEmpty()) {
@@ -93,6 +93,8 @@ public class BannerServiceImpl implements IBannerService {
         //Cập nhật các trường khác
         existing.setTitle(title);
         existing.setPosition(position);
+        existing.setStatus(status);
+        existing.setEndAt(endTime);
         existing.setStatus(status);
 
         return bannerRepository.save(existing);

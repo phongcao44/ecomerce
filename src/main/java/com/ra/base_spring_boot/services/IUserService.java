@@ -15,4 +15,6 @@ public interface IUserService {
     void addRole(long userId, long roleId);
     void changeStatus(Long userId,String status);
     void deleteRole(long userId,long roleId);
+    void processOAuthPostLogin(String email, String name);
+    User findOrCreate(String email, String name);
 }

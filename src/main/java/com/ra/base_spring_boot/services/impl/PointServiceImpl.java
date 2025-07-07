@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.services.impl;
 
+import com.ra.base_spring_boot.dto.resp.UserPointResponse;
 import com.ra.base_spring_boot.model.Order;
 import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.model.UserPoint;
@@ -9,12 +10,14 @@ import com.ra.base_spring_boot.services.IPointService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 
 public class PointServiceImpl implements IPointService {
     private final IPointRepository pointRepository;
     public PointServiceImpl(IPointRepository pointRepository) {
         this.pointRepository = pointRepository;
     }
+
     public void accumulatePoints(Order order) {
         User user = order.getUser();
         UserPoint userPoint = pointRepository.findByUser(user);
@@ -45,5 +48,21 @@ public class PointServiceImpl implements IPointService {
     }
 
 
+    @Override
+    public UserPointResponse getUserPoints(Long userId) {
+        User user = pointRepository.findById(userId).orElseThrow(null).getUser();
+        UserPoint userPoint = pointRepository.findByUser(user);
+        UserPointResponse userPointResponse = new UserPointResponse();
+        userPointResponse.setUserId(userId);
+        userPointResponse.setUserPoints(userPoint.getTotalPoints());
+        userPointResponse.setUserRank(userPoint.getUserRank());
+        userPointResponse.setRankPoints(userPoint.getRankPoints());
+        return userPointResponse;
+    }
+
+    @Override
+    public List<UserPointResponse> getAllUserRank(Long orderId) {
+        return List.of();
+    }
 }
 

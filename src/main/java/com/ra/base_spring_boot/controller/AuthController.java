@@ -4,6 +4,7 @@ import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.*;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.IAuthService;
+import com.ra.base_spring_boot.services.impl.FacebookAuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.Map;
 
 @RestController
@@ -131,5 +133,12 @@ public class AuthController {
                         .data("Password changed successfully")
                         .build()
         );
+    }
+    private final FacebookAuthService facebookAuthService;
+
+    @PostMapping("/facebook")
+    public ResponseEntity<?> loginWithFacebook(@RequestBody FacebookLoginRequest request) {
+        String jwt = facebookAuthService.loginWithFacebook(request.getAccessToken());
+        return ResponseEntity.ok(Collections.singletonMap("token", jwt));
     }
 }

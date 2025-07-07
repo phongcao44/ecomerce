@@ -32,12 +32,9 @@ BannerRequest request
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Banner> updateBanner(
             @PathVariable Integer id,
-            @RequestParam String title,
-            @RequestParam String position,
-            @RequestParam Boolean status,
-            @RequestParam(value = "image", required = false) MultipartFile image
+            BannerRequest request
     ) {
-        return ResponseEntity.ok(iBannerService.update(id, title, position, status, image));
+        return ResponseEntity.ok(iBannerService.update(id,request.getTitle(), request.getPosition(),request.isStatus(), request.getStartAt(),request.getEndAt(),request.getImage()));
     }
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteBanner(@PathVariable Integer id) {
