@@ -13,6 +13,7 @@ public class AddressSummary {
     private Long id;
     private String fulladdress;
     private String province;
+    private String district;
     private String ward;
     private String recipient_name;
     private String phone;

@@ -10,11 +10,11 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 public class AddressRequest {
-
-    private int provinceId;
-    private String wardId;
-    private int districtId;
-    private String phone;
     private String recipientName;
+
+    private String phone;
     private String fullAddress;
+    private String province;  // Tên tỉnh
+    private String district;  // Tên quận
+    private String ward;      // Tên phường
 }

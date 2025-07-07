@@ -1,7 +1,11 @@
 package com.ra.base_spring_boot.controller;
 
+import com.itextpdf.text.*;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.pdf.PdfWriter;
 import com.ra.base_spring_boot.dto.DataError;
 
+import com.ra.base_spring_boot.dto.req.AddressRequest;
 import com.ra.base_spring_boot.dto.req.UpdateOrderStatusRequest;
 import com.ra.base_spring_boot.dto.resp.*;
 import com.ra.base_spring_boot.model.*;
@@ -13,12 +17,13 @@ import com.ra.base_spring_boot.model.Address;
 import com.ra.base_spring_boot.model.Order;
 import com.ra.base_spring_boot.model.ProductVariant;
 import com.ra.base_spring_boot.model.User;
-
 import com.ra.base_spring_boot.model.constants.OrderStatus;
 import com.ra.base_spring_boot.repository.IOrderItemRepository;
 import com.ra.base_spring_boot.repository.IOrderRepository;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.IOrderService;
+import com.ra.base_spring_boot.services.ghn.GhnClient;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -27,6 +32,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.awt.*;
+
+import java.awt.Image;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +49,8 @@ public class OrderController {
     private IOrderRepository iOrderRepository;
     @Autowired
     private IOrderItemRepository iOrderItemRepository;
+    @Autowired
+    private GhnClient ghnClient;
 
     @GetMapping("/admin/order/list")
     public ResponseEntity<?> findAll() {
@@ -208,7 +218,8 @@ public class OrderController {
                 .id(addr.getId())
                 .fulladdress(addr.getFullAddress())
                 .province(addr.getProvince())
-                .ward(addr.getWard())
+                .district(addr.getDistrict())
+                .ward(addr.getWardCode())
                 .recipient_name(addr.getRecipientName())
                 .phone(addr.getPhone())
                 .build();
@@ -316,6 +327,7 @@ public class OrderController {
                 .id(addr.getId())
                 .fulladdress(addr.getFullAddress())
                 .province(addr.getProvince())
+                .district(addr.getDistrict())
                 .ward(addr.getWard())
                 .recipient_name(addr.getRecipientName())
                 .phone(addr.getPhone())
@@ -394,6 +406,53 @@ public class OrderController {
 
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/order/pdf/{id}")
+    public void exportShippingLabel(@PathVariable Long id, HttpServletResponse response) throws Exception {
+        // Lấy dữ liệu đơn hàng từ DB hoặc API (ở đây bạn đã có JSON mẫu)
+        OrderDetailResponse order = orderService.getOrderDetail(id); // Tự tạo DTO từ API
+
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition", "inline; filename=order_" + id + ".pdf");
+
+        Document document = new Document(PageSize.A6.rotate(), 10, 10, 10, 10); // A6 ngang
+        PdfWriter writer = PdfWriter.getInstance(document, response.getOutputStream());
+        document.open();
+
+        Font fontNormal = FontFactory.getFont(FontFactory.HELVETICA, 9);
+        Font fontBold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11);
+
+        // 1. Header: Shop Name
+        document.add(new Paragraph("Shop: Ecommer", fontBold));
+
+        // 2. Người nhận
+        document.add(new Paragraph("Người nhận: " + order.getShippingAddress().getRecipient_name(), fontBold));
+        document.add(new Paragraph("SĐT: " + order.getShippingAddress().getPhone(), fontNormal));
+        document.add(new Paragraph("Địa chỉ: " + order.getShippingAddress().getFulladdress(), fontNormal));
+        document.add(new Paragraph("Phường/Xã: " + order.getShippingAddress().getWard(), fontNormal));
+        document.add(new Paragraph("Quận/huyện: " + order.getShippingAddress().getDistrict(), fontNormal));
+        document.add(new Paragraph("Tỉnh/Thành: " + order.getShippingAddress().getProvince(), fontNormal));
+      //  document.add(new Paragraph("Thành phố: Hồ Chí Minh", fontNormal)); // Nếu cố định
+
+        document.add(Chunk.NEWLINE);
+
+        // 3. Thông tin đơn
+        document.add(new Paragraph("mã-đơn:" + id, fontNormal));
+        //document.add(new Paragraph("Khối luợng tạm tính: 0.30 KG", fontNormal));
+        document.add(new Paragraph("phuong thuc thanh toan: " + order.getPaymentMethod(), fontNormal));
+
+        document.add(Chunk.NEWLINE);
+
+//        // 4. QR Code
+//        BarcodeQRCode qr = new BarcodeQRCode("Mã đơn: " + id, 100, 100, null);
+//        Image qrImage = qr.getImage();
+//        qrImage.scaleAbsolute(60, 60);
+//        qrImage.setAlignment(Image.ALIGN_RIGHT);
+//        document.add(qrImage);
+
+        document.close();
+    }
+
 }
 
 
