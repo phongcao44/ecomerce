@@ -2,6 +2,9 @@ package com.ra.base_spring_boot.controller;
 
 import com.itextpdf.text.*;
 import com.itextpdf.text.Font;
+import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.ra.base_spring_boot.dto.DataError;
 
@@ -415,33 +418,94 @@ public class OrderController {
         response.setContentType("application/pdf");
         response.setHeader("Content-Disposition", "inline; filename=order_" + id + ".pdf");
 
-        Document document = new Document(PageSize.A6.rotate(), 10, 10, 10, 10); // A6 ngang
-        PdfWriter writer = PdfWriter.getInstance(document, response.getOutputStream());
+//        Document document = new Document(PageSize.A6.rotate(), 10, 10, 20, 20);
+//        PdfWriter writer = PdfWriter.getInstance(document, response.getOutputStream());
+//        document.open();
+        Rectangle rectangle = new Rectangle(200, 300); // Rộng 400, cao 250 điểm
+        Document document = new Document(rectangle, 10, 10, 10, 10);
+        PdfWriter.getInstance(document, response.getOutputStream());
         document.open();
 
-        Font fontNormal = FontFactory.getFont(FontFactory.HELVETICA, 9);
-        Font fontBold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11);
+        Font fontNormal = FontFactory.getFont(FontFactory.HELVETICA, 4);
+        Font fontBold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
 
         // 1. Header: Shop Name
         document.add(new Paragraph("Shop: Ecommer", fontBold));
+        //document.add(Chunk.NEWLINE);
+
 
         // 2. Người nhận
-        document.add(new Paragraph("Người nhận: " + order.getShippingAddress().getRecipient_name(), fontBold));
-        document.add(new Paragraph("SĐT: " + order.getShippingAddress().getPhone(), fontNormal));
-        document.add(new Paragraph("Địa chỉ: " + order.getShippingAddress().getFulladdress(), fontNormal));
-        document.add(new Paragraph("Phường/Xã: " + order.getShippingAddress().getWard(), fontNormal));
-        document.add(new Paragraph("Quận/huyện: " + order.getShippingAddress().getDistrict(), fontNormal));
-        document.add(new Paragraph("Tỉnh/Thành: " + order.getShippingAddress().getProvince(), fontNormal));
-      //  document.add(new Paragraph("Thành phố: Hồ Chí Minh", fontNormal)); // Nếu cố định
+        PdfPTable infoTable = new PdfPTable(2);
+        infoTable.setWidthPercentage(100);
+        infoTable.setSpacingBefore(5f);
+        infoTable.setSpacingAfter(1f);
 
-        document.add(Chunk.NEWLINE);
+        infoTable.addCell(new Phrase("Người nhận", fontNormal));
+        infoTable.addCell(new Phrase(order.getShippingAddress().getRecipient_name(), fontNormal));
+
+        infoTable.addCell(new Phrase("SĐT", fontNormal));
+        infoTable.addCell(new Phrase(order.getShippingAddress().getPhone(), fontNormal));
+
+        infoTable.addCell(new Phrase("Địa chỉ", fontNormal));
+        infoTable.addCell(new Phrase(order.getShippingAddress().getFulladdress(), fontNormal));
+
+        infoTable.addCell(new Phrase("Phường/Xã", fontNormal));
+        infoTable.addCell(new Phrase(order.getShippingAddress().getWard(), fontNormal));
+
+        infoTable.addCell(new Phrase("Quận/Huyện", fontNormal));
+        infoTable.addCell(new Phrase(order.getShippingAddress().getDistrict(), fontNormal));
+
+        infoTable.addCell(new Phrase("Tỉnh/Thành", fontNormal));
+        infoTable.addCell(new Phrase(order.getShippingAddress().getProvince(), fontNormal));
+
+        document.add(infoTable);
+       // document.add(Chunk.NEWLINE);
 
         // 3. Thông tin đơn
-        document.add(new Paragraph("mã-đơn:" + id, fontNormal));
-        //document.add(new Paragraph("Khối luợng tạm tính: 0.30 KG", fontNormal));
-        document.add(new Paragraph("phuong thuc thanh toan: " + order.getPaymentMethod(), fontNormal));
+        PdfPTable orderTable = new PdfPTable(2);
+        orderTable.setWidthPercentage(100);
+        orderTable.setSpacingBefore(5f);
+        infoTable.setSpacingAfter(1f);
+
+        orderTable.addCell(new Phrase("Mã đơn", fontNormal));
+        orderTable.addCell(new Phrase(String.valueOf(id), fontNormal));
+
+        orderTable.addCell(new Phrase("Phương thức thanh toán", fontNormal));
+        orderTable.addCell(new Phrase(order.getPaymentMethod().toString(), fontNormal));
+
+        document.add(orderTable);
 
         document.add(Chunk.NEWLINE);
+
+        // 4. Bảng sản phẩm
+        PdfPTable productTable = new PdfPTable(3); // Tên, Số lượng, Giá
+        productTable.setWidthPercentage(100);
+        productTable.setSpacingBefore(10f);
+
+        productTable.addCell(new PdfPCell(new Phrase("Sản phẩm", fontBold)));
+        productTable.addCell(new PdfPCell(new Phrase("Số lượng", fontBold)));
+        productTable.addCell(new PdfPCell(new Phrase("Giá", fontBold)));
+
+// Danh sách sản phẩm
+        for (OrderItemDetail item : order.getItems()) {
+            productTable.addCell(new Phrase(item.getProductName(), fontNormal));
+            productTable.addCell(new Phrase(String.valueOf(item.getQuantity()), fontNormal));
+            productTable.addCell(new Phrase(item.getPrice().toString(), fontNormal));
+        }
+
+        document.add(productTable);
+
+        // Tổng tiền (tùy chọn)
+        document.add(Chunk.NEWLINE);
+        PdfPTable summaryTable = new PdfPTable(2);
+        summaryTable.setWidthPercentage(100);
+
+        summaryTable.addCell(new Phrase("Tổng tiền tạm tính", fontNormal));
+        summaryTable.addCell(new Phrase(order.getItems().stream()
+                .map(i -> i.getPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add).toString(), fontNormal));
+
+        document.add(summaryTable);
 
 //        // 4. QR Code
 //        BarcodeQRCode qr = new BarcodeQRCode("Mã đơn: " + id, 100, 100, null);
