@@ -53,9 +53,9 @@ public class SecurityConfig
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(
                         url -> url
-                                .requestMatchers("/api/v1/admin/**").hasAnyAuthority(RoleName.ROLE_MODERATOR.toString(),RoleName.ROLE_ADMIN.toString())
-                                .requestMatchers("/api/v1/user/**").hasAuthority(RoleName.ROLE_USER.toString())
-                                .requestMatchers("/api/v1/product-variants").hasAnyAuthority(RoleName.ROLE_ADMIN.toString(), RoleName.ROLE_USER.toString())
+                             //   .requestMatchers("/api/v1/admin/**").hasAnyAuthority(RoleName.ROLE_MODERATOR.toString(),RoleName.ROLE_ADMIN.toString())
+                               // .requestMatchers("/api/v1/user/**").hasAuthority(RoleName.ROLE_USER.toString())
+                                //.requestMatchers("/api/v1/product-variants").hasAnyAuthority(RoleName.ROLE_ADMIN.toString(), RoleName.ROLE_USER.toString())
                                 .anyRequest().permitAll()
                 )
                 .authenticationProvider(authenticationProvider())

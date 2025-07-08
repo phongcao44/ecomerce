@@ -4,17 +4,24 @@ import com.ra.base_spring_boot.dto.resp.*;
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.repository.IOrderRepository;
 import com.ra.base_spring_boot.services.IOrderService;
+import com.ra.base_spring_boot.services.IPaymentService;
+import com.ra.base_spring_boot.services.IProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
 public class OrderServiceImpl implements IOrderService {
     @Autowired
     private IOrderRepository orderRepository;
+    @Autowired
+    private IPaymentService paymentService;
 
     @Override
     public List<Order> findByOrderId(Long orderId) {
@@ -125,6 +132,29 @@ public class OrderServiceImpl implements IOrderService {
                 .items(itemList)
                 .voucher(voucher)
                 .build();
+    }
+
+    @Override
+    public List<OrderResponse> getAllOrderResponses() {
+        List<Order> orderEntities = orderRepository.findAll();
+       return orderEntities.stream().map(order -> {
+            User user = order.getUser();
+            UserResponse userDto = UserResponse.builder()
+                    .id(user.getId())
+                    .username(user.getUsername())
+                    .email(user.getEmail())
+                    .build();
+            PaymentResponse paymentResponse = paymentService.getPaymentByOrderId(order.getId());
+            return OrderResponse.builder()
+                    .orderId(order.getId())
+                    .username(userDto.getUsername())
+                    .createdAt(order.getCreatedAt())
+                    .paymentMethod(order.getPaymentMethod())
+                    .payment(paymentResponse)
+                    .status(order.getStatus())
+                    .totalAmount(order.getTotalAmount())
+                    .build();
+        }).collect(Collectors.toList());
     }
 }
 

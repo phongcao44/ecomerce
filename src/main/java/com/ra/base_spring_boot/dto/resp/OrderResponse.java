@@ -23,21 +23,21 @@ import java.util.List;
 public class OrderResponse {
     private Long orderId;
 
-    private Long userId;
+    private String username;
 
     private PaymentMethod paymentMethod;
 
     private LocalDateTime createdAt;
 
+    //private AddressResponse  shippingAddress;
 
-    private AddressResponse  shippingAddress;
-
+    private PaymentResponse payment;
 
     private OrderStatus status;
 
     private BigDecimal totalAmount;
 
 
-    private List<OrderItemDetailDTO> orderItems;
+   // private List<OrderItemDetailDTO> orderItems;
 
 }

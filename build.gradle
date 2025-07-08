@@ -53,7 +53,7 @@ dependencies {
 
     implementation 'org.json:json:20240303'
 
-
+    implementation 'org.apache.poi:poi-ooxml:5.2.3'
 }
 
 tasks.named('test') {

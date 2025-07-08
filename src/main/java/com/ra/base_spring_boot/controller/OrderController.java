@@ -21,13 +21,18 @@ import com.ra.base_spring_boot.model.Order;
 import com.ra.base_spring_boot.model.ProductVariant;
 import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.model.constants.OrderStatus;
+import com.ra.base_spring_boot.model.constants.PaymentMethod;
 import com.ra.base_spring_boot.repository.IOrderItemRepository;
 import com.ra.base_spring_boot.repository.IOrderRepository;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.IOrderService;
+import com.ra.base_spring_boot.services.IPaymentService;
 import com.ra.base_spring_boot.services.ghn.GhnClient;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +43,7 @@ import org.springframework.web.bind.annotation.*;
 import java.awt.*;
 
 import java.awt.Image;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -54,7 +60,8 @@ public class OrderController {
     private IOrderItemRepository iOrderItemRepository;
     @Autowired
     private GhnClient ghnClient;
-
+    @Autowired
+    private IPaymentService paymentService;
     @GetMapping("/admin/order/list")
     public ResponseEntity<?> findAll() {
         List<Order> orderEntities = iOrderRepository.findAll();
@@ -80,17 +87,16 @@ public class OrderController {
                     .recipient_name(address.getRecipientName())
                     .ward(address.getWard())
                     .build();
-
+            PaymentResponse paymentResponse = paymentService.getPaymentByOrderId(order.getId());
             return OrderResponse.builder()
                     .orderId(order.getId())
-
-                    .userId(order.getId())
-
+                    .username(userDto.getUsername())
                     .createdAt(order.getCreatedAt())
                     .paymentMethod(order.getPaymentMethod())
+                    .payment(paymentResponse)
                     .status(order.getStatus())
                     .totalAmount(order.getTotalAmount())
-                    .shippingAddress(addressResponse)
+                   // .shippingAddress(addressResponse)
                     .build();
         }).collect(Collectors.toList());
         return ResponseEntity.ok(orderResponses);
@@ -169,13 +175,13 @@ public class OrderController {
             // Trả về OrderResponse
             OrderResponse response = OrderResponse.builder()
                     .orderId(updatedOrder.getId())
-                    .userId(user.getId())
+                    .username(userDto.getUsername())
                     .createdAt(updatedOrder.getCreatedAt())
                     .paymentMethod(updatedOrder.getPaymentMethod())
                     .status(updatedOrder.getStatus())
                     .totalAmount(updatedOrder.getTotalAmount())
-                    .shippingAddress(addressResponse)
-                    .orderItems(orderItemDetailResponses)
+                    //.shippingAddress(addressResponse)
+                    //.orderItems(orderItemDetailResponses)
                     .build();
 
             return ResponseEntity.ok(response);
@@ -515,6 +521,41 @@ public class OrderController {
 //        document.add(qrImage);
 
         document.close();
+    }
+
+    @GetMapping("/admin/order/excel")
+    public void exportToExcel(HttpServletResponse response) throws IOException {
+        List<OrderResponse> orders = orderService.getAllOrderResponses();
+
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=orders.xlsx");
+
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        XSSFSheet sheet = workbook.createSheet("Orders");
+
+        Row header = sheet.createRow(0);
+        header.createCell(0).setCellValue("Order ID");
+        header.createCell(1).setCellValue("Username");
+        header.createCell(2).setCellValue("Created At");
+        header.createCell(3).setCellValue("Payment Method");
+        header.createCell(4).setCellValue("Payment Status");
+        header.createCell(5).setCellValue("Status");
+        header.createCell(6).setCellValue("Total Amount");
+
+        int rowIdx = 1;
+        for (OrderResponse order : orders) {
+            Row row = sheet.createRow(rowIdx++);
+            row.createCell(0).setCellValue(order.getOrderId());
+            row.createCell(1).setCellValue(order.getUsername());
+            row.createCell(2).setCellValue(order.getCreatedAt().toString());
+            row.createCell(3).setCellValue(order.getPaymentMethod().toString());
+            row.createCell(4).setCellValue(order.getPayment() != null ? order.getPayment().getStatus().toString() : "N/A");
+            row.createCell(5).setCellValue(order.getStatus().toString());
+            row.createCell(6).setCellValue(order.getTotalAmount().doubleValue());
+        }
+
+        workbook.write(response.getOutputStream());
+        workbook.close();
     }
 
 }
