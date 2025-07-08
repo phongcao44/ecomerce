@@ -3,6 +3,7 @@ package com.ra.base_spring_boot.controller;
 import com.itextpdf.text.*;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
@@ -432,8 +433,12 @@ public class OrderController {
         PdfWriter.getInstance(document, response.getOutputStream());
         document.open();
 
-        Font fontNormal = FontFactory.getFont(FontFactory.HELVETICA, 4);
-        Font fontBold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
+        //Font fontNormal = FontFactory.getFont(FontFactory.HELVETICA, 4);
+        //Font fontBold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
+        // Sửa font để hỗ trợ Unicode
+        BaseFont unicodeFont = BaseFont.createFont("src/main/resources/fonts/times.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+        Font fontNormal = new Font(unicodeFont, 8);
+        Font fontBold = new Font(unicodeFont, 10, Font.BOLD);
 
         // 1. Header: Shop Name
         document.add(new Paragraph("Shop: Ecommer", fontBold));
