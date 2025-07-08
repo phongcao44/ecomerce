@@ -65,6 +65,9 @@ public class ReturnPolicyServiceImpl implements IReturnPolicyService {
                 .id(policy.getId())
                 .title(policy.getTitle())
                 .content(policy.getContent())
+                .returnDays(policy.getReturnDays())
+                .allowReturnWithoutReason(policy.getAllowReturnWithoutReason())
+                .status(policy.getStatus())
                 .adminName(admin.getUsername())
                 .createdAt(policy.getCreatedAt())
                 .updatedAt(policy.getUpdatedAt())
@@ -79,7 +82,7 @@ public class ReturnPolicyServiceImpl implements IReturnPolicyService {
                         .title(policy.getTitle())
                         .content(policy.getContent())
                         .returnDays(policy.getReturnDays())
-                        .allowReturnWithoutReason(policy.getAllowReturnWithoutReason()) // ✅ thêm
+                        .allowReturnWithoutReason(policy.getAllowReturnWithoutReason())
                         .status(policy.getStatus())
                         .adminName(policy.getAdmin().getUsername())
                         .createdAt(policy.getCreatedAt())

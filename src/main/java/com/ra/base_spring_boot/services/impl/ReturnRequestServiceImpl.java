@@ -3,6 +3,7 @@ package com.ra.base_spring_boot.services.impl;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.ra.base_spring_boot.dto.req.ReturnRequestDTO;
+import com.ra.base_spring_boot.dto.resp.OrderItemDetailDTO;
 import com.ra.base_spring_boot.dto.resp.ReturnRequestResponseDTO;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.exception.HttpNotFound;
@@ -49,6 +50,59 @@ public class ReturnRequestServiceImpl implements IReturnRequestService {
     }
 
     @Override
+    public List<ReturnRequestResponseDTO> getAll() {
+        List<ReturnRequest> requests = returnRequestRepository.findAll();
+        return requests.stream()
+                .map(r -> ReturnRequestResponseDTO.builder()
+                        .id(r.getId())
+                        .orderId(r.getOrder().getId())
+                        .reason(r.getReason())
+                        .mediaUrl(r.getMediaUrl())
+                        .status(r.getStatus())
+                        .createdAt(r.getCreatedAt())
+                        .fullName(r.getUser().getUsername())
+                        .build())
+                .toList();
+    }
+
+
+    @Override
+    public ReturnRequestResponseDTO getDetailById(Long id) {
+        ReturnRequest request = returnRequestRepository.findById(id)
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy yêu cầu trả hàng"));
+
+        Order order = request.getOrder();
+
+        List<OrderItemDetailDTO> items = order.getOrderItems().stream()
+                .map(OrderItemDetailDTO::fromOrderItem)
+                .toList();
+
+        return ReturnRequestResponseDTO.builder()
+                .id(request.getId())
+                .orderId(order.getId())
+                .reason(request.getReason())
+                .mediaUrl(request.getMediaUrl())
+                .status(request.getStatus())
+                .createdAt(request.getCreatedAt())
+                .fullName(request.getUser().getUsername())
+                .items(items)
+                .build();
+    }
+
+    @Override
+    public void updateStatus(Long id, ReturnStatus status) {
+        ReturnRequest request = returnRequestRepository.findById(id)
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy yêu cầu trả hàng"));
+
+        if (request.getStatus() == ReturnStatus.APPROVED) {
+            throw new HttpBadRequest("Yêu cầu này đã hoàn tất trả hàng");
+        }
+
+        request.setStatus(status);
+        returnRequestRepository.save(request);
+    }
+
+    @Override
     public ReturnRequestResponseDTO create(ReturnRequestDTO dto, User user) {
         Order order = orderRepository.findById(dto.getOrderId())
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy đơn hàng"));
@@ -62,7 +116,7 @@ public class ReturnRequestServiceImpl implements IReturnRequestService {
         }
 
         if (order.getStatus() != OrderStatus.DELIVERED) {
-            throw new HttpBadRequest("Chỉ có thể yêu cầu trả hàng với đơn đã giao");
+            throw new HttpBadRequest("Chỉ có thể yêu cầu trả hàng với đơn hàng đã giao");
         }
 
         String mediaUrl = uploadMedia(dto.getMedia());
@@ -113,7 +167,7 @@ public class ReturnRequestServiceImpl implements IReturnRequestService {
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy yêu cầu"));
 
         if (!returned.getUser().getId().equals(user.getId())) {
-            throw new HttpBadRequest("Không có quyền truy cập");
+            throw new HttpBadRequest("Bạn không có quyền truy cập vào để xem yêu cầu trả đơn hàng này");
         }
 
         return ReturnRequestResponseDTO.builder()
