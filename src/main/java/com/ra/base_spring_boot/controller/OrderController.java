@@ -214,7 +214,7 @@ public class OrderController {
 
                     .username(userDto.getUsername())
 
-                    .userId(user.getId())
+                  //  .userId(user.getId())
 
                     .createdAt(updatedOrder.getCreatedAt())
                     .paymentMethod(updatedOrder.getPaymentMethod())
@@ -231,17 +231,17 @@ public class OrderController {
         }
     }
 
-    @DeleteMapping("/admin/order/delete/{id}")
-
-                    .shippingAddress(addressResponse)
-                    .orderItems(orderItemDetailResponses)
-                    .build();
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return new ResponseEntity<>(new DataError("Lỗi xử lý: " + e.getMessage(), 500), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+//    @DeleteMapping("/admin/order/delete/{id}")
+//
+//                    .shippingAddress(addressResponse)
+//                    .orderItems(orderItemDetailResponses)
+//                    .build();
+//
+//            return ResponseEntity.ok(response);
+//        } catch (Exception e) {
+//            return new ResponseEntity<>(new DataError("Lỗi xử lý: " + e.getMessage(), 500), HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
 
 
 
@@ -656,12 +656,13 @@ public class OrderController {
 
             return OrderResponse.builder()
                     .orderId(order.getId())
-                    .userId(user.getId())
+                   // .userId(user.getId())
+                    .username(userDto.getUsername())
                     .createdAt(order.getCreatedAt())
                     .paymentMethod(order.getPaymentMethod())
                     .status(order.getStatus())
                     .totalAmount(order.getTotalAmount())
-                    .shippingAddress(addressResponse)
+                  //  .shippingAddress(addressResponse)
                     .build();
         }).collect(Collectors.toList());
 
