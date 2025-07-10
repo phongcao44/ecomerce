@@ -11,6 +11,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import java.util.List;
 
@@ -38,6 +39,9 @@ public class OrderResponse {
     private BigDecimal totalAmount;
 
 
+
    // private List<OrderItemDetailDTO> orderItems;
+
+    private List<OrderItemDetailDTO> orderItems;
 
 }

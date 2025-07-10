@@ -59,10 +59,6 @@ public class AuthServiceImpl implements IAuthService
             throw new HttpBadRequest("Email đã tồn tại");
         }
 
-        String email = formRegister.getEmail();
-        if (!email.toLowerCase().endsWith("@gmail.com")) {
-            throw new HttpBadRequest("Invalid email format");
-        }
         Set<Role> roles = new HashSet<>();
         roles.add(roleService.findByRoleName(RoleName.ROLE_USER));
         LocalDateTime now = LocalDateTime.now();

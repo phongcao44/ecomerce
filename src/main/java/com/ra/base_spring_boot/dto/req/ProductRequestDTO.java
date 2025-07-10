@@ -33,4 +33,7 @@ public class ProductRequestDTO {
 
     @NotNull(message = "Không được để trống")
     private Long categoryId;
+
+    @NotNull(message = "Không được để trống")
+    private Long return_policy_id;
 }
