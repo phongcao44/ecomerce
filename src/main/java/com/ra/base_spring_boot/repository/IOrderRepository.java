@@ -27,4 +27,15 @@ public interface IOrderRepository extends JpaRepository<Order, Long> {
             @Param("userId") Long userId,
             @Param("productId") Long productId
     );
+
+    @Query("""
+SELECT DISTINCT v.product.id
+FROM Order o
+JOIN o.orderItems oi
+JOIN oi.variant v
+WHERE o.user.id = :userId
+  AND o.status = com.ra.base_spring_boot.model.constants.OrderStatus.DELIVERED
+""")
+    List<Long> findPurchasedProductIdsByUser(@Param("userId") Long userId);
+
 }

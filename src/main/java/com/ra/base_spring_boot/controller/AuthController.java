@@ -2,9 +2,11 @@ package com.ra.base_spring_boot.controller;
 
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.*;
+import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.IAuthService;
-import com.ra.base_spring_boot.services.impl.FacebookAuthService;
+import com.ra.base_spring_boot.services.IUserService;
+import com.ra.base_spring_boot.services.impl.FacebookUserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,14 +17,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.Collections;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
     private final IAuthService authService;
-
+    private final IUserService userService;
     /**
      * @param formLogin FormLogin
      * @apiNote handle login with { email , password }
@@ -134,11 +135,5 @@ public class AuthController {
                         .build()
         );
     }
-    private final FacebookAuthService facebookAuthService;
 
-    @PostMapping("/facebook")
-    public ResponseEntity<?> loginWithFacebook(@RequestBody FacebookLoginRequest request) {
-        String jwt = facebookAuthService.loginWithFacebook(request.getAccessToken());
-        return ResponseEntity.ok(Collections.singletonMap("token", jwt));
-    }
 }

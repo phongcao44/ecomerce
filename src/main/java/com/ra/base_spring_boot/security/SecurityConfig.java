@@ -10,6 +10,7 @@ import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.jwt.JwtTokenFilter;
 import com.ra.base_spring_boot.security.principle.MyUserDetailsService;
 import com.ra.base_spring_boot.services.impl.CustomOAuth2UserService;
+import com.ra.base_spring_boot.services.impl.FacebookUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -42,7 +43,7 @@ public class SecurityConfig
     private final JwtTokenFilter jwtTokenFilter;
     private final JwtProvider jwtProvider;
     private final CustomOAuth2UserService customOAuth2UserService;
-
+    private final FacebookUserService facebookUserService;
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         System.out.println(">>> Security filter chain initialized <<<");
@@ -76,8 +77,9 @@ public class SecurityConfig
                 .addFilterAfter(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> {
-                            System.out.println(">>> userInfoEndpoint được gọi <<<");
-                            userInfo.oidcUserService(customOAuth2UserService); // ✅
+                            userInfo
+                                    .oidcUserService(customOAuth2UserService) // Google
+                                    .userService(facebookUserService);    // Facebook
                         })
                         .successHandler(oAuth2SuccessHandler())
                 )

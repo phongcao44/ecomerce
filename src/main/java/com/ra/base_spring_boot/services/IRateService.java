@@ -11,5 +11,6 @@ public interface IRateService {
         List<ReviewResponse> getReviewsByProductId(Long productId);
         Double getAverageRatingByProductId(Long productId);
         RatingSummaryResponse getRatingSummaryByProductId(Long productId);
-
+        void deleteReviewByProductId(long userId,Long productId);
+        ReviewResponse editReviewByProductId(Long userId,ReviewRequest request);
 }

@@ -1,4 +1,11 @@
   spring:
+    thymeleaf:
+      enabled: true
+      prefix: classpath:/templates/
+      suffix: .html
+      mode: HTML
+      encoding: UTF-8
+      cache: false
     servlet:
       multipart:
         max-file-size: 10MB
@@ -26,8 +33,8 @@
     mail:
       host: smtp.gmail.com
       port: 587
-      username: nhutlmce@gmail.com
-      password: nmkpatdrcqgkpumw
+      username: phonglx001@gmail.com
+      password: sfkrbvhtxqvltram
       protocol: smtp
       properties:
         mail:

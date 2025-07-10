@@ -1,40 +1,19 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <title>Chat Fanpage Facebook</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Chat ManyChat</title>
 </head>
 <body>
-<h1>Chào mừng bạn đến với website!</h1>
-<p>Bạn có thể chat với fanpage Facebook tại góc dưới bên phải.</p>
+<h2>Test popup chat Messenger bằng ManyChat</h2>
 
-<!-- Facebook SDK -->
-<div id="fb-root"></div>
+<!-- ManyChat Chat Widget Script -->
+<script src="https://widget.manychat.com/fb714881755039825.js" async="async"></script>
 <script>
-    window.fbAsyncInit = function() {
-        FB.init({
-            xfbml            : true,
-            version          : 'v19.0' // hoặc phiên bản mới nhất
-        });
+    window.mcWidgetSettings = {
+        widget_id: 'fb714881755039825',
     };
-
-    (function(d, s, id){
-        var js, fjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) return;
-        js = d.createElement(s); js.id = id;
-        js.src = "https://connect.facebook.net/vi_VN/sdk/xfbml.customerchat.js";
-        fjs.parentNode.insertBefore(js, fjs);
-    }(document, 'script', 'facebook-jssdk'));
 </script>
-
-<!-- Plugin chat -->
-<div class="fb-customerchat"
-     attribution="biz_inbox"
-     page_id="61578247975586"
-     theme_color="#0084ff"
-     logged_in_greeting="Chào bạn! Mình có thể giúp gì không?"
-     logged_out_greeting="Hãy đăng nhập Facebook để chat với mình nhé.">
-</div>
-
 </body>
 </html>

@@ -33,7 +33,13 @@ public class EmailService {
             throw new RuntimeException("Error sending email: " + e.getMessage());
         }
     }
-
+    public void sendCartReminder(String toEmail, String username) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject("Giỏ hàng của bạn vẫn đang chờ!");
+        message.setText("Chào " + username + ",\n\nBạn vẫn còn sản phẩm trong giỏ hàng. Hãy hoàn tất đơn hàng của mình nhé!\n\nCảm ơn bạn.");
+        mailSender.send(message);
+    }
 
     @Value("${spring.mail.username}")
     private String fromEmail;
