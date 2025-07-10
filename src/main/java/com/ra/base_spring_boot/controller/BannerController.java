@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/admin/banner")
+@RequestMapping("/api/v1/")
 public class BannerController {
     private final IBannerService iBannerService;
     public BannerController(IBannerService iBannerService) {
@@ -23,20 +23,20 @@ public class BannerController {
         return ResponseEntity.ok(iBannerService.getAll());
     }
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Banner> createBanner(
-BannerRequest request
-    ) {
+    @PostMapping(value = "admin/banners",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Banner> createBanner(BannerRequest request)
+    {
         return ResponseEntity.ok(iBannerService.create(request.getTitle(), request.getPosition(),request.isStatus(), request.getStartAt(),request.getEndAt(),request.getImage()));
     }
-    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+
+    @PutMapping(value = "admin/banner/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Banner> updateBanner(
             @PathVariable Integer id,
             BannerRequest request
     ) {
         return ResponseEntity.ok(iBannerService.update(id,request.getTitle(), request.getPosition(),request.isStatus(), request.getStartAt(),request.getEndAt(),request.getImage()));
     }
-    @DeleteMapping("/{id}")
+    @DeleteMapping("admin/banner/{id}")
     public ResponseEntity<?> deleteBanner(@PathVariable Integer id) {
         iBannerService.delete(id);
         return ResponseEntity.ok().build();

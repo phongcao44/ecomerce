@@ -46,8 +46,8 @@ public class PointServiceImpl implements IPointService {
     }
 
     private UserRank calculateNewRank(int rankPoints) {
-        if (rankPoints >= 2000) return UserRank.KIMCUONG;
-        else if (rankPoints >= 1000) return UserRank.VANG;
+        if (rankPoints >= 4000) return UserRank.KIMCUONG;
+        else if (rankPoints >= 1500) return UserRank.VANG;
         else if (rankPoints >= 500) return UserRank.BAC;
         else return UserRank.DONG;
     }

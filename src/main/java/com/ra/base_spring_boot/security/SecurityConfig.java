@@ -2,8 +2,6 @@ package com.ra.base_spring_boot.security;
 
 import com.ra.base_spring_boot.advice.OAuth2SuccessHandler;
 import com.ra.base_spring_boot.model.constants.RoleName;
-import com.ra.base_spring_boot.repository.IRoleRepository;
-import com.ra.base_spring_boot.repository.IUserRepository;
 import com.ra.base_spring_boot.security.exception.AccessDenied;
 import com.ra.base_spring_boot.security.exception.JwtEntryPoint;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
