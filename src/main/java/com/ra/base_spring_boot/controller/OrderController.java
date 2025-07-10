@@ -31,6 +31,7 @@ import com.ra.base_spring_boot.model.constants.PaymentMethod;
 import com.ra.base_spring_boot.repository.IOrderItemRepository;
 import com.ra.base_spring_boot.repository.IOrderRepository;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
+import com.ra.base_spring_boot.services.IGmailService;
 import com.ra.base_spring_boot.services.IOrderService;
 import com.ra.base_spring_boot.services.IPaymentService;
 import com.ra.base_spring_boot.services.ghn.GhnClient;
@@ -73,6 +74,9 @@ public class OrderController {
     private GhnClient ghnClient;
     @Autowired
     private IPaymentService paymentService;
+
+    @Autowired
+    private IGmailService  gmailService;
 
     @GetMapping("/admin/order/list")
     public ResponseEntity<?> findAll() {
@@ -153,6 +157,26 @@ public class OrderController {
                     }
 
                     variant.setStockQuantity(newStock);
+                }
+                // Gửi email mời đánh giá
+                String subject = "Cảm ơn bạn đã mua hàng tại Ecommer!";
+                String body = """
+            Xin chào %s,
+
+            Cảm ơn bạn đã đặt hàng tại cửa hàng của chúng tôi. 
+            Đơn hàng của bạn đã được giao thành công. Chúng tôi rất mong nhận được đánh giá từ bạn.
+
+            Vui lòng nhấn vào link sau để đánh giá sản phẩm:
+            https://ecomer/review?orderId=%d
+
+            Trân trọng,
+            Đội ngũ Ecommer
+            """.formatted(order.getUser().getUsername(), order.getId());
+
+                try {
+                    gmailService.sendEmailAfterDelayInMinutes(order.getUser().getEmail(), subject, body, 1);
+                } catch (Exception e) {
+                    e.printStackTrace(); // Có thể log lỗi nếu cần
                 }
             }
 
@@ -502,6 +526,7 @@ public class OrderController {
         infoTable.addCell(new Phrase(order.getShippingAddress().getProvince(), fontNormal));
 
         document.add(infoTable);
+
        // document.add(Chunk.NEWLINE);
 
         // 3. Thông tin đơn
