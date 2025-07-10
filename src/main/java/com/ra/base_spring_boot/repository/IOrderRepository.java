@@ -27,4 +27,11 @@ public interface IOrderRepository extends JpaRepository<Order, Long> {
             @Param("userId") Long userId,
             @Param("productId") Long productId
     );
+
+    long countByStatus(OrderStatus status);
+
+    List<Order> findByUserId(Long userId);
+
+    List<Order> findByUserIdAndStatus(Long userId, OrderStatus status);
+
 }

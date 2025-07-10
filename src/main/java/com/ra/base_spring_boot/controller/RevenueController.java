@@ -22,6 +22,12 @@ public class RevenueController {
     @Autowired
     private IRevenueService revenueService;
 
+    @GetMapping("/dashboard")
+    public ResponseEntity<?> getDashboardStats() {
+        RevenueResponseDTO stats = revenueService.getDashboardStats();
+        return ResponseEntity.ok(stats);
+    }
+
     // theo khoảng
     @GetMapping("/range")
     public ResponseEntity<?> getRevenueByRange(@RequestParam String from, @RequestParam String to) {

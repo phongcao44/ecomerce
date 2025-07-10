@@ -8,6 +8,7 @@ import java.util.List;
 public interface IRevenueService {
     List<RevenueResponseDTO> getRevenueByRange(LocalDate from, LocalDate to);
 
+    RevenueResponseDTO getDashboardStats();
 
     List<RevenueResponseDTO> getRevenueByDate(LocalDate date);
 

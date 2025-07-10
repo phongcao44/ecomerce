@@ -44,5 +44,10 @@ public class Product {
 
     @OneToMany(mappedBy = "product")
     private List<ProductImage> images;
+
+    @ManyToOne
+    @JoinColumn(name = "return_policy_id")
+    private ReturnPolicy returnPolicy;
+
 }
 

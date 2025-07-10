@@ -9,12 +9,17 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.ra.base_spring_boot.dto.DataError;
 
+
 import com.ra.base_spring_boot.dto.req.AddressRequest;
 import com.ra.base_spring_boot.dto.req.UpdateOrderStatusRequest;
 import com.ra.base_spring_boot.dto.resp.*;
 import com.ra.base_spring_boot.model.*;
 
+
+import com.ra.base_spring_boot.dto.req.UpdateOrderStatusRequest;
+
 import com.ra.base_spring_boot.dto.resp.AddressResponse;
+import com.ra.base_spring_boot.dto.resp.OrderItemDetailDTO;
 import com.ra.base_spring_boot.dto.resp.OrderResponse;
 import com.ra.base_spring_boot.dto.resp.UserResponse;
 import com.ra.base_spring_boot.model.Address;
@@ -37,8 +42,12 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.awt.*;
@@ -47,6 +56,7 @@ import java.awt.Image;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -63,6 +73,7 @@ public class OrderController {
     private GhnClient ghnClient;
     @Autowired
     private IPaymentService paymentService;
+
     @GetMapping("/admin/order/list")
     public ResponseEntity<?> findAll() {
         List<Order> orderEntities = iOrderRepository.findAll();
@@ -176,11 +187,16 @@ public class OrderController {
             // Trả về OrderResponse
             OrderResponse response = OrderResponse.builder()
                     .orderId(updatedOrder.getId())
+
                     .username(userDto.getUsername())
+
+                    .userId(user.getId())
+
                     .createdAt(updatedOrder.getCreatedAt())
                     .paymentMethod(updatedOrder.getPaymentMethod())
                     .status(updatedOrder.getStatus())
                     .totalAmount(updatedOrder.getTotalAmount())
+
                     //.shippingAddress(addressResponse)
                     //.orderItems(orderItemDetailResponses)
                     .build();
@@ -192,6 +208,21 @@ public class OrderController {
     }
 
     @DeleteMapping("/admin/order/delete/{id}")
+
+                    .shippingAddress(addressResponse)
+                    .orderItems(orderItemDetailResponses)
+                    .build();
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return new ResponseEntity<>(new DataError("Lỗi xử lý: " + e.getMessage(), 500), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+
+    @DeleteMapping("/order/delete/{id}")
+
     @Transactional
     //Có @Transactional: tất cả sẽ rollback → đảm bảo hoặc tất cả cùng thành công, hoặc tất cả bị hủy
     public ResponseEntity<?> delete(@PathVariable Long id){
@@ -204,6 +235,7 @@ public class OrderController {
             return new ResponseEntity<>("xóa goy", HttpStatus.OK);
         }
     }
+
 
     @GetMapping("/admin/order/detail/{id}")
     public ResponseEntity<?> getOrderDetail(@PathVariable Long id) {
@@ -561,6 +593,59 @@ public class OrderController {
 
         workbook.write(response.getOutputStream());
         workbook.close();
+    }
+
+
+    @GetMapping("/user/order/list")
+    public ResponseEntity<?> getMyOrders(@RequestParam(required = false) OrderStatus status,
+                                         @AuthenticationPrincipal MyUserDetails userDetails) {
+        Long userId = userDetails.getUser().getId();
+
+        List<Order> orders = (status != null)
+                ? orderService.findByUserIdAndStatus(userId, status)
+                : orderService.findByUserId(userId);
+
+        if (orders.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Bạn chưa có đơn hàng nào.");
+        }
+
+        List<OrderResponse> responses = orders.stream().map(order -> {
+            User user = order.getUser();
+            Address address = order.getShippingAddress();
+
+            UserResponse userDto = UserResponse.builder()
+                    .id(user.getId())
+                    .username(user.getUsername())
+                    .email(user.getEmail())
+                    .build();
+
+            AddressResponse addressResponse = AddressResponse.builder()
+                    .id(address.getId())
+                    .userId(address.getUser().getId())
+                    .fulladdress(address.getFullAddress())
+                    .phone(address.getPhone())
+                    .province(address.getProvince())
+                    .recipient_name(address.getRecipientName())
+                    .ward(address.getWard())
+                    .build();
+
+            return OrderResponse.builder()
+                    .orderId(order.getId())
+                    .userId(user.getId())
+                    .createdAt(order.getCreatedAt())
+                    .paymentMethod(order.getPaymentMethod())
+                    .status(order.getStatus())
+                    .totalAmount(order.getTotalAmount())
+                    .shippingAddress(addressResponse)
+                    .build();
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/admin/order/rate/cancelled_and_returned")
+    public ResponseEntity<Map<String, Double>> getRate() {
+        return ResponseEntity.ok(orderService.getCancelAndReturnRate());
     }
 
 }
