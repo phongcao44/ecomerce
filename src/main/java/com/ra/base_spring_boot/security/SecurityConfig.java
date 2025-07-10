@@ -1,10 +1,16 @@
 package com.ra.base_spring_boot.security;
 
+import com.ra.base_spring_boot.advice.OAuth2SuccessHandler;
 import com.ra.base_spring_boot.model.constants.RoleName;
+import com.ra.base_spring_boot.repository.IRoleRepository;
+import com.ra.base_spring_boot.repository.IUserRepository;
 import com.ra.base_spring_boot.security.exception.AccessDenied;
 import com.ra.base_spring_boot.security.exception.JwtEntryPoint;
+import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.jwt.JwtTokenFilter;
 import com.ra.base_spring_boot.security.principle.MyUserDetailsService;
+import com.ra.base_spring_boot.services.impl.CustomOAuth2UserService;
+import com.ra.base_spring_boot.services.impl.FacebookUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,15 +41,17 @@ public class SecurityConfig
     private final JwtEntryPoint jwtEntryPoint;
     private final AccessDenied accessDenied;
     private final JwtTokenFilter jwtTokenFilter;
-
+    private final JwtProvider jwtProvider;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final FacebookUserService facebookUserService;
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception
-    {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        System.out.println(">>> Security filter chain initialized <<<");
+
         return http
-                .cors(cf -> cf.configurationSource(request ->
-                {
+                .cors(cf -> cf.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.setAllowedOrigins(List.of("http://localhost:5173")); // phụ thuộc vào port clents
+                    config.setAllowedOrigins(List.of("http://localhost:5173"));
                     config.setAllowedMethods(List.of("*"));
                     config.setAllowCredentials(true);
                     config.setAllowedHeaders(List.of("*"));
@@ -51,26 +59,30 @@ public class SecurityConfig
                     return config;
                 }))
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(
-                        url -> url
-
-                                .requestMatchers("/api/v1/admin/**").hasAnyAuthority(RoleName.ROLE_MODERATOR.toString(),RoleName.ROLE_ADMIN.toString())
-                                .requestMatchers("/api/v1/user/**").hasAuthority(RoleName.ROLE_USER.toString())
-                                .requestMatchers("/api/v1/product-variants").hasAnyAuthority(RoleName.ROLE_ADMIN.toString(), RoleName.ROLE_USER.toString())
-                                .requestMatchers("/api/v1/admin/**").hasAnyAuthority(RoleName.ROLE_MODERATOR.toString(),RoleName.ROLE_ADMIN.toString())
-                                .requestMatchers("/api/v1/user/**").hasAuthority(RoleName.ROLE_USER.toString())
-                                .requestMatchers("/api/v1/product-variants").hasAnyAuthority(RoleName.ROLE_ADMIN.toString(), RoleName.ROLE_USER.toString())
-
-                                .anyRequest().permitAll()
+                .authorizeHttpRequests(url -> url
+                        .requestMatchers("/api/v1/admin/**")
+                        .hasAnyAuthority(RoleName.ROLE_MODERATOR.toString(), RoleName.ROLE_ADMIN.toString())
+                        .requestMatchers("/api/v1/user/**").hasAuthority(RoleName.ROLE_USER.toString())
+                        .requestMatchers("/api/v1/product-variants")
+                        .hasAnyAuthority(RoleName.ROLE_ADMIN.toString(), RoleName.ROLE_USER.toString())
+                        .requestMatchers("/", "/auth/**", "/oauth2/**").permitAll()
+                        .anyRequest().permitAll()
                 )
-                .authenticationProvider(authenticationProvider())
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(jwtEntryPoint)
+                        .accessDeniedHandler(accessDenied)
+                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(
-                        exception -> exception
-                                .authenticationEntryPoint(jwtEntryPoint)
-                                .accessDeniedHandler(accessDenied)
-                )
+                .authenticationProvider(authenticationProvider())
                 .addFilterAfter(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> {
+                            userInfo
+                                    .oidcUserService(customOAuth2UserService) // Google
+                                    .userService(facebookUserService);    // Facebook
+                        })
+                        .successHandler(oAuth2SuccessHandler())
+                )
                 .build();
     }
 
@@ -94,4 +106,9 @@ public class SecurityConfig
     {
         return auth.getAuthenticationManager();
     }
+    @Bean
+    public OAuth2SuccessHandler oAuth2SuccessHandler() {
+        return new OAuth2SuccessHandler(jwtProvider);
+    }
+
 }
