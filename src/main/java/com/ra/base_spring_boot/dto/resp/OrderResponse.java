@@ -7,6 +7,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -27,4 +28,7 @@ public class OrderResponse {
     private OrderStatus status;
 
     private BigDecimal totalAmount;
+
+    private List<OrderItemDetailDTO> orderItems;
+
 }
