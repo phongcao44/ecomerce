@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Fanpage Facebook</title>
+</head>
+<body>
+<h1>Chào mừng bạn đến với website!</h1>
+<p>Bạn có thể chat với fanpage Facebook tại góc dưới bên phải.</p>
+
+<!-- Facebook SDK -->
+<div id="fb-root"></div>
+<script>
+    window.fbAsyncInit = function() {
+        FB.init({
+            xfbml            : true,
+            version          : 'v19.0' // hoặc phiên bản mới nhất
+        });
+    };
+
+    (function(d, s, id){
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "https://connect.facebook.net/vi_VN/sdk/xfbml.customerchat.js";
+        fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<!-- Plugin chat -->
+<div class="fb-customerchat"
+     attribution="biz_inbox"
+     page_id="61578247975586"
+     theme_color="#0084ff"
+     logged_in_greeting="Chào bạn! Mình có thể giúp gì không?"
+     logged_out_greeting="Hãy đăng nhập Facebook để chat với mình nhé.">
+</div>
+
+</body>
+</html>
