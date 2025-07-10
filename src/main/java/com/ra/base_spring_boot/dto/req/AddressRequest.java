@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 public class AddressRequest {
-
     private String recipientName;
+
     private String phone;
     private String fullAddress;
     private String province;  // Tên tỉnh

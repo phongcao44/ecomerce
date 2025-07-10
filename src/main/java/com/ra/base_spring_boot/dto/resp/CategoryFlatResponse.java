@@ -2,20 +2,21 @@ package com.ra.base_spring_boot.dto.resp;
 
 import lombok.*;
 
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
 @Builder
-public class CategoryResponse {
-    private Integer level;
-
+public class CategoryFlatResponse {
     private Long id;
 
     private String name;
 
     private String description;
 
+    private int level;
+
     private Long parentId;
 
+    private String parentName;
 }

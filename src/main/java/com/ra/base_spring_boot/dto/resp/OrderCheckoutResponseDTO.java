@@ -28,9 +28,16 @@ public class OrderCheckoutResponseDTO {
 
     private List<OrderItemDetailDTO> items;
 
+    private BigDecimal shippingFee;
+
     public static OrderCheckoutResponseDTO fromOrder(Order order, List<OrderItem> orderItems) {
         return OrderCheckoutResponseDTO.builder()
                 .orderId(order.getId())
+                .shippingFee(
+                        order.getShippingFee() != null ?
+                                BigDecimal.valueOf(order.getShippingFee().getTotal()) :
+                                BigDecimal.ZERO
+                )
                 .totalAmount(order.getTotalAmount())
                 .paymentMethod(order.getPaymentMethod())
                 .createdAt(order.getCreatedAt())

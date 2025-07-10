@@ -10,6 +10,8 @@ import lombok.*;
 @Setter
 @Builder
 @Table(name = "distribution_Center")
+
+
 public class DistributionCenter {
 
     @Id
@@ -20,12 +22,25 @@ public class DistributionCenter {
     @JoinColumn(name = "partner_id")
     private DeliveryPartners partner;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "order_id")
+    private Order order;
+
     @Column(name = "name")
     private String name;
 
+
     private String address;
 
-    private String city;
+    private Integer province;
+
+    private Integer distributor;
 
     private String ward;
+
+
 }

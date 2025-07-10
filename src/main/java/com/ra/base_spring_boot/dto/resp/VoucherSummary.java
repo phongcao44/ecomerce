@@ -5,14 +5,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
+@Builder
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
-@Builder
-
-public class UserResponse {
-    private Long id;
-    private String username;
-    private String email;
-
+public class VoucherSummary {
+    private String code;
+    private double discountAmount;
 }

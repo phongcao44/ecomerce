@@ -154,10 +154,11 @@ public class PaymentController {
         String vnp_SecureHash = VnpayConfig.hmacSHA512(VnpayConfig.secretKey, hashData.toString());
         queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
         String paymentUrl = VnpayConfig.vnp_PayUrl + "?" + queryUrl;
-        com.google.gson.JsonObject job = new JsonObject();
-        job.addProperty("code", "00");
-        job.addProperty("message", "success");
-        job.addProperty("data", paymentUrl);
+       // com.google.gson.JsonObject job = new JsonObject();
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("code", "00");
+        responseMap.put("message", "success");
+        responseMap.put("data", paymentUrl);
         Gson gson = new Gson();
         //test
         System.out.println("Order ID: " + orderId);
@@ -167,7 +168,8 @@ public class PaymentController {
         System.out.println("SecureHash: " + vnp_SecureHash);
 
         // resp.getWriter().write(gson.toJson(job));
-        return ResponseEntity.ok(gson.toJson(job));
+       // return ResponseEntity.ok(gson.toJson(responseMap));
+        return ResponseEntity.ok(responseMap);
     }
     @GetMapping("/payment-info")
     public ResponseEntity<?> getPaymentInfo(@RequestParam(value = "vnp_Amount") String amount,

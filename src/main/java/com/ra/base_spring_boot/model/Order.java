@@ -40,10 +40,15 @@ public class Order {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
+    private ShippingFee shippingFee;
+
     @ManyToOne
     @JsonIgnore
     @JoinColumn(name = "shipping_address_id")
     private Address shippingAddress;
+
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> orderItems;
@@ -51,5 +56,12 @@ public class Order {
     @ManyToOne
     @JoinColumn(name = "voucher_id")
     private Voucher voucher;
+
+    @Column(name = "used_point")
+    private Integer usedPoints;
+    @Column(name = "discount_percent")
+    private Double discountPercent;
+    @Column(name = "discount_amount")
+    private Double discountAmount;
 
 }

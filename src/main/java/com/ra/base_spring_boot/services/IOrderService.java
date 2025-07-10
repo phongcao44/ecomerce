@@ -1,5 +1,7 @@
 package com.ra.base_spring_boot.services;
 
+import com.ra.base_spring_boot.dto.resp.OrderDetailResponse;
+import com.ra.base_spring_boot.dto.resp.OrderResponse;
 import com.ra.base_spring_boot.model.Order;
 import com.ra.base_spring_boot.model.constants.OrderStatus;
 
@@ -13,6 +15,11 @@ public interface IOrderService {
 
     Order save(Order order);
 
+
+    OrderDetailResponse getOrderDetail(Long id);
+
+    List<OrderResponse> getAllOrderResponses();
+
     long countByStatus(OrderStatus status);
 
     Map<String, Double> getCancelAndReturnRate();
@@ -20,5 +27,6 @@ public interface IOrderService {
     List<Order> findByUserId(Long userId);
 
     List<Order> findByUserIdAndStatus(Long userId, OrderStatus status);
+
 
 }

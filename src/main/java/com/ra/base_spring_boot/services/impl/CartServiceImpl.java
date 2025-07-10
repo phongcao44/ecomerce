@@ -12,6 +12,7 @@ import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.model.constants.OrderStatus;
 import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.services.ICartService;
+import com.ra.base_spring_boot.services.ShippingFeeService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,10 @@ public class CartServiceImpl implements ICartService {
     private final IAddressRepository addressRepository;
 
     private final IOrderItemRepository orderItemRepository;
+
+    private final ShippingFeeService shippingFeeService;
+
+    private final ShippingFeeRepository shippingFeeRepository;
 
 
     private Cart getOrCreateCart(Long userId) {
@@ -174,6 +179,8 @@ public class CartServiceImpl implements ICartService {
         if (items.isEmpty()) {
             throw new HttpNotFound("Cart Is Empty");
         }
+        // ✅ Tính phí giao hàng
+        ShippingFee shippingFee = shippingFeeService.calculateAndSaveShippingFee(userId, address);
 
         Order order = Order.builder()
                 .user(user)
@@ -183,6 +190,12 @@ public class CartServiceImpl implements ICartService {
                 .shippingAddress(address)
                 .build();
         orderRepository.save(order);
+
+        // ✅ Gán ShippingFee vào Order
+        shippingFee.setOrder(order);
+        shippingFeeRepository.save(shippingFee);
+
+        order.setShippingFee(shippingFee);
 
         List<OrderItem> orderItems = new ArrayList<>();
         BigDecimal total = BigDecimal.ZERO;
@@ -206,11 +219,24 @@ public class CartServiceImpl implements ICartService {
             orderItems.add(orderItem);
         }
 
+//        order.setTotalAmount(total);
+//        orderRepository.save(order);
+//
+//        cartItemRepository.deleteAll(items);
+//
+//        return OrderCheckoutResponseDTO.fromOrder(order, orderItems);
+
+        // ✅ Cộng thêm phí giao hàng
+        total = total.add(BigDecimal.valueOf(shippingFee.getTotal()));
+
+        // ✅ Gán lại vào order và lưu
         order.setTotalAmount(total);
         orderRepository.save(order);
 
+        // ✅ Xoá toàn bộ cart sau khi checkout
         cartItemRepository.deleteAll(items);
 
+        // ✅ Trả về DTO
         return OrderCheckoutResponseDTO.fromOrder(order, orderItems);
     }
 

@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.services.impl;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.ra.base_spring_boot.dto.req.BannerRequest;
 import com.ra.base_spring_boot.model.Banner;
 import com.ra.base_spring_boot.repository.IBannerRepository;
 import com.ra.base_spring_boot.services.IBannerService;

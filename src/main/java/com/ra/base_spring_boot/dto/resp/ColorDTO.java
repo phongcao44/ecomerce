@@ -5,14 +5,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Builder
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
-@Builder
-
-public class UserResponse {
+public class ColorDTO {
     private Long id;
-    private String username;
-    private String email;
-
+    private String name;
+    private String hex_code;
 }

@@ -9,22 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 @Builder
-public class AddressResponse {
+public class ShippingFeeResponse {
     private Long id;
 
-
-    private Long userId;
-
-    private String fulladdress;
-
-    private String phone;
-
-    private String province;
-
-    private String recipient_name;
-
-    private String ward;
-
-
-
+    private double price;
 }

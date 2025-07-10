@@ -1,5 +1,7 @@
 package com.ra.base_spring_boot.services.impl;
 
+import com.ra.base_spring_boot.dto.resp.CategoryDetailResponse;
+import com.ra.base_spring_boot.dto.resp.CategoryFlatResponse;
 import com.ra.base_spring_boot.dto.resp.CategoryResponse;
 import com.ra.base_spring_boot.dto.resp.SearchCategoryRespone;
 import com.ra.base_spring_boot.model.Category;
@@ -11,7 +13,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,27 +33,32 @@ public class CategoryServiceImpl implements ICategoryService {
         responesedto = categoryPage.stream()
                 .filter(category -> category.getParent() == null) // Chỉ lấy danh mục cha
                 .map(category ->
-                CategoryResponse.builder()
-                        .id(category.getId())
-                        .name(category.getName())
-                        .description(category.getDescription())
-                        .parentId(null)// chỉ lấy cha
-                        .build()
+                        CategoryResponse.builder()
+                                .id(category.getId())
+                                .name(category.getName())
+                                .description(category.getDescription())
+                                .parentId(null)// chỉ lấy cha
+                                .build()
                 ).collect(Collectors.toList());
         return new PageImpl<>(responesedto, pageable, responesedto.size());
     }
 
     @Override
-    public List<CategoryResponse> pageablesub(Long  parentId) {
+    public Category save(Category category) {
+        return categoryRepository.save(category);
+    }
+
+    @Override
+    public List<CategoryResponse> pageablesub(Long parentId) {
         List<Category> subcategory = categoryRepository.findAllByParentId(parentId);
         return subcategory.stream().map(category ->
-                        CategoryResponse.builder()
-                                .id(category.getId())
-                                .name(category.getName())
-                                .description(category.getDescription())
-                                .parentId(category.getParent().getId())
-                                .build()
-                        ).collect(Collectors.toList());
+                CategoryResponse.builder()
+                        .id(category.getId())
+                        .name(category.getName())
+                        .description(category.getDescription())
+                        .parentId(category.getParent().getId())
+                        .build()
+        ).collect(Collectors.toList());
     }
 
     @Override
@@ -70,7 +77,95 @@ public class CategoryServiceImpl implements ICategoryService {
     }
 
     @Override
-    public Category save(Category category) {
-        return null;
+    public List<CategoryDetailResponse> getCategoryTree() {
+        List<Category> allCategories = categoryRepository.findAll();
+
+        Map<Long, CategoryDetailResponse> categoryMap = new HashMap<>();
+        List<CategoryDetailResponse> roots = new ArrayList<>();
+
+        for (Category cat : allCategories) {
+            categoryMap.put(cat.getId(), CategoryDetailResponse.builder()
+                    .id(cat.getId())
+                    .name(cat.getName())
+                    .description(cat.getDescription())
+                    .parentId(cat.getParent() != null ? cat.getParent().getId() : null)
+                    .children(new ArrayList<>())
+                    .build());
+        }
+
+        for (CategoryDetailResponse dto : categoryMap.values()) {
+            if (dto.getParentId() == null) {
+                roots.add(dto);
+            } else {
+                CategoryDetailResponse parent = categoryMap.get(dto.getParentId());
+                if (parent != null) {
+                    parent.getChildren().add(dto);
+                }
+            }
+        }
+
+        return roots;
+    }
+
+    @Override
+    public List<CategoryResponse> findAllParents(Long sonId) {
+        List<CategoryResponse> result = new ArrayList<>();
+        Optional<Category> optional = categoryRepository.findById(sonId);
+
+        while (optional.isPresent()) {
+            Category current = optional.get();
+            result.add(CategoryResponse.builder()
+                    .id(current.getId())
+                    .name(current.getName())
+                    .description(current.getDescription())
+                    .parentId(current.getParent() != null ? current.getParent().getId() : null)
+                    .level(getCategoryLevel(current))
+                    .build());
+
+            optional = Optional.ofNullable(current.getParent());
+        }
+
+        return result;
+    }
+
+    @Override
+    public List<CategoryFlatResponse> getFlattenCategoryList() {
+        List<Category> allCategories = categoryRepository.findAll();
+        List<CategoryFlatResponse> flatList = new ArrayList<>();
+
+        for (Category category : allCategories) {
+            int level = 1;
+            Category current = category.getParent();
+            while (current != null) {
+                level++;
+                current = current.getParent();
+            }
+
+            flatList.add(CategoryFlatResponse.builder()
+                    .id(category.getId())
+                    .name(category.getName())
+                    .description(category.getDescription())
+                    .level(level)
+                    .parentId(category.getParent() != null ? category.getParent().getId() : null)
+                    .parentName(category.getParent() != null ? category.getParent().getName() : null)
+                    .build());
+        }
+
+        // Sắp xếp theo level (nếu cần)
+        flatList.sort(Comparator.comparingInt(CategoryFlatResponse::getLevel));
+
+        return flatList;
+    }
+
+    public int getCategoryLevel(Category category) {
+        int level = 1;
+        Category current = category;
+
+        while (current.getParent() != null) {
+            level++;
+            current = current.getParent();
+        }
+
+        return level;
     }
 }

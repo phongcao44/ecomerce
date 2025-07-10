@@ -47,12 +47,13 @@ dependencies {
     implementation 'com.cloudinary:cloudinary-http44:1.37.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
-    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'com.itextpdf:itextpdf:5.0.6'
 
+    implementation 'com.google.code.gson:gson:2.10.1'
 
     implementation 'org.json:json:20240303'
 
-
+    implementation 'org.apache.poi:poi-ooxml:5.2.3'
 }
 
 tasks.named('test') {

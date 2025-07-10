@@ -3,6 +3,7 @@ package com.ra.base_spring_boot.controller;
 import com.ra.base_spring_boot.dto.DataError;
 import com.ra.base_spring_boot.dto.req.AddParentCategoryRequest;
 import com.ra.base_spring_boot.dto.req.CategoryRequest;
+import com.ra.base_spring_boot.dto.resp.CategoryDetailResponse;
 import com.ra.base_spring_boot.dto.resp.CategoryResponse;
 import com.ra.base_spring_boot.model.Category;
 import com.ra.base_spring_boot.repository.ICategoryRepository;
@@ -41,7 +42,15 @@ public class CategoryController {
         Page<CategoryResponse> categoryPage = categoryService.pageable(pageable);
         return new ResponseEntity<>(categoryPage, HttpStatus.OK);
         }
-
+    //list tìm cha va ong noi
+    @GetMapping("/list/son_of_parent/{sonId}")
+    public ResponseEntity<?> getson(@PathVariable Long sonId) {
+        List<CategoryResponse> parentLine = categoryService.findAllParents(sonId);
+        if (parentLine.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy danh mục con");
+        }
+        return ResponseEntity.ok(parentLine);
+    }
         // danh mục con của cha
     @GetMapping("/categories/list/son/{parentId}")
     public ResponseEntity<?> getSubCategories(@PathVariable Long parentId) {
@@ -67,6 +76,28 @@ public class CategoryController {
         }
         return new ResponseEntity<>(category,HttpStatus.OK);
     }
+
+    //add danh mục dùng chung
+    @PostMapping("/add")
+    public ResponseEntity<?> addCategory(@RequestBody CategoryRequest categoryRequest) {
+        Category category = new Category();
+        category.setName(categoryRequest.getName());
+        category.setDescription(categoryRequest.getDescription());
+
+        if (categoryRequest.getParentId() != null) {
+            Optional<Category> parentCategory = categoryRepository.findById(categoryRequest.getParentId());
+            if (parentCategory.isPresent()) {
+                category.setParent(parentCategory.get());
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Danh mục cha không tồn tại");
+            }
+        }else {
+            category.setParent(null);
+        }
+        categoryRepository.save(category);
+        return ResponseEntity.ok("them thanh cong goy");
+    }
+
 
     //add danh mục dùng rieeng cho con
     @PostMapping("/admin/categories/add/son/{parentId}")
@@ -212,4 +243,16 @@ public class CategoryController {
         categoryRepository.deleteById(id);
         return ResponseEntity.ok("Xóa danh mục con thành công");
     }
+
+    @GetMapping("/categories/tree")
+    public ResponseEntity<?> getCategoryTree() {
+        return ResponseEntity.ok(categoryService.getCategoryTree());
+    }
+
+    @GetMapping("/categories/flat")
+    public ResponseEntity<?> getFlatCategoryList() {
+        return ResponseEntity.ok(categoryService.getFlattenCategoryList());
+    }
+
+
 }
