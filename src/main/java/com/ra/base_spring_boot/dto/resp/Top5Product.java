@@ -15,12 +15,21 @@ public class Top5Product {
     private String productName;
     private Double price;
     private Long purchaseCount;
+    private String image;
     public static Top5Product from(Product product, Long purchaseCount) {
+        // Tìm ảnh chính từ danh sách ảnh của sản phẩm
+        String mainImage = product.getImages().stream()
+                .filter(img -> Boolean.TRUE.equals(img.getIsMain()))
+                .findFirst()
+                .map(img -> img.getImageUrl())
+                .orElse(null); // fallback nếu không có ảnh chính
+
         return Top5Product.builder()
                 .id(product.getId())
                 .productName(product.getName())
                 .price(product.getPrice().doubleValue())
                 .purchaseCount(purchaseCount)
+                .image(mainImage)
                 .build();
     }
 }

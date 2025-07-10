@@ -36,25 +36,28 @@ public class AddressServiceImpl implements IAddressService {
     @Override
     public void addAddress(Long userId, AddressRequest newAddress) {
         User user = iUserService.findUser(userId);
-        String provineName = ghnClient.getProvinceName(newAddress.getProvinceId());
-        String districtName = ghnClient.getDistrictName(newAddress.getDistrictId(), newAddress.getProvinceId());
-        String wardName = ghnClient.getWardName(newAddress.getWardId(), newAddress.getDistrictId());
 
+        // Ánh xạ tên => ID
+        int provinceId = ghnClient.getProvinceIdByName(newAddress.getProvince());
+        int districtId = ghnClient.getDistrictIdByName(newAddress.getDistrict(), provinceId);
+        String wardCode = ghnClient.getWardCodeByName(newAddress.getWard(), districtId);
 
-        Address address = Address.builder().
-                user(user).
-                province(provineName).
-                provinceId(newAddress.getProvinceId()).
-                ward(wardName).
-                ward(newAddress.getWardId()).
-                district(districtName).
-                districtId(newAddress.getDistrictId()).
-                fullAddress(newAddress.getFullAddress()).
-                phone(newAddress.getPhone()).
-                recipientName(newAddress.getRecipientName()).
-                build();
+        Address address = Address.builder()
+                .user(user)
+                .province(newAddress.getProvince())
+                .provinceId(provinceId)
+                .district(newAddress.getDistrict())
+                .districtId(districtId)
+                .ward(newAddress.getWard())
+                .wardCode(wardCode)
+                .fullAddress(newAddress.getFullAddress())
+                .phone(newAddress.getPhone())
+                .recipientName(newAddress.getRecipientName())
+                .build();
+
         iAddressRepository.save(address);
     }
+
 
 
 
@@ -72,23 +75,24 @@ public class AddressServiceImpl implements IAddressService {
     }
 
     @Override
-    public void update(Long userId,Long id,AddressRequest Address) {
-        String provineName = ghnClient.getProvinceName(Address.getProvinceId());
-        String districtName = ghnClient.getDistrictName(Address.getDistrictId(), Address.getProvinceId());
-        String wardName = ghnClient.getWardName(Address.getWardId(), Address.getDistrictId());
-
+    public void update(Long userId, Long id, AddressRequest req) {
         Address address = findById(id);
-        if(address.getUser().getId().equals(userId)){
+        if (address.getUser().getId().equals(userId)) {
+            int provinceId = ghnClient.getProvinceIdByName(req.getProvince());
+            int districtId = ghnClient.getDistrictIdByName(req.getDistrict(), provinceId);
+            String wardCode = ghnClient.getWardCodeByName(req.getWard(), districtId);
+
             address.setUser(iUserService.findUser(userId));
-            address.setProvince(provineName);
-            address.setProvinceId(Address.getProvinceId());
-            address.setDistrictId(address.getDistrictId());
-            address.setWard(wardName);
-            address.setWardCode(address.getWardCode());
-            address.setDistrict(districtName);
-            address.setFullAddress(Address.getFullAddress());
-            address.setPhone(Address.getPhone());
-            address.setRecipientName(Address.getRecipientName());
+            address.setProvince(req.getProvince());
+            address.setProvinceId(provinceId);
+            address.setDistrict(req.getDistrict());
+            address.setDistrictId(districtId);
+            address.setWard(req.getWard());
+            address.setWardCode(wardCode);
+            address.setFullAddress(req.getFullAddress());
+            address.setPhone(req.getPhone());
+            address.setRecipientName(req.getRecipientName());
+
             iAddressRepository.save(address);
         }
     }

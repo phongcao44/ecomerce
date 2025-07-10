@@ -9,9 +9,11 @@ import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.dto.resp.Top5Product;
 import com.ra.base_spring_boot.model.Category;
 import com.ra.base_spring_boot.model.Product;
+import com.ra.base_spring_boot.model.ReturnPolicy;
 import com.ra.base_spring_boot.model.constants.ProductStatus;
 import com.ra.base_spring_boot.repository.ICategoryRepository;
 import com.ra.base_spring_boot.repository.IProductRepository;
+import com.ra.base_spring_boot.repository.IReturnPolicyRepository;
 import com.ra.base_spring_boot.services.IProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,10 +30,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProductServiceImpl implements IProductService {
 
-    @Autowired
     private final IProductRepository productRepository;
-    @Autowired
+
     private final ICategoryRepository categoryRepository;
+
+    private final IReturnPolicyRepository returnPolicyRepository;
+
 
     @Override
     public List<ProductResponseDTO> findAll() {
@@ -75,6 +79,9 @@ public class ProductServiceImpl implements IProductService {
         Category category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new HttpNotFound("Category Not Found"));
 
+        ReturnPolicy returnPolicy = returnPolicyRepository.findById(dto.getReturn_policy_id())
+                .orElseThrow(() -> new HttpNotFound("Return Policy Not Found"));
+
         Product product = Product.builder()
                 .name(dto.getName())
                 .description(dto.getDescription())
@@ -82,6 +89,7 @@ public class ProductServiceImpl implements IProductService {
                 .brand(dto.getBrand())
                 .status(dto.getStatus())
                 .category(category)
+                .returnPolicy(returnPolicy)
                 .build();
 
         product = productRepository.save(product);
@@ -136,12 +144,16 @@ public class ProductServiceImpl implements IProductService {
         Category category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new HttpNotFound("Category Not Found"));
 
+        ReturnPolicy returnPolicy = returnPolicyRepository.findById(dto.getReturn_policy_id())
+                .orElseThrow(() -> new HttpNotFound("Return Policy Not Found"));
+
         existing.setName(dto.getName());
         existing.setDescription(dto.getDescription());
         existing.setPrice(dto.getPrice());
         existing.setBrand(dto.getBrand());
         existing.setStatus(dto.getStatus());
         existing.setCategory(category);
+        existing.setReturnPolicy(returnPolicy);
 
         Product updated = productRepository.save(existing);
 
