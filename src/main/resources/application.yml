@@ -1,54 +1,88 @@
-spring:
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
+  spring:
+    thymeleaf:
+      enabled: true
+      prefix: classpath:/templates/
+      suffix: .html
+      mode: HTML
+      encoding: UTF-8
+      cache: false
+    servlet:
+      multipart:
+        max-file-size: 10MB
+        max-request-size: 10MB
 
-  application:
-    name: base_spring_boot
-  datasource:
-    url: jdbc:mysql://localhost:3306/base_core?createDatabaseIfNotExist=true
-    username: root
-    password: 123456
-  jooq:
-    sql-dialect: org.hibernate.dialect.MySQL8Dialect
-  jpa:
-    hibernate:
-      naming:
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
-      ddl-auto: update
-    properties:
+    application:
+      name: base_spring_boot
+    datasource:
+      url: jdbc:mysql://localhost:3306/base_core?createDatabaseIfNotExist=true
+      username: root
+      password: 123456
+    jooq:
+      sql-dialect: org.hibernate.dialect.MySQL8Dialect
+    jpa:
       hibernate:
-        format_sql: true
-        show_sql: true
+        naming:
+          physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+          implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+        ddl-auto: update
+      properties:
+        hibernate:
+          format_sql: true
+          show_sql: true
 
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: nhutlmce@gmail.com
-    password: nmkpatdrcqgkpumw
-    protocol: smtp
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-          ssl:
-            trust: smtp.gmail.com
+    mail:
+      host: smtp.gmail.com
+      port: 587
+      username: phonglx001@gmail.com
+      password: sfkrbvhtxqvltram
+      protocol: smtp
+      properties:
+        mail:
+          smtp:
+            auth: true
+            starttls:
+              enable: true
+            ssl:
+              trust: smtp.gmail.com
+    security:
+     oauth2:
+       client:
+         registration:
+           google:
+             client-id: 518518758871-l2e83fg6a74i4tj4pa0mb2l1d3cebv52.apps.googleusercontent.com
+             client-secret: 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
+             scope:
+               - openid
+               - profile
+               - email
+           facebook:
+             client-id: 746285027978811
+             client-secret: 628945d73c82331919d3d8589b0a3f96
+             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+             scope:
+               - email
+         provider:
+           google:
+             authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+             token-uri: https://oauth2.googleapis.com/token
+             user-info-uri: https://openidconnect.googleapis.com/v1/userinfo
+             user-name-attribute: sub
+           facebook:
+             authorization-uri: https://www.facebook.com/v11.0/dialog/oauth
+             token-uri: https://graph.facebook.com/v11.0/oauth/access_token
+             user-info-uri: https://graph.facebook.com/me?fields=id,name,email
+  jwt:
+    secret:
+      key: Ascmkkqdnmsdfrtgsyuhidj21ue120938219321ndsad
+    expired:
+      access: 28800000
 
-jwt:
-  secret:
-    key: Ascmkkqdnmsdfrtgsyuhidj21ue120938219321ndsad
-  expired:
-    access: 28800000
+  open:
+    api:
+      title: API Document
+      version: v1.0
+      description: TEST API
+      serverUrl: http://localhost:8080
+  ghn:
+    token: 2b984e8b-56f2-11f0-a792-aa91a84883e3
 
-open:
-  api:
-    title: API Document
-    version: v1.0
-    description: TEST API
-    serverUrl: http://localhost:8080
-ghn:
-  token: 2b984e8b-56f2-11f0-a792-aa91a84883e3

@@ -1,23 +1,31 @@
 package com.ra.base_spring_boot.services.impl;
 
+import com.ra.base_spring_boot.dto.resp.UserPointResponse;
 import com.ra.base_spring_boot.model.Order;
 import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.model.UserPoint;
 import com.ra.base_spring_boot.model.constants.UserRank;
 import com.ra.base_spring_boot.repository.IPointRepository;
+import com.ra.base_spring_boot.repository.IUserRepository;
 import com.ra.base_spring_boot.services.IPointService;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-
+import java.util.List;
+@Service
 public class PointServiceImpl implements IPointService {
     private final IPointRepository pointRepository;
-    public PointServiceImpl(IPointRepository pointRepository) {
+    private final IUserRepository userRepository;
+    public PointServiceImpl(IPointRepository pointRepository, IUserRepository userRepository)
+    {
         this.pointRepository = pointRepository;
+        this.userRepository = userRepository;
     }
+
     public void accumulatePoints(Order order) {
         User user = order.getUser();
-        UserPoint userPoint = pointRepository.findByUser(user);
+        UserPoint userPoint = pointRepository.findByUserId(user.getId());
         BigDecimal rate = getRateByRank(userPoint.getUserRank());
         BigDecimal orderTotal = order.getTotalAmount();
         BigDecimal points = orderTotal.multiply(rate).divide(BigDecimal.valueOf(1000), RoundingMode.DOWN);
@@ -25,7 +33,6 @@ public class PointServiceImpl implements IPointService {
         userPoint.setTotalPoints(userPoint.getTotalPoints() + earnedPoints);
         userPoint.setRankPoints(userPoint.getRankPoints() + earnedPoints);
         userPoint.setUserRank(calculateNewRank(userPoint.getRankPoints()));
-
         pointRepository.save(userPoint);
     }
 
@@ -39,10 +46,39 @@ public class PointServiceImpl implements IPointService {
     }
 
     private UserRank calculateNewRank(int rankPoints) {
-        if (rankPoints >= 2000) return UserRank.KIMCUONG;
-        else if (rankPoints >= 1000) return UserRank.VANG;
+        if (rankPoints >= 4000) return UserRank.KIMCUONG;
+        else if (rankPoints >= 1500) return UserRank.VANG;
         else if (rankPoints >= 500) return UserRank.BAC;
         else return UserRank.DONG;
+    }
+
+
+    @Override
+    public UserPointResponse getUserPoints(Long userId) {
+        User user = userRepository.findById(userId).orElse(null);
+        System.out.println(userId+"...............");
+        UserPoint userPoint = pointRepository.findByUserId(userId);
+
+
+        UserPointResponse userPointResponse = new UserPointResponse();
+        userPointResponse.setUserId(userId);
+        userPointResponse.setUserPoints(userPoint.getTotalPoints());
+        userPointResponse.setUserRank(userPoint.getUserRank());
+        userPointResponse.setRankPoints(userPoint.getRankPoints());
+        return userPointResponse;
+    }
+    @Override
+    public void SetUserPoints(User user) {
+    UserPoint  userPoint = new UserPoint();
+    userPoint.setUser(user);
+    userPoint.setUserRank(UserRank.DONG);
+    userPoint.setTotalPoints(0);
+    userPoint.setRankPoints(0);
+    pointRepository.save(userPoint);
+    }
+    @Override
+    public List<UserPointResponse> getAllUserRank(Long orderId) {
+        return List.of();
     }
 }
 

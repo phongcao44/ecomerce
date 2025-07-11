@@ -1,5 +1,7 @@
 package com.ra.base_spring_boot.security.jwt;
 
+import com.ra.base_spring_boot.model.User;
+import com.ra.base_spring_boot.repository.IUserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -69,7 +71,7 @@ public class JwtProvider
     }
 
 
-    private String createToken(Map<String, Object> claims, String username)
+    public String createToken(Map<String, Object> claims, String username)
     {
 
         return Jwts.builder()
@@ -85,6 +87,15 @@ public class JwtProvider
     {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public String generateTokenFromEmail(String email) {
+        return Jwts.builder()
+                .setSubject(email)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 86400000))
+                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .compact();
     }
 
 }

@@ -34,6 +34,7 @@ import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.IGmailService;
 import com.ra.base_spring_boot.services.IOrderService;
 import com.ra.base_spring_boot.services.IPaymentService;
+import com.ra.base_spring_boot.services.IPointService;
 import com.ra.base_spring_boot.services.ghn.GhnClient;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -74,6 +75,8 @@ public class OrderController {
     private GhnClient ghnClient;
     @Autowired
     private IPaymentService paymentService;
+    @Autowired
+    private IPointService pointService;
 
     @Autowired
     private IGmailService  gmailService;
@@ -224,6 +227,9 @@ public class OrderController {
                     //.shippingAddress(addressResponse)
                     //.orderItems(orderItemDetailResponses)
                     .build();
+            if (status == OrderStatus.DELIVERED) {
+                pointService.accumulatePoints(updatedOrder);
+            }
 
             return ResponseEntity.ok(response);
         }catch (Exception e) {
