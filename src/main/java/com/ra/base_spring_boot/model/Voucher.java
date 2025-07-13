@@ -19,7 +19,10 @@ public class Voucher {
 
     private String code;
 
-    private double discountPercent;
+    private Double discountPercent;
+
+    private Double discountAmount; // Thêm dòng này
+
     private double maxDiscount;
 
     private LocalDate startDate;

@@ -21,4 +21,12 @@ public class ProductVariantResponseDTO {
     private Integer stockQuantity;
 
     private BigDecimal priceOverride;
+
+    private BigDecimal discountOverrideByFlashSale;
+
+    private String discountType;
+
+    private BigDecimal finalPriceAfterDiscount;
+
+
 }
