@@ -74,6 +74,40 @@ public class GhnClient {
         throw new RuntimeException("Ward not found: " + wardCode);
     }
 
+//    public int getProvinceIdByName(String provinceName) throws JSONException {
+//        JSONArray data = new JSONObject(getProvinces().getBody()).optJSONArray("data");
+//        for (int i = 0; i < data.length(); i++) {
+//            JSONObject province = data.getJSONObject(i);
+//            if (province.getString("ProvinceName").equalsIgnoreCase(provinceName.trim())) {
+//                return province.getInt("ProvinceID");
+//            }
+//        }
+//        throw new RuntimeException("Province not found: " + provinceName);
+//    }
+//
+//    public int getDistrictIdByName(String districtName, int provinceId) throws JSONException {
+//        JSONArray data = new JSONObject(getDistricts(provinceId).getBody()).optJSONArray("data");
+//        for (int i = 0; i < data.length(); i++) {
+//            JSONObject district = data.getJSONObject(i);
+//            if (district.getString("DistrictName").equalsIgnoreCase(districtName.trim())) {
+//                return district.getInt("DistrictID");
+//            }
+//        }
+//        throw new RuntimeException("District not found: " + districtName);
+//    }
+//
+//    public String getWardCodeByName(String wardName, int districtId) throws JSONException {
+//        JSONArray data = new JSONObject(getWards(districtId).getBody()).optJSONArray("data");
+//        for (int i = 0; i < data.length(); i++) {
+//            JSONObject ward = data.getJSONObject(i);
+//            if (ward.getString("WardName").equalsIgnoreCase(wardName.trim())) {
+//                return ward.getString("WardCode");
+//            }
+//        }
+//        throw new RuntimeException("Ward not found: " + wardName);
+//    }
+
+
     public int getProvinceIdByName(String provinceName) throws JSONException {
         JSONArray data = new JSONObject(getProvinces().getBody()).optJSONArray("data");
         for (int i = 0; i < data.length(); i++) {

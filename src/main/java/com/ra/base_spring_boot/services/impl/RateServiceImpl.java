@@ -102,6 +102,28 @@ public class RateServiceImpl implements IRateService {
                 .build();
     }
 
+    @Override
+    public void deleteReviewByProductId(long userId, Long productId) {
+        reviewRepo.deleteReviewByProductId(productId);
+    }
+
+    @Override
+    public ReviewResponse editReviewByProductId(Long userId, ReviewRequest request) {
+        Review review = reviewRepo.findByUserIdAndProductId(userId, request.getProductId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Review not found"));
+            review.setComment(request.getComment());
+            review.setRating(request.getRating());
+            review.setCreatedAt(LocalDateTime.now());
+        reviewRepo.save(review);
+
+        return ReviewResponse.builder()
+                .id(review.getId())
+                .rating(review.getRating())
+                .comment(review.getComment())
+                .userName(review.getUser().getUsername())
+                .createdAt(review.getCreatedAt())
+                .build();
+    }
 
 
 }

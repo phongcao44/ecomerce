@@ -19,9 +19,7 @@ import com.ra.base_spring_boot.repository.IUserRepository;
 import com.ra.base_spring_boot.repository.IPasswordResetTokenRepository;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
-import com.ra.base_spring_boot.services.IAuthService;
-import com.ra.base_spring_boot.services.IRoleService;
-import com.ra.base_spring_boot.services.IVoucherService;
+import com.ra.base_spring_boot.services.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -50,11 +48,12 @@ public class AuthServiceImpl implements IAuthService
     private final EmailService emailService;
     private final IPasswordResetTokenRepository passwordResetTokenRepository;
     private final IVoucherService voucherService;
-
+    private final IPointService pointService;
 
     @Override
     public void register(FormRegister formRegister)
     {
+        String email = formRegister.getEmail();
         if (userRepository.existsByEmail(formRegister.getEmail())) {
             throw new HttpBadRequest("Email đã tồn tại");
         }
@@ -77,6 +76,7 @@ public class AuthServiceImpl implements IAuthService
                 .build();
         userRepository.save(user);
         voucherService.assignWelcomeVoucher(user);
+        pointService.SetUserPoints(user);
     }
 
 

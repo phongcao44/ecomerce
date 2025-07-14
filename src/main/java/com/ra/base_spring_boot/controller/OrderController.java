@@ -31,9 +31,7 @@ import com.ra.base_spring_boot.model.constants.PaymentMethod;
 import com.ra.base_spring_boot.repository.IOrderItemRepository;
 import com.ra.base_spring_boot.repository.IOrderRepository;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
-import com.ra.base_spring_boot.services.IGmailService;
-import com.ra.base_spring_boot.services.IOrderService;
-import com.ra.base_spring_boot.services.IPaymentService;
+import com.ra.base_spring_boot.services.*;
 import com.ra.base_spring_boot.services.ghn.GhnClient;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -59,6 +57,9 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @RestController
@@ -74,9 +75,14 @@ public class OrderController {
     private GhnClient ghnClient;
     @Autowired
     private IPaymentService paymentService;
-
+    @Autowired
+    private IPointService pointService;
+    @Autowired
+    private SmsService smsService;
     @Autowired
     private IGmailService  gmailService;
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
 
     @GetMapping("/admin/order/list")
     public ResponseEntity<?> findAll() {
@@ -143,7 +149,7 @@ public class OrderController {
             }
 
             // Cập nhật trạng thái
-            order.setStatus(status);
+         //   order.setStatus(status);
 
             // Nếu chuyển sang DELIVERED → trừ kho
             if (status == OrderStatus.DELIVERED) {
@@ -157,7 +163,10 @@ public class OrderController {
                     }
 
                     variant.setStockQuantity(newStock);
+
                 }
+                order.setStatus(status);
+
                 // Gửi email mời đánh giá
                 String subject = "Cảm ơn bạn đã mua hàng tại Ecommer!";
                 String body = """
@@ -179,6 +188,17 @@ public class OrderController {
                     e.printStackTrace(); // Có thể log lỗi nếu cần
                 }
             }
+            // Gửi SMS (sài khóa lại)
+            String phoneNumber = order.getShippingAddress().getPhone();
+            String smsMessage = "Cảm ơn bạn đã mua hàng tại Ecommer! Vui lòng đánh giá đơn hàng: https://ecomer/review?orderId=%d".formatted(order.getId());
+            scheduler.schedule(() -> {
+            try {
+                smsService.sendSms(phoneNumber, smsMessage);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            }, 1, TimeUnit.MINUTES);
+            //khóa sms tới đây nè
 
             // Lưu lại đơn hàng
             Order updatedOrder = orderService.save(order);
@@ -224,6 +244,9 @@ public class OrderController {
                     //.shippingAddress(addressResponse)
                     //.orderItems(orderItemDetailResponses)
                     .build();
+            if (status == OrderStatus.DELIVERED) {
+                pointService.accumulatePoints(updatedOrder);
+            }
 
             return ResponseEntity.ok(response);
         }catch (Exception e) {
@@ -656,7 +679,8 @@ public class OrderController {
 
             return OrderResponse.builder()
                     .orderId(order.getId())
-//                    .userId(user.getId())
+                   // .userId(user.getId())
+                    .username(userDto.getUsername())
                     .createdAt(order.getCreatedAt())
                     .paymentMethod(order.getPaymentMethod())
                     .status(order.getStatus())

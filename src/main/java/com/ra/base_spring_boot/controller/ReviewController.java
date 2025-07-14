@@ -61,4 +61,11 @@ public class ReviewController {
         }
         return new ResponseEntity<>(new DataError("sản phẩm không tồn tại",404), HttpStatus.NOT_FOUND);
     }
+    @PatchMapping("/user/review/edit")
+    public ResponseEntity<?> editReview( @Valid @RequestBody ReviewRequest request,
+    @AuthenticationPrincipal MyUserDetails user
+    ){
+
+        return ResponseEntity.ok(reviewService.editReviewByProductId(user.getUser().getId(), request));
+    }
 }
