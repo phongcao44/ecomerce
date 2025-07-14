@@ -1,6 +1,5 @@
 package com.ra.base_spring_boot.services;
 
-<<<<<<< src/main/java/com/ra/base_spring_boot/services/IPointService.java
 import com.ra.base_spring_boot.dto.resp.UserPointResponse;
 import com.ra.base_spring_boot.model.Order;
 import com.ra.base_spring_boot.model.User;
