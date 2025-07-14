@@ -198,6 +198,16 @@ public class OrderServiceImpl implements IOrderService {
         return orderRepository.findByUserIdAndStatus(userId, status);
     }
 
+  /*  @Override
+    public List<Order> getOrderStatusDelivered(Long userId) {
+        List<Order> ordersDelivered = orderRepository.findByUserIdAndStatus(userId, OrderStatus.DELIVERED);
+        List<OrderItemDetail> orderItemDetails = ordersDelivered.stream().map(order -> {
+                    ProductVariant variant = items.getVariant();
+                    Product product = variant.getProduct();
+    }).toList();
+        return ordersDelivered;
+    }*/
+
     @Override
     public long countByStatus(OrderStatus status) {
         return orderRepository.countByStatus(status);

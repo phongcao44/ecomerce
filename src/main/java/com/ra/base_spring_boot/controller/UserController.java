@@ -3,6 +3,7 @@ package com.ra.base_spring_boot.controller;
 
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.AddUserRequest;
+import com.ra.base_spring_boot.dto.req.UserDetailRequest;
 import com.ra.base_spring_boot.dto.req.UserStatusRequest;
 import com.ra.base_spring_boot.dto.resp.RoleResponse;
 import com.ra.base_spring_boot.dto.resp.UserDetailResponse;
@@ -10,10 +11,12 @@ import com.ra.base_spring_boot.dto.resp.ViewUserResponse;
 import com.ra.base_spring_boot.model.Role;
 import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.model.constants.RoleName;
+import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -73,5 +76,14 @@ public class UserController {
     public ResponseEntity<?> getUsersDetail(@PathVariable long id) {
         UserDetailResponse users = userService.findUserDetails(id);
         return ResponseEntity.ok(users);
+    }
+
+    @PatchMapping("/update")
+    public ResponseEntity<?> updateUserDetail(
+            @AuthenticationPrincipal MyUserDetails userDetails,
+            @RequestBody UserDetailRequest userDetailRequest) {
+       UserDetailResponse updateUser =  userService.updateUserDetails(userDetails.getUser().getId(), userDetailRequest);
+        return ResponseEntity.ok(updateUser);
+
     }
 }

@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.services;
 
 import com.ra.base_spring_boot.dto.req.AddUserRequest;
 import com.ra.base_spring_boot.dto.req.FormRegister;
+import com.ra.base_spring_boot.dto.req.UserDetailRequest;
 import com.ra.base_spring_boot.dto.resp.UserDetailResponse;
 import com.ra.base_spring_boot.dto.resp.ViewUserResponse;
 import com.ra.base_spring_boot.model.User;
@@ -20,4 +21,5 @@ public interface IUserService {
     void processOAuthPostLogin(String email, String name);
     User findOrCreate(String email, String name);
     UserDetailResponse findUserDetails(Long userId);
+    UserDetailResponse updateUserDetails(Long userId, UserDetailRequest userDetailRequest);
 }
