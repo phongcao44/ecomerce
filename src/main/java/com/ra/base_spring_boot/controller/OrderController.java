@@ -234,7 +234,7 @@ public class OrderController {
 
                     .username(userDto.getUsername())
 
-                  //  .userId(user.getId())
+//                    .userId(user.getId())
 
                     .createdAt(updatedOrder.getCreatedAt())
                     .paymentMethod(updatedOrder.getPaymentMethod())
@@ -265,7 +265,7 @@ public class OrderController {
 //            return new ResponseEntity<>(new DataError("Lỗi xử lý: " + e.getMessage(), 500), HttpStatus.INTERNAL_SERVER_ERROR);
 //        }
 //    }
-
+//
 
 
     @DeleteMapping("/order/delete/{id}")
@@ -685,7 +685,7 @@ public class OrderController {
                     .paymentMethod(order.getPaymentMethod())
                     .status(order.getStatus())
                     .totalAmount(order.getTotalAmount())
-                  //  .shippingAddress(addressResponse)
+//                    .shippingAddress(addressResponse)
                     .build();
         }).collect(Collectors.toList());
 

@@ -30,6 +30,15 @@ public class OrderCheckoutResponseDTO {
 
     private BigDecimal shippingFee;
 
+    // Các trường mới
+    private Long voucherId;
+
+    private Double discountPercent;
+
+    private Double discountAmount;
+
+    private Integer usedPoints;
+
     public static OrderCheckoutResponseDTO fromOrder(Order order, List<OrderItem> orderItems) {
         return OrderCheckoutResponseDTO.builder()
                 .orderId(order.getId())
@@ -45,8 +54,13 @@ public class OrderCheckoutResponseDTO {
                 .items(orderItems.stream()
                         .map(OrderItemDetailDTO::fromOrderItem)
                         .toList())
+                // Gán thêm thông tin giảm giá
+                .voucherId(order.getVoucher() != null ? order.getVoucher().getId() : null)
+                .discountPercent(order.getDiscountPercent())
+                .discountAmount(order.getDiscountAmount())
+                .usedPoints(order.getUsedPoints())
+
                 .build();
     }
-
 }
 

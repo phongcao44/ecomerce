@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+
 import java.util.List;
+
 @Service
 public class PointServiceImpl implements IPointService {
     private final IPointRepository pointRepository;
@@ -23,11 +25,16 @@ public class PointServiceImpl implements IPointService {
         this.userRepository = userRepository;
     }
 
+
+    @Override
+
     public void accumulatePoints(Order order) {
         User user = order.getUser();
         UserPoint userPoint = pointRepository.findByUserId(user.getId());
         BigDecimal rate = getRateByRank(userPoint.getUserRank());
-        BigDecimal orderTotal = order.getTotalAmount();
+        // Cộng điểm dựa trên số tiền thật sự đã chi (bao gồm cả điểm đã dùng)
+        BigDecimal orderTotal = order.getTotalAmount().add(BigDecimal
+                .valueOf(order.getUsedPoints() != null ? order.getUsedPoints() : 0));
         BigDecimal points = orderTotal.multiply(rate).divide(BigDecimal.valueOf(1000), RoundingMode.DOWN);
         int earnedPoints = points.intValue();
         userPoint.setTotalPoints(userPoint.getTotalPoints() + earnedPoints);
@@ -51,6 +58,7 @@ public class PointServiceImpl implements IPointService {
         else if (rankPoints >= 500) return UserRank.BAC;
         else return UserRank.DONG;
     }
+
 
 
     @Override
@@ -80,5 +88,6 @@ public class PointServiceImpl implements IPointService {
     public List<UserPointResponse> getAllUserRank(Long orderId) {
         return List.of();
     }
+
 }
 

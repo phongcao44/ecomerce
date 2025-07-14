@@ -57,6 +57,10 @@ public class AuthServiceImpl implements IAuthService
         if (userRepository.existsByEmail(formRegister.getEmail())) {
             throw new HttpBadRequest("Email đã tồn tại");
         }
+        String email = formRegister.getEmail();
+        if (!email.toLowerCase().endsWith("@gmail.com")) {
+            throw new IllegalArgumentException("Email phải kết thúc bằng @gmail.com");
+        }
 
         Set<Role> roles = new HashSet<>();
         roles.add(roleService.findByRoleName(RoleName.ROLE_USER));
@@ -74,6 +78,7 @@ public class AuthServiceImpl implements IAuthService
         voucherService.assignWelcomeVoucher(user);
         pointService.SetUserPoints(user);
     }
+
 
     @Override
     public JwtResponse login(FormLogin formLogin)

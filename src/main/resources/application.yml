@@ -11,6 +11,7 @@
         max-file-size: 10MB
         max-request-size: 10MB
 
+
     application:
       name: base_spring_boot
     datasource:
@@ -20,6 +21,23 @@
     jooq:
       sql-dialect: org.hibernate.dialect.MySQL8Dialect
     jpa:
+
+  application:
+    name: base_spring_boot
+  datasource:
+    url: jdbc:mysql://localhost:3306/base_core?createDatabaseIfNotExist=true
+    username: root
+    password: Nhutkep@123
+  jooq:
+    sql-dialect: org.hibernate.dialect.MySQL8Dialect
+  jpa:
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+      ddl-auto: update
+    properties:
+
       hibernate:
         naming:
           physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl

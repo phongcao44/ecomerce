@@ -2,8 +2,6 @@ package com.ra.base_spring_boot.services.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.ra.base_spring_boot.model.Address;
-import com.ra.base_spring_boot.model.DistributionCenter;
-import com.ra.base_spring_boot.model.Order;
 import com.ra.base_spring_boot.model.ShippingFee;
 import com.ra.base_spring_boot.repository.DistributionCenterRepository;
 import com.ra.base_spring_boot.repository.IAddressRepository;
