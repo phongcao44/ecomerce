@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ra.base_spring_boot.model.constants.RoleName;
 import jakarta.persistence.*;
 import lombok.*;
@@ -27,5 +28,6 @@ public class Role {
     private String description;
 
     @ManyToMany(mappedBy = "roles")
+    @JsonIgnore // thêm dòng này để dừng serialize chỗ này
     private Set<User> users;
 }

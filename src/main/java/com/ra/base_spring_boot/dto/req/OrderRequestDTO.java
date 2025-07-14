@@ -6,6 +6,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+import java.util.List;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -18,4 +20,13 @@ public class OrderRequestDTO {
 
     @NotNull(message = "Payment method is required")
     private PaymentMethod paymentMethod;
+
+    // Danh sách cartItemId muốn checkout
+    private List<Long> cartItemIds;
+
+    // Dùng nếu có áp dụng voucher
+    private Long voucherId;
+
+    // Dùng nếu user muốn dùng điểm
+    private Integer usedPoints;
 }

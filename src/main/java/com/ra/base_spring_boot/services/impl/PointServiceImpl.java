@@ -6,20 +6,26 @@ import com.ra.base_spring_boot.model.UserPoint;
 import com.ra.base_spring_boot.model.constants.UserRank;
 import com.ra.base_spring_boot.repository.IPointRepository;
 import com.ra.base_spring_boot.services.IPointService;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+@Service
 public class PointServiceImpl implements IPointService {
     private final IPointRepository pointRepository;
     public PointServiceImpl(IPointRepository pointRepository) {
         this.pointRepository = pointRepository;
     }
+
+    @Override
     public void accumulatePoints(Order order) {
         User user = order.getUser();
         UserPoint userPoint = pointRepository.findByUser(user);
         BigDecimal rate = getRateByRank(userPoint.getUserRank());
-        BigDecimal orderTotal = order.getTotalAmount();
+        // Cộng điểm dựa trên số tiền thật sự đã chi (bao gồm cả điểm đã dùng)
+        BigDecimal orderTotal = order.getTotalAmount().add(BigDecimal
+                .valueOf(order.getUsedPoints() != null ? order.getUsedPoints() : 0));
         BigDecimal points = orderTotal.multiply(rate).divide(BigDecimal.valueOf(1000), RoundingMode.DOWN);
         int earnedPoints = points.intValue();
         userPoint.setTotalPoints(userPoint.getTotalPoints() + earnedPoints);
@@ -44,5 +50,7 @@ public class PointServiceImpl implements IPointService {
         else if (rankPoints >= 500) return UserRank.BAC;
         else return UserRank.DONG;
     }
+
+
 }
 

@@ -5,17 +5,20 @@ import com.ra.base_spring_boot.dto.resp.ProductVariantDetailDTO;
 import com.ra.base_spring_boot.dto.resp.ProductVariantResponseDTO;
 import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.model.*;
-import com.ra.base_spring_boot.repository.IColorRepository;
-import com.ra.base_spring_boot.repository.IProductRepository;
-import com.ra.base_spring_boot.repository.IProductVariantRepository;
-import com.ra.base_spring_boot.repository.ISizeRepository;
+import com.ra.base_spring_boot.model.constants.DiscountType;
+import com.ra.base_spring_boot.model.constants.UserStatus;
+import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.services.IProductService;
 import com.ra.base_spring_boot.services.IProductVariantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,23 +33,66 @@ public class ProductVariantServiceImpl implements IProductVariantService {
     private IColorRepository colorRepository;
     @Autowired
     private ISizeRepository sizeRepository;
-
-
+    @Autowired
+    private IFlashSaleItemRepository  flashSaleItemRepository;
+    @Autowired
+    private IFlashSaleRepository flashSaleRepository;
 
     @Override
     public List<ProductVariantResponseDTO> findAll() {
-        List<ProductVariant> variants = productVariantRepository.findAll();
+        // B1: Lấy danh sách các Flash Sale đang hoạt động
+        List<FlashSale> activeFlashSales = flashSaleRepository.findAll().stream()
+                .filter(flashSale -> flashSale.getStatus() == UserStatus.ACTIVE
+                        && flashSale.getStartTime().isBefore(LocalDateTime.now())
+                        && flashSale.getEndTime().isAfter(LocalDateTime.now()))
+                .collect(Collectors.toList());
 
-        return variants.stream().map(variant -> ProductVariantResponseDTO.builder()
-                .id(variant.getId())
-                .productName(variant.getProduct().getName())
-                .colorName(variant.getColor() !=null ? variant.getColor().getName():null)
-                .sizeName(variant.getSize() !=null ? variant.getSize().getSizeName():null)
-                .stockQuantity(variant.getStockQuantity())
-                .priceOverride(variant.getPriceOverride())
-                .build()
-        ).collect(Collectors.toList());
+        // B2: Lấy tất cả các item thuộc các Flash Sale đang hoạt động
+        List<FlashSaleItem> activeFlashSaleItems = new ArrayList<>();
+        for (FlashSale flashSale : activeFlashSales) {
+            List<FlashSaleItem> items = flashSaleItemRepository.findByFlashSaleId(flashSale.getId());
+            activeFlashSaleItems.addAll(items);
+        }
+
+        // B3: Ánh xạ variantId -> FlashSaleItem để tra nhanh
+        Map<Long, FlashSaleItem> flashSaleItemMap = activeFlashSaleItems.stream()
+                .filter(item -> item.getVariant() != null)
+                .collect(Collectors.toMap(item -> item.getVariant().getId(), item -> item, (a, b) -> a));
+
+        // B4: Tạo danh sách DTO và tính giá giảm nếu có Flash Sale
+        List<ProductVariant> variants = productVariantRepository.findAll();
+        return variants.stream().map(variant -> {
+            BigDecimal priceOriginal = variant.getPriceOverride();
+            BigDecimal finalPrice = priceOriginal;
+            ProductVariantResponseDTO dto = ProductVariantResponseDTO.builder()
+                    .id(variant.getId())
+                    .productName(variant.getProduct().getName())
+                    .colorName(variant.getColor() !=null ? variant.getColor().getName():null)
+                    .sizeName(variant.getSize() !=null ? variant.getSize().getSizeName():null)
+                    .stockQuantity(variant.getStockQuantity())
+                    .priceOverride(variant.getPriceOverride())
+                    .build();
+
+            // Nếu variant đang có Flash Sale thì gán giá giảm
+            if (flashSaleItemMap.containsKey(variant.getId())) {
+                FlashSaleItem item = flashSaleItemMap.get(variant.getId());
+                dto.setDiscountOverrideByFlashSale(item.getDiscountedPrice());
+                dto.setDiscountType(item.getDiscountType().name());
+                // Tính giá sau giảm
+                if (item.getDiscountType() == DiscountType.PERCENTAGE) {
+                    BigDecimal percent = item.getDiscountedPrice(); // ví dụ: 10%
+                    BigDecimal discountAmount = priceOriginal.multiply(percent).divide(BigDecimal.valueOf(100));
+                    finalPrice = priceOriginal.subtract(discountAmount);
+                } else if (item.getDiscountType() == DiscountType.AMOUNT) {
+                    BigDecimal discountAmount = item.getDiscountedPrice();
+                    finalPrice = priceOriginal.subtract(discountAmount);
+                }
+            }
+            dto.setFinalPriceAfterDiscount(finalPrice);
+            return dto;
+        }).collect(Collectors.toList());
     }
+
 
 
     @Override
