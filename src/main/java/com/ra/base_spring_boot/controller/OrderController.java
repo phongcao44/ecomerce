@@ -679,11 +679,13 @@ public class OrderController {
     public ResponseEntity<Map<String, Double>> getRate() {
         return ResponseEntity.ok(orderService.getCancelAndReturnRate());
     }
-    /*@GetMapping("/user/orders/delivered")
-    public ResponseEntity<List<?>> getDelivered(
+    @GetMapping("/user/orders/delivered")
+    public ResponseEntity<List<OrderDeliveredReponse>> getDeliveredProducts(
             @AuthenticationPrincipal MyUserDetails userDetails) {
-        return ResponseEntity.ok(orderService.getOrderStatusDelivered(userDetails.getUser().getId()));
-    }*/
+        Long userId = userDetails.getUser().getId();
+        List<OrderDeliveredReponse> products = orderService.getOrderStatusDelivered(userId);
+        return ResponseEntity.ok(products);
+    }
 }
 
 

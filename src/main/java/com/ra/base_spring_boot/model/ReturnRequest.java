@@ -34,5 +34,9 @@ public class ReturnRequest {
 
     @Enumerated(EnumType.STRING)
     private ReturnStatus status; // PENDING, APPROVED, REJECTED
+    @ManyToOne
+    @JoinColumn(name = "product_variant_id")
+    private ProductVariant productVariant;
 }
+
 

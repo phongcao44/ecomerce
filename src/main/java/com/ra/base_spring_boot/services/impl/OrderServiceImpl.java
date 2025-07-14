@@ -7,10 +7,13 @@ import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.model.Order;
 import com.ra.base_spring_boot.model.constants.OrderStatus;
 
+import com.ra.base_spring_boot.model.constants.ReturnStatus;
 import com.ra.base_spring_boot.repository.IOrderRepository;
+import com.ra.base_spring_boot.repository.IReturnRequestRepository;
 import com.ra.base_spring_boot.services.IOrderService;
 import com.ra.base_spring_boot.services.IPaymentService;
 import com.ra.base_spring_boot.services.IProductService;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,13 +21,10 @@ import org.springframework.stereotype.Service;
 
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 
 
 @Service
@@ -33,7 +33,8 @@ public class OrderServiceImpl implements IOrderService {
     private IOrderRepository orderRepository;
     @Autowired
     private IPaymentService paymentService;
-
+    @Autowired
+    private IReturnRequestRepository returnRequestRepository;
     @Override
     public List<Order> findByOrderId(Long orderId) {
         return orderRepository.findAll();
@@ -198,15 +199,27 @@ public class OrderServiceImpl implements IOrderService {
         return orderRepository.findByUserIdAndStatus(userId, status);
     }
 
-  /*  @Override
-    public List<Order> getOrderStatusDelivered(Long userId) {
+    public List<OrderDeliveredReponse> getOrderStatusDelivered(Long userId) {
         List<Order> ordersDelivered = orderRepository.findByUserIdAndStatus(userId, OrderStatus.DELIVERED);
-        List<OrderItemDetail> orderItemDetails = ordersDelivered.stream().map(order -> {
-                    ProductVariant variant = items.getVariant();
-                    Product product = variant.getProduct();
-    }).toList();
-        return ordersDelivered;
-    }*/
+        List<OrderDeliveredReponse> responseList = new ArrayList<>();
+
+        for (Order order : ordersDelivered) {
+            for (OrderItem item : order.getOrderItems()) {
+                Product product = item.getVariant().getProduct();
+
+                Optional<ReturnRequest> existingRequest = returnRequestRepository
+                        .findByOrder_IdAndProductVariant_Id(order.getId(), product.getId());
+
+                ReturnStatus returnStatus = existingRequest.map(ReturnRequest::getStatus).orElse(null);
+
+                responseList.add(
+                        OrderDeliveredReponse.from(order.getId(), product, returnStatus)
+                );
+            }
+        }
+        return responseList;
+    }
+
 
     @Override
     public long countByStatus(OrderStatus status) {

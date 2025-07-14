@@ -1,8 +1,10 @@
 package com.ra.base_spring_boot.services;
 
+import com.ra.base_spring_boot.dto.resp.OrderDeliveredReponse;
 import com.ra.base_spring_boot.dto.resp.OrderDetailResponse;
 import com.ra.base_spring_boot.dto.resp.OrderResponse;
 import com.ra.base_spring_boot.model.Order;
+import com.ra.base_spring_boot.model.Product;
 import com.ra.base_spring_boot.model.constants.OrderStatus;
 
 import java.util.List;
@@ -28,5 +30,5 @@ public interface IOrderService {
 
     List<Order> findByUserIdAndStatus(Long userId, OrderStatus status);
 
-   // List<Order> getOrderStatusDelivered(Long userId);
+    List<OrderDeliveredReponse> getOrderStatusDelivered(Long userId);
 }
