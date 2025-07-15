@@ -213,7 +213,7 @@ public class OrderServiceImpl implements IOrderService {
                 ReturnStatus returnStatus = existingRequest.map(ReturnRequest::getStatus).orElse(null);
 
                 responseList.add(
-                        OrderDeliveredReponse.from(order.getId(), product, returnStatus)
+                        OrderDeliveredReponse.from(order.getId(),product, product, returnStatus)
                 );
             }
         }
