@@ -73,6 +73,7 @@ public class GhnClient {
         }
         throw new RuntimeException("Ward not found: " + wardCode);
     }
+
 //    public int getProvinceIdByName(String provinceName) throws JSONException {
 //        JSONArray data = new JSONObject(getProvinces().getBody()).optJSONArray("data");
 //        for (int i = 0; i < data.length(); i++) {
@@ -105,6 +106,7 @@ public class GhnClient {
 //        }
 //        throw new RuntimeException("Ward not found: " + wardName);
 //    }
+
 
     public int getProvinceIdByName(String provinceName) throws JSONException {
         JSONArray data = new JSONObject(getProvinces().getBody()).optJSONArray("data");

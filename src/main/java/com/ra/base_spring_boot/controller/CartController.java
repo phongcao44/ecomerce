@@ -87,5 +87,17 @@ public class CartController {
         OrderCheckoutResponseDTO response = cartService.checkoutByCartItemId(userDetails.getUser().getId(), cartItemId, request);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/checkout/selected")
+    public ResponseEntity<?> checkoutSelectedItems(@AuthenticationPrincipal MyUserDetails userDetails,
+                                                   @RequestBody OrderRequestDTO request) {
+        if (userDetails == null) {
+            return ResponseEntity.status(401).body("Please login to checkout");
+        }
+
+        OrderCheckoutResponseDTO response = cartService.checkoutSelectedItems(userDetails.getUser().getId(), request);
+        return ResponseEntity.ok(response);
+    }
+
 }
 

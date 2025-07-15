@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ra.base_spring_boot.model.constants.UserRank;
 import jakarta.persistence.*;
 import lombok.*;
@@ -18,6 +19,7 @@ public class UserPoint {
 
     @OneToOne
     @JoinColumn(name = "user_id", unique = true)
+    @JsonIgnore // chặn vòng lặp user ←→ point
     private User user;
 
     private Integer totalPoints = 0;

@@ -10,6 +10,7 @@ public interface IPointService {
     UserPointResponse getUserPoints(Long userId);
     List<UserPointResponse> getAllUserRank(Long orderId);
     void SetUserPoints(User user);
+
     void accumulatePoints(Order order);
 
 }

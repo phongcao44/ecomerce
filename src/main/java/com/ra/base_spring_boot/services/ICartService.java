@@ -21,6 +21,8 @@ public interface ICartService {
 
     OrderCheckoutResponseDTO checkout(Long userId, OrderRequestDTO request);
 
+    OrderCheckoutResponseDTO checkoutSelectedItems(Long userId, OrderRequestDTO request);
+
     OrderCheckoutResponseDTO checkoutByCartItemId(Long userId, Long cartItemId, OrderRequestDTO request);
 
     BigDecimal getCartTotal(Long userId);
