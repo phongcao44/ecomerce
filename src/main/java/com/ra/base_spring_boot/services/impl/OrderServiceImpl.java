@@ -199,26 +199,61 @@ public class OrderServiceImpl implements IOrderService {
         return orderRepository.findByUserIdAndStatus(userId, status);
     }
 
-    public List<OrderDeliveredReponse> getOrderStatusDelivered(Long userId) {
+   /* public List<DeliveredItemResponse> getOrderStatusDelivered(Long userId) {
         List<Order> ordersDelivered = orderRepository.findByUserIdAndStatus(userId, OrderStatus.DELIVERED);
-        List<OrderDeliveredReponse> responseList = new ArrayList<>();
+        List<DeliveredItemResponse> responseList = new ArrayList<>();
 
         for (Order order : ordersDelivered) {
             for (OrderItem item : order.getOrderItems()) {
+                if (returnRequestRepository.existsByOrderItem(item)) {
+                    continue; // đã yêu cầu trả hàng → ẩn
+                }
+
                 Product product = item.getVariant().getProduct();
+                String variantInfo = item.getVariant().getColor().getName() + " - " + item.getVariant().getSize();
+                String imageUrl = "";
+                if (product.getImages() != null && !product.getImages().isEmpty()) {
+                    imageUrl = product.getImages().get(0).getImageUrl();
 
-                Optional<ReturnRequest> existingRequest = returnRequestRepository
-                        .findByOrder_IdAndProductVariant_Id(order.getId(), product.getId());
-
-                ReturnStatus returnStatus = existingRequest.map(ReturnRequest::getStatus).orElse(null);
-
-                responseList.add(
-                        OrderDeliveredReponse.from(order.getId(),product, product, returnStatus)
-                );
+                    responseList.add(new DeliveredItemResponse(
+                            item.getId(),
+                            order.getId(),
+                            product.getName(),
+                            item.getQuantity(),
+                            imageUrl
+                    ));
+                }
             }
         }
-        return responseList;
+            return responseList;
     }
+*/
+   @Override
+   public List<DeliveredItemResponse> getDeliveredItemsByUser(User user) {
+       List<Order> orders = orderRepository.findByUserIdAndStatus(user.getId(), OrderStatus.DELIVERED);
+
+       return orders.stream()
+               .flatMap(order -> order.getOrderItems().stream()
+                       .filter(item -> !returnRequestRepository.existsByOrderItem(item)) // lọc item chưa bị trả hàng
+                       .map(item -> {
+                           Product product = item.getVariant().getProduct();
+                           String imageUrl = product.getImages() != null && !product.getImages().isEmpty()
+                                   ? product.getImages().get(0).getImageUrl()
+                                   : null;
+
+                           // Tạo thông tin biến thể
+
+                           return new DeliveredItemResponse(
+                                   item.getId(),
+                                   order.getId(),
+                                   product.getName(),
+                                   item.getQuantity(),
+                                   imageUrl,
+                                   item.getPriceAtTime()
+                           );
+                       })
+               ).toList();
+   }
 
 
     @Override

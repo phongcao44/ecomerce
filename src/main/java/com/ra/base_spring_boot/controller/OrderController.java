@@ -697,10 +697,10 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getCancelAndReturnRate());
     }
     @GetMapping("/user/orders/delivered")
-    public ResponseEntity<List<OrderDeliveredReponse>> getDeliveredProducts(
+    public ResponseEntity<List<DeliveredItemResponse>> getDeliveredProducts(
             @AuthenticationPrincipal MyUserDetails userDetails) {
         Long userId = userDetails.getUser().getId();
-        List<OrderDeliveredReponse> products = orderService.getOrderStatusDelivered(userId);
+        List<DeliveredItemResponse> products = orderService.getDeliveredItemsByUser(userDetails.getUser());
         return ResponseEntity.ok(products);
     }
 }

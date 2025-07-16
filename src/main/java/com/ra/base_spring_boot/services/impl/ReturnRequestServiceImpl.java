@@ -4,16 +4,15 @@
     import com.cloudinary.utils.ObjectUtils;
     import com.ra.base_spring_boot.dto.req.ReturnRequestDTO;
     import com.ra.base_spring_boot.dto.resp.OrderItemDetailDTO;
+    import com.ra.base_spring_boot.dto.resp.ReturnRequestItemResponseDTO;
     import com.ra.base_spring_boot.dto.resp.ReturnRequestResponseDTO;
     import com.ra.base_spring_boot.exception.HttpBadRequest;
     import com.ra.base_spring_boot.exception.HttpNotFound;
-    import com.ra.base_spring_boot.model.Order;
-    import com.ra.base_spring_boot.model.ProductVariant;
-    import com.ra.base_spring_boot.model.ReturnRequest;
+    import com.ra.base_spring_boot.model.*;
     import com.ra.base_spring_boot.model.constants.OrderStatus;
     import com.ra.base_spring_boot.model.constants.ReturnStatus;
+    import com.ra.base_spring_boot.repository.IOrderItemRepository;
     import com.ra.base_spring_boot.repository.IOrderRepository;
-    import com.ra.base_spring_boot.model.User;
     import com.ra.base_spring_boot.repository.IReturnRequestRepository;
     import com.ra.base_spring_boot.services.IProductVariantService;
     import com.ra.base_spring_boot.services.IReturnRequestService;
@@ -36,6 +35,7 @@
 
         private final Cloudinary cloudinary;
 
+        private final IOrderItemRepository orderItemRepository;
         private String uploadMedia(MultipartFile file) {
             try {
                 Map uploadResult = cloudinary.uploader().upload(
@@ -120,12 +120,14 @@
             if (order.getStatus() != OrderStatus.DELIVERED) {
                 throw new HttpBadRequest("Chỉ có thể yêu cầu trả hàng với đơn hàng đã giao");
             }
-
+            OrderItem orderItem = orderItemRepository.findById(dto.getItemId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm trong đơn hàng"));
             String mediaUrl = uploadMedia(dto.getMedia());
 
             ReturnRequest request = ReturnRequest.builder()
                     .user(user)
                     .order(order)
+                    .orderItem(orderItem)
                     .reason(dto.getReason())
                     .mediaUrl(mediaUrl)
                     .status(ReturnStatus.PENDING)
@@ -145,23 +147,28 @@
         }
 
         @Override
-        public List<ReturnRequestResponseDTO> getByUser(User user) {
+        public List<ReturnRequestItemResponseDTO> getByUser(User user) {
             List<ReturnRequest> requests = returnRequestRepository.findByUserId(user.getId());
-            if (requests.isEmpty()) {
-                throw new HttpNotFound("Không có yêu cầu đổi/trả nào");
-            }
 
             return requests.stream()
-                    .map(r -> ReturnRequestResponseDTO.builder()
-                            .id(r.getId())
-                            .orderId(r.getOrder().getId())
-                            .reason(r.getReason())
-                            .mediaUrl(r.getMediaUrl())
-                            .status(r.getStatus())
-                            .createdAt(r.getCreatedAt())
-                            .build())
+                    .map(r -> {
+                        OrderItem item = r.getOrderItem(); // returnRequest liên kết trực tiếp với 1 OrderItem
+
+                        return ReturnRequestItemResponseDTO.builder()
+                                .id(r.getId())
+                                .orderId(item.getOrder().getId())
+                                .reason(r.getReason())
+                                .mediaUrl(r.getMediaUrl())
+                                .status(r.getStatus())
+                                .createdAt(r.getCreatedAt())
+                                .productName(item.getVariant().getProduct().getName())
+                                .price(item.getPriceAtTime())
+                                .fullName(user.getUsername())
+                                .build();
+                    })
                     .toList();
         }
+
 
         @Override
         public ReturnRequestResponseDTO getById(Long id, User user) {
