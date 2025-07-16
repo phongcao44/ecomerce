@@ -22,8 +22,8 @@ public class UserPoint {
     @JsonIgnore // chặn vòng lặp user ←→ point
     private User user;
 
-    private Integer totalPoints = 0;     // Dùng để đổi giảm giá
-    private Integer rankPoints = 0;      // Dùng để xét hạng
+    private Integer totalPoints = 0;
+    private Integer rankPoints = 0;
     @Enumerated(EnumType.STRING)
     private UserRank userRank = UserRank.DONG;
 }

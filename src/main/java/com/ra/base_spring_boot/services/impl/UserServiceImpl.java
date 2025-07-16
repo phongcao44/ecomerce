@@ -2,13 +2,16 @@ package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.req.AddUserRequest;
 import com.ra.base_spring_boot.dto.req.FormRegister;
-import com.ra.base_spring_boot.dto.resp.ViewUserResponse;
+import com.ra.base_spring_boot.dto.resp.*;
+import com.ra.base_spring_boot.model.Address;
 import com.ra.base_spring_boot.model.Role;
 import com.ra.base_spring_boot.model.User;
+import com.ra.base_spring_boot.model.UserPoint;
 import com.ra.base_spring_boot.model.constants.RoleName;
 import com.ra.base_spring_boot.model.constants.UserStatus;
 import com.ra.base_spring_boot.repository.IRoleRepository;
 import com.ra.base_spring_boot.repository.IUserRepository;
+import com.ra.base_spring_boot.services.IAddressService;
 import com.ra.base_spring_boot.services.IRoleService;
 import com.ra.base_spring_boot.services.IUserService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +23,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -32,8 +36,7 @@ public class UserServiceImpl implements IUserService {
     private final PasswordEncoder passwordEncoder;
     private final IRoleRepository iRoleRepository;
     private final ConversionService conversionService;
-
-
+    private final PointServiceImpl pointService;
     @Override
     public List<ViewUserResponse> findAll() {
         List<User> list = userRepository.findAll();
@@ -46,7 +49,8 @@ public class UserServiceImpl implements IUserService {
         Set<String> roleNames = user.getRoles().stream()
                 .map(role -> role.getName().name()) // "ROLE_USER", "ROLE_ADMIN"
                 .collect(Collectors.toSet());
-
+        UserPoint point = user.getUserPoint();
+        //UserPointResponse userPointResponse = pointService.getUserPoints(user.getId());
         return ViewUserResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -54,6 +58,8 @@ public class UserServiceImpl implements IUserService {
                 .createTime(LocalDateTime.now())
                 .updateTime(LocalDateTime.now())
                 .roles(roleNames)
+                .userRank(user.getUserPoint().getUserRank())
+                .userStatus(user.getStatus())
                 .build();
     }
 
@@ -155,4 +161,64 @@ public class UserServiceImpl implements IUserService {
     public User findUser(long userId) {
         return userRepository.findById(userId).orElse(null);
     }
+    public void processOAuthPostLogin(String email, String name) {
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+        if (optionalUser.isEmpty()) {
+            User newUser = new User();
+            newUser.setEmail(email);
+            newUser.setUsername(name);
+            userRepository.save(newUser);
+        }
+    }
+    @Override
+    public User findOrCreate(String email, String name) {
+        Role defaultRole = iRoleRepository.findByName(RoleName.ROLE_USER)
+                .orElseThrow(() -> new RuntimeException("Default role not found"));
+        System.out.println(">>> Calling findOrCreate with: " + email + ", " + name);
+
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        if (existingUser.isPresent()) {
+            System.out.println("User exists: " + email);
+            return existingUser.get();
+        }
+
+        System.out.println("Creating new user: " + email);
+        User user = new User();
+        user.setEmail(email);
+        user.setUsername(name);
+        user.setRoles(Set.of(defaultRole));
+        user.setStatus(UserStatus.ACTIVE);
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+        User savedUser = userRepository.save(user);
+        System.out.println("Saved user ID: " + savedUser.getId());
+
+        return userRepository.save(user);
+    }
+
+    @Override
+    public UserDetailResponse findUserDetails(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        Set<RoleResponseDTO> roleResponses = user.getRoles().stream()
+                .map(role -> RoleResponseDTO.builder()
+                        .id(role.getId())
+                        .name(role.getName().name())
+                        .description(role.getDescription())
+                        .build())
+                .collect(Collectors.toSet());
+
+        return UserDetailResponse.builder()
+                .userId(user.getId())
+                 .userName(user.getUsername())
+                .userEmail(user.getEmail())
+                .Address(user.getAddresses())
+                .status(user.getStatus())
+                .role(roleResponses)
+                .createTime(user.getCreatedAt())
+                .updateTime(user.getUpdatedAt())
+                .rank(user.getUserPoint().getUserRank())
+                .build();
+    }
+
+
 }

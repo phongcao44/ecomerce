@@ -1,37 +1,47 @@
 package com.ra.base_spring_boot.repository;
 
 import com.ra.base_spring_boot.model.Product;
+import com.ra.base_spring_boot.model.constants.OrderStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
 public interface IProductRepository extends JpaRepository<Product, Long> {
     @Query("""
-    SELECT v.product, count(oi.id) as purchaseCount
-        from Order o
-            join o.orderItems oi
-                join oi.variant v
-                    where o.status = com.ra.base_spring_boot.model.constants.OrderStatus.DELIVERED
-                        GROUP BY v.product
-                            ORDER BY purchaseCount DESC
-    """)
-    List<Object[]> findTop5BestSellingProducts(Pageable pageable);
+    SELECT v.product, COUNT(oi.id) as purchaseCount,
+           COALESCE(AVG(r.rating), 0), COUNT(r.id)
+    FROM Order o
+        JOIN o.orderItems oi
+        JOIN oi.variant v
+        LEFT JOIN Review r ON r.product = v.product
+    WHERE o.status = :status
+    GROUP BY v.product
+    ORDER BY purchaseCount DESC
+""")
+    List<Object[]> findTop5BestSellingProducts(@Param("status") OrderStatus status, Pageable pageable);
 
     List<Product> findProductByNameContainsIgnoreCase(String name);
 
     List<Product> findByCategoryIdIn(List<Long> categoryIds);
 
     @Query("""
-    SELECT p, COUNT(oi)
+    SELECT p, 
+           COUNT(oi.id), 
+           COALESCE(AVG(r.rating), 0), 
+           COUNT(DISTINCT pv.id)
     FROM Product p
     LEFT JOIN ProductVariant v ON v.product = p
     LEFT JOIN OrderItem oi ON oi.variant = v
-    LEFT JOIN Order o ON o = oi.order AND o.status = com.ra.base_spring_boot.model.constants.OrderStatus.DELIVERED
+    LEFT JOIN Order o ON oi.order = o AND o.status = :status
+    LEFT JOIN Review r ON r.product = p
+    LEFT JOIN ProductView pv ON pv.product = p
     GROUP BY p
     ORDER BY COUNT(oi.id) ASC
 """)
-    List<Object[]> findTop5LeastSellingOrUnsoldProducts(Pageable pageable);
+    List<Object[]> findTop5LeastSellingWithRatingAndView(@Param("status") OrderStatus status, Pageable pageable);
+
 
 }

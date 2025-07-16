@@ -9,6 +9,7 @@ import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.dto.resp.Top5Product;
 import com.ra.base_spring_boot.model.Category;
 import com.ra.base_spring_boot.model.Product;
+import com.ra.base_spring_boot.model.constants.OrderStatus;
 import com.ra.base_spring_boot.model.ReturnPolicy;
 import com.ra.base_spring_boot.model.constants.ProductStatus;
 import com.ra.base_spring_boot.repository.ICategoryRepository;
@@ -30,8 +31,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProductServiceImpl implements IProductService {
 
+    @Autowired
     private final IProductRepository productRepository;
-
+    @Autowired
     private final ICategoryRepository categoryRepository;
 
     private final IReturnPolicyRepository returnPolicyRepository;
@@ -217,15 +219,51 @@ public class ProductServiceImpl implements IProductService {
 
     @Override
     public List<Top5Product> getTop5BestSellingProducts() {
-        List<Object[]> top5 = productRepository.findTop5BestSellingProducts(PageRequest.of(0, 5));
-        return top5.stream().map(
-                row -> Top5Product.from((Product) row[0], (Long) row[1])).toList();
+        List<Object[]> result = productRepository.findTop5BestSellingProducts(
+                OrderStatus.DELIVERED,
+                PageRequest.of(0, 5)
+        );
+
+        return result.stream().map(row -> {
+            Product product = (Product) row[0];
+            Long purchaseCount = (Long) row[1];
+            Double avgRating = (Double) row[2];
+            Long totalView = (Long) row[3];
+
+            return Top5Product.builder()
+                    .id(product.getId())
+                    .productName(product.getName())
+                    .price(product.getPrice().doubleValue())
+                    .purchaseCount(purchaseCount)
+                    .averageRating(avgRating)
+                    .totalReviews(totalView) // dùng lại field này cho view nếu bạn không tách riêng
+                    .image(product.getImages().isEmpty() ? null : product.getImages().get(0).getImageUrl())
+                    .build();
+        }).toList();
     }
 
     @Override
     public List<Top5Product> getTop5LestSellingProducts() {
-        List<Object[]> top5 = productRepository.findTop5LeastSellingOrUnsoldProducts(PageRequest.of(0, 5));
-        return top5.stream().map(
-                row -> Top5Product.from((Product) row[0], (Long) row[1])).toList();
+        List<Object[]> result = productRepository.findTop5LeastSellingWithRatingAndView(
+                OrderStatus.DELIVERED,
+                PageRequest.of(0, 5)
+        );
+
+        return result.stream().map(row -> {
+            Product product = (Product) row[0];
+            Long purchaseCount = (Long) row[1];
+            Double avgRating = (Double) row[2];
+            Long totalView = (Long) row[3];
+
+            return Top5Product.builder()
+                    .id(product.getId())
+                    .productName(product.getName())
+                    .price(product.getPrice().doubleValue())
+                    .purchaseCount(purchaseCount)
+                    .averageRating(avgRating)
+                    .totalReviews(totalView) // dùng lại field này cho view nếu bạn không tách riêng
+                    .image(product.getImages().isEmpty() ? null : product.getImages().get(0).getImageUrl())
+                    .build();
+        }).toList();
     }
 }

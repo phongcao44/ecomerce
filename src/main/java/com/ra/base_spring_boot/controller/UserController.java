@@ -5,6 +5,7 @@ import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.AddUserRequest;
 import com.ra.base_spring_boot.dto.req.UserStatusRequest;
 import com.ra.base_spring_boot.dto.resp.RoleResponse;
+import com.ra.base_spring_boot.dto.resp.UserDetailResponse;
 import com.ra.base_spring_boot.dto.resp.ViewUserResponse;
 import com.ra.base_spring_boot.model.Role;
 import com.ra.base_spring_boot.model.User;
@@ -67,5 +68,10 @@ public class UserController {
     public ResponseEntity<?> handleStatusChange(@PathVariable long userId, @RequestBody UserStatusRequest status) {
     userService.changeStatus(userId, status.getStatus());
     return ResponseEntity.ok(status);
+    }
+    @GetMapping("/admin/getUsers/{id}")
+    public ResponseEntity<?> getUsersDetail(@PathVariable long id) {
+        UserDetailResponse users = userService.findUserDetails(id);
+        return ResponseEntity.ok(users);
     }
 }

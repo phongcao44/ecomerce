@@ -31,8 +31,7 @@ import com.ra.base_spring_boot.model.constants.PaymentMethod;
 import com.ra.base_spring_boot.repository.IOrderItemRepository;
 import com.ra.base_spring_boot.repository.IOrderRepository;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
-import com.ra.base_spring_boot.services.IOrderService;
-import com.ra.base_spring_boot.services.IPaymentService;
+import com.ra.base_spring_boot.services.*;
 import com.ra.base_spring_boot.services.ghn.GhnClient;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -58,6 +57,9 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @RestController
@@ -73,6 +75,14 @@ public class OrderController {
     private GhnClient ghnClient;
     @Autowired
     private IPaymentService paymentService;
+    @Autowired
+    private IPointService pointService;
+    @Autowired
+    private SmsService smsService;
+    @Autowired
+    private IGmailService  gmailService;
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
 
     @GetMapping("/admin/order/list")
     public ResponseEntity<?> findAll() {
@@ -139,6 +149,9 @@ public class OrderController {
             }
 
 
+            // Cập nhật trạng thái
+         //   order.setStatus(status);
+
             // Nếu chuyển sang DELIVERED → trừ kho
             if (status == OrderStatus.DELIVERED) {
                 for (var item : order.getOrderItems()) {
@@ -151,8 +164,42 @@ public class OrderController {
                     }
 
                     variant.setStockQuantity(newStock);
+
+                }
+                order.setStatus(status);
+
+                // Gửi email mời đánh giá
+                String subject = "Cảm ơn bạn đã mua hàng tại Ecommer!";
+                String body = """
+            Xin chào %s,
+
+            Cảm ơn bạn đã đặt hàng tại cửa hàng của chúng tôi. 
+            Đơn hàng của bạn đã được giao thành công. Chúng tôi rất mong nhận được đánh giá từ bạn.
+
+            Vui lòng nhấn vào link sau để đánh giá sản phẩm:
+            https://ecomer/review?orderId=%d
+
+            Trân trọng,
+            Đội ngũ Ecommer
+            """.formatted(order.getUser().getUsername(), order.getId());
+
+                try {
+                    gmailService.sendEmailAfterDelayInMinutes(order.getUser().getEmail(), subject, body, 1);
+                } catch (Exception e) {
+                    e.printStackTrace(); // Có thể log lỗi nếu cần
                 }
             }
+            // Gửi SMS (sài khóa lại)
+            String phoneNumber = order.getShippingAddress().getPhone();
+            String smsMessage = "Cảm ơn bạn đã mua hàng tại Ecommer! Vui lòng đánh giá đơn hàng: https://ecomer/review?orderId=%d".formatted(order.getId());
+            scheduler.schedule(() -> {
+            try {
+                smsService.sendSms(phoneNumber, smsMessage);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            }, 1, TimeUnit.MINUTES);
+            //khóa sms tới đây nè
 
             // Sau khi mọi thứ hợp lệ thì cập nhật trạng thái
             order.setStatus(status);
@@ -201,6 +248,9 @@ public class OrderController {
                     .shippingAddress(addressResponse)
                     .orderItems(orderItemDetailResponses)
                     .build();
+            if (status == OrderStatus.DELIVERED) {
+                pointService.accumulatePoints(updatedOrder);
+            }
 
             return ResponseEntity.ok(response);
         }catch (Exception e) {
@@ -503,6 +553,7 @@ public class OrderController {
         infoTable.addCell(new Phrase(order.getShippingAddress().getProvince(), fontNormal));
 
         document.add(infoTable);
+
        // document.add(Chunk.NEWLINE);
 
         // 3. Thông tin đơn
@@ -632,7 +683,8 @@ public class OrderController {
 
             return OrderResponse.builder()
                     .orderId(order.getId())
-//                    .userId(user.getId())
+                   // .userId(user.getId())
+                    .username(userDto.getUsername())
                     .createdAt(order.getCreatedAt())
                     .paymentMethod(order.getPaymentMethod())
                     .status(order.getStatus())

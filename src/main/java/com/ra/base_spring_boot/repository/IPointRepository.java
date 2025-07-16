@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 
 public interface IPointRepository extends JpaRepository<UserPoint,Long> {
-
     UserPoint findByUser(User user);
+    UserPoint findByUserId(Long userId);
 }
