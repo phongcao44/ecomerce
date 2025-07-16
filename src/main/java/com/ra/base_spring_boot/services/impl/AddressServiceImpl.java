@@ -103,6 +103,7 @@ public class AddressServiceImpl implements IAddressService {
 
         return list.stream().map(
                 address -> AddressRespone.builder()
+                        .addressId(address.getId())
                         .provinceName(address.getProvince())
                         .districtName(address.getDistrict())
                         .wardName(address.getWard())

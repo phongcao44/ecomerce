@@ -6,12 +6,13 @@ import com.ra.base_spring_boot.model.constants.PaymentMethod;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public interface IOrderRepository extends JpaRepository<Order, Long> {
+public interface IOrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
     List<Order> findAllByStatusAndCreatedAtBetween(OrderStatus status, LocalDateTime from, LocalDateTime to);
     List<Order> findAllByStatus(OrderStatus status);
     List<Order> findOrdersByPaymentMethod(PaymentMethod PaymentMethod);
@@ -44,5 +45,6 @@ WHERE o.user.id = :userId
   AND o.status = com.ra.base_spring_boot.model.constants.OrderStatus.DELIVERED
 """)
     List<Long> findPurchasedProductIdsByUser(@Param("userId") Long userId);
+
 
 }

@@ -15,6 +15,12 @@ import com.ra.base_spring_boot.dto.req.UpdateOrderStatusRequest;
 import com.ra.base_spring_boot.dto.resp.*;
 import com.ra.base_spring_boot.model.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.web.bind.annotation.*;
+
 
 import com.ra.base_spring_boot.dto.req.UpdateOrderStatusRequest;
 
@@ -41,6 +47,9 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
+import com.ra.base_spring_boot.specifications.OrderSpecifications;
+import org.springframework.data.jpa.domain.Specification;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -82,6 +91,53 @@ public class OrderController {
     @Autowired
     private IGmailService  gmailService;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+    @GetMapping("/admin/order/paginate")
+    public ResponseEntity<?> getAllPaginate(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "limit", defaultValue = "10") int limit,
+            @RequestParam(name = "sortBy", defaultValue = "createdAt") String sortBy,
+            @RequestParam(name = "orderBy", defaultValue = "desc") String orderBy,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String keyword
+    ) {
+        Sort sort = orderBy.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, limit, sort);
+
+        Specification<Order> spec = Specification.where(null);
+
+        if (status != null && !status.isEmpty()) {
+            spec = spec.and(OrderSpecifications.hasStatus(status));
+        }
+        if (keyword != null && !keyword.isEmpty()) {
+            spec = spec.and(OrderSpecifications.hasKeyword(keyword));
+        }
+
+        Page<Order> orderPage = iOrderRepository.findAll(spec, pageable);
+
+        Page<OrderResponse> responsePage = orderPage.map(order -> {
+            User user = order.getUser();
+            UserResponse userDto = UserResponse.builder()
+                    .id(user.getId())
+                    .username(user.getUsername())
+                    .email(user.getEmail())
+                    .build();
+
+            PaymentResponse paymentResponse = paymentService.getPaymentByOrderId(order.getId());
+
+            return OrderResponse.builder()
+                    .orderId(order.getId())
+                    .username(userDto.getUsername())
+                    .createdAt(order.getCreatedAt())
+                    .paymentMethod(order.getPaymentMethod())
+                    .payment(paymentResponse)
+                    .status(order.getStatus())
+                    .totalAmount(order.getTotalAmount())
+                    .build();
+        });
+
+        return ResponseEntity.ok(responsePage);
+    }
 
 
     @GetMapping("/admin/order/list")
