@@ -34,14 +34,15 @@ public class AddressServiceImpl implements IAddressService {
 
 
     @Override
-    public void addAddress(Long userId, AddressRequest newAddress) {
+    public AddressRespone addAddress(Long userId, AddressRequest newAddress) {
         User user = iUserService.findUser(userId);
 
-        // Ánh xạ tên => ID
+        // Lấy ID từ GHN
         int provinceId = ghnClient.getProvinceIdByName(newAddress.getProvince());
         int districtId = ghnClient.getDistrictIdByName(newAddress.getDistrict(), provinceId);
         String wardCode = ghnClient.getWardCodeByName(newAddress.getWard(), districtId);
 
+        // Tạo đối tượng Address
         Address address = Address.builder()
                 .user(user)
                 .province(newAddress.getProvince())
@@ -55,10 +56,20 @@ public class AddressServiceImpl implements IAddressService {
                 .recipientName(newAddress.getRecipientName())
                 .build();
 
-        iAddressRepository.save(address);
+        // Lưu vào DB
+        address = iAddressRepository.save(address);
+
+        // Trả về DTO của địa chỉ vừa thêm
+        return AddressRespone.builder()
+                .addressId(address.getId())
+                .provinceName(address.getProvince())
+                .districtName(address.getDistrict())
+                .wardName(address.getWard())
+                .recipientName(address.getRecipientName())
+                .phone(address.getPhone())
+                .fullAddress(address.getFullAddress())
+                .build();
     }
-
-
 
 
     @Override
@@ -103,6 +114,7 @@ public class AddressServiceImpl implements IAddressService {
 
         return list.stream().map(
                 address -> AddressRespone.builder()
+                        .addressId(address.getId())
                         .provinceName(address.getProvince())
                         .districtName(address.getDistrict())
                         .wardName(address.getWard())

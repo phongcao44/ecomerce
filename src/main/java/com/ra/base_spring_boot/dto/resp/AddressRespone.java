@@ -8,6 +8,7 @@ import lombok.*;
 @Setter
 @Builder
 public class AddressRespone {
+    private Long addressId;
     private String provinceName;
     private String wardName;
     private String districtName;

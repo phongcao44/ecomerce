@@ -1,8 +1,8 @@
 package com.ra.base_spring_boot.controller;
 
 import com.ra.base_spring_boot.dto.req.CartItemRequestDTO;
-import com.ra.base_spring_boot.dto.req.OrderRequestDTO;
-import com.ra.base_spring_boot.dto.resp.CartResponseDTO;
+import com.ra.base_spring_boot.dto.req.OrderRequestAllDTO;
+import com.ra.base_spring_boot.dto.req.OrderRequestSelectedDTO;
 import com.ra.base_spring_boot.dto.resp.OrderCheckoutResponseDTO;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.ICartService;
@@ -67,7 +67,7 @@ public class CartController {
 
     @PostMapping("/checkout")
     public ResponseEntity<?> checkout(@AuthenticationPrincipal MyUserDetails userDetails, @Valid
-    @RequestBody OrderRequestDTO request) {
+    @RequestBody OrderRequestAllDTO request) {
         if (userDetails == null) {
             return ResponseEntity.status(401).body("Please login to checkout");
         }
@@ -76,21 +76,21 @@ public class CartController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/checkout/{cartItemId}")
-    public ResponseEntity<?> checkoutByCartItem(@AuthenticationPrincipal MyUserDetails userDetails,
-                                                @PathVariable Long cartItemId,
-                                                @RequestBody OrderRequestDTO request) {
-        if (userDetails == null) {
-            return ResponseEntity.status(401).body("Please login to checkout");
-        }
-
-        OrderCheckoutResponseDTO response = cartService.checkoutByCartItemId(userDetails.getUser().getId(), cartItemId, request);
-        return ResponseEntity.ok(response);
-    }
+//    @PostMapping("/checkout/{cartItemId}")
+//    public ResponseEntity<?> checkoutByCartItem(@AuthenticationPrincipal MyUserDetails userDetails,
+//                                                @PathVariable Long cartItemId,
+//                                                @RequestBody OrderRequestSelectedDTO request) {
+//        if (userDetails == null) {
+//            return ResponseEntity.status(401).body("Please login to checkout");
+//        }
+//
+//        OrderCheckoutResponseDTO response = cartService.checkoutByCartItemId(userDetails.getUser().getId(), cartItemId, request);
+//        return ResponseEntity.ok(response);
+//    }
 
     @PostMapping("/checkout/selected")
     public ResponseEntity<?> checkoutSelectedItems(@AuthenticationPrincipal MyUserDetails userDetails,
-                                                   @RequestBody OrderRequestDTO request) {
+                                                   @RequestBody OrderRequestSelectedDTO request) {
         if (userDetails == null) {
             return ResponseEntity.status(401).body("Please login to checkout");
         }

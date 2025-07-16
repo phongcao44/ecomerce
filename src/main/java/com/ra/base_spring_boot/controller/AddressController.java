@@ -36,11 +36,11 @@ public class AddressController {
     }
 
     @PostMapping("/user/address/add")
-    public ResponseEntity<?> addAddress(
+    public ResponseEntity<AddressRespone> addAddress(
             @RequestBody AddressRequest addressRequest,
             @AuthenticationPrincipal MyUserDetails user) {
-        addressService.addAddress(user.getUser().getId(),addressRequest);
-                return ResponseEntity.ok().build();
+       AddressRespone addressRespone = addressService.addAddress(user.getUser().getId(),addressRequest);
+        return ResponseEntity.ok(addressRespone);
     }
     @DeleteMapping("/user/address/delete")
     public ResponseEntity<?> deleteAddress(

@@ -8,7 +8,7 @@ import java.util.List;
 
 
 public interface IAddressService {
-    void addAddress(Long userId ,AddressRequest address);
+    AddressRespone addAddress(Long userId, AddressRequest newAddress);
     Address findById(long id);
     void delete(Long userId, Long id);
     void update(Long userId,Long Id,AddressRequest address);

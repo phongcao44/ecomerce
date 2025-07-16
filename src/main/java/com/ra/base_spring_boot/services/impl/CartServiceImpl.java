@@ -1,11 +1,11 @@
 package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.req.CartItemRequestDTO;
-import com.ra.base_spring_boot.dto.req.OrderRequestDTO;
+import com.ra.base_spring_boot.dto.req.OrderRequestAllDTO;
+import com.ra.base_spring_boot.dto.req.OrderRequestSelectedDTO;
 import com.ra.base_spring_boot.dto.resp.CartItemResponseDTO;
 import com.ra.base_spring_boot.dto.resp.CartResponseDTO;
 import com.ra.base_spring_boot.dto.resp.OrderCheckoutResponseDTO;
-import com.ra.base_spring_boot.dto.resp.OrderItemDetailDTO;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.exception.HttpUnAuthorized;
@@ -24,7 +24,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+
 
 @Service
 @RequiredArgsConstructor
@@ -56,6 +56,8 @@ public class CartServiceImpl implements ICartService {
     private final IPointService iPointService;
 
     private final IFlashSaleItemService flashSaleItemService;
+
+    private final IUserVoucherRepository userVoucherRepository;
 
 
 
@@ -210,23 +212,24 @@ public class CartServiceImpl implements ICartService {
     }
 
     @Override
-    public OrderCheckoutResponseDTO checkout(Long userId, OrderRequestDTO request) {
+    public OrderCheckoutResponseDTO checkout(Long userId, OrderRequestAllDTO request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new HttpNotFound("User Not Found"));
 
         Address address = addressRepository.findById(request.getAddressId())
                 .orElseThrow(() -> new HttpNotFound("Shipping Address Not Found"));
 
-        List<CartItem> selectedItems = cartItemRepository.findAllById(request.getCartItemIds());
-        if (selectedItems.isEmpty()) {
-            throw new HttpNotFound("No selected cart items found.");
+        if (!address.getUser().getId().equals(userId)) {
+            throw new HttpUnAuthorized("Bạn không có quyền dùng địa chỉ này.");
         }
 
-        for (CartItem item : selectedItems) {
-            if (!item.getCart().getUser().getId().equals(userId)) {
-                throw new HttpUnAuthorized("Access Denied");
-            }
+
+        List<CartItem> selectedItems = cartItemRepository.findAllByCart_User_Id(userId);
+
+        if (selectedItems.isEmpty()) {
+            throw new HttpNotFound("Giỏ hàng trống.");
         }
+
 
         ShippingFee shippingFee = shippingFeeService.calculateAndSaveShippingFee(userId, address);
 
@@ -298,7 +301,7 @@ public class CartServiceImpl implements ICartService {
             orderItems.add(orderItem);
         }
 
-        // Optional voucher
+        // áp dụng voucher
         if (request.getVoucherId() != null && request.getVoucherId() > 0) {
             Voucher voucher = voucherRepository.findById(request.getVoucherId())
                     .orElseThrow(() -> new HttpNotFound("Voucher not found"));
@@ -311,6 +314,14 @@ public class CartServiceImpl implements ICartService {
             voucherRepository.save(voucher);
 
             order.setVoucher(voucher);
+
+            UserVoucher userVoucher = UserVoucher.builder()
+                    .user(user)
+                    .voucher(voucher)
+                    .used(true)
+                    .usedAt(LocalDateTime.now())
+                    .build();
+            userVoucherRepository.save(userVoucher);
 
             if (voucher.getDiscountAmount() != null) {
                 BigDecimal amount = BigDecimal.valueOf(voucher.getDiscountAmount());
@@ -344,7 +355,7 @@ public class CartServiceImpl implements ICartService {
         }
 
 
-        // Add shipping fee
+        // thêm giá ship vào sau khi checkout
         total = total.add(BigDecimal.valueOf(shippingFee.getTotal()));
         order.setTotalAmount(total);
         orderRepository.save(order);
@@ -357,15 +368,21 @@ public class CartServiceImpl implements ICartService {
 
         return OrderCheckoutResponseDTO.fromOrder(order, orderItems);
     }
+
+
 
     @Override
     @Transactional
-    public OrderCheckoutResponseDTO checkoutSelectedItems(Long userId, OrderRequestDTO request) {
+    public OrderCheckoutResponseDTO checkoutSelectedItems(Long userId, OrderRequestSelectedDTO request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new HttpNotFound("User Not Found"));
 
         Address address = addressRepository.findById(request.getAddressId())
                 .orElseThrow(() -> new HttpNotFound("Shipping Address Not Found"));
+
+        if (!address.getUser().getId().equals(userId)) {
+            throw new HttpUnAuthorized("Bạn không có quyền dùng địa chỉ này.");
+        }
 
         List<CartItem> selectedItems = cartItemRepository.findAllById(request.getCartItemIds());
         if (selectedItems.isEmpty()) {
@@ -462,156 +479,13 @@ public class CartServiceImpl implements ICartService {
 
             order.setVoucher(voucher);
 
-            if (voucher.getDiscountAmount() != null) {
-                BigDecimal amount = BigDecimal.valueOf(voucher.getDiscountAmount());
-                order.setDiscountAmount(amount.doubleValue());
-                total = total.subtract(amount);
-            } else if (voucher.getDiscountPercent() != null) {
-                BigDecimal percent = BigDecimal.valueOf(voucher.getDiscountPercent());
-                BigDecimal discount = total.multiply(percent).divide(BigDecimal.valueOf(100));
-                order.setDiscountPercent(percent.doubleValue());
-                total = total.subtract(discount);
-            }
-        }
-
-        // Áp dụng điểm người dùng
-        int used = request.getUsedPoints() != null ? request.getUsedPoints() : 0;
-        if (used > 0) {
-            UserPoint userPoint = pointRepository.findByUser(user);
-            int currentPoints = userPoint.getTotalPoints();
-
-            if (used > currentPoints) {
-                throw new IllegalArgumentException("Bạn không có đủ điểm để sử dụng");
-            }
-
-            // Trừ điểm
-            userPoint.setTotalPoints(currentPoints - used);
-            pointRepository.save(userPoint);
-
-            // Ghi lại vào đơn hàng
-            order.setUsedPoints(used);
-            total = total.subtract(BigDecimal.valueOf(used));
-        }
-
-
-        // Add shipping fee
-        total = total.add(BigDecimal.valueOf(shippingFee.getTotal()));
-        order.setTotalAmount(total);
-        orderRepository.save(order);
-
-        // Cộng điểm thưởng
-        iPointService.accumulatePoints(order);
-
-        // Xoá cart item đã thanh toán
-        cartItemRepository.deleteAll(selectedItems);
-
-        return OrderCheckoutResponseDTO.fromOrder(order, orderItems);
-    }
-
-
-
-    @Override
-    public OrderCheckoutResponseDTO checkoutByCartItemId(Long userId, Long cartItemId, OrderRequestDTO request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new HttpNotFound("User Not Found"));
-
-        Address address = addressRepository.findById(request.getAddressId())
-                .orElseThrow(() -> new HttpNotFound("Shipping Address Not Found"));
-
-        List<CartItem> selectedItems = cartItemRepository.findAllById(request.getCartItemIds());
-        if (selectedItems.isEmpty()) {
-            throw new HttpNotFound("No selected cart items found.");
-        }
-
-        for (CartItem item : selectedItems) {
-            if (!item.getCart().getUser().getId().equals(userId)) {
-                throw new HttpUnAuthorized("Access Denied");
-            }
-        }
-
-        ShippingFee shippingFee = shippingFeeService.calculateAndSaveShippingFee(userId, address);
-
-        Order order = Order.builder()
-                .user(user)
-                .shippingAddress(address)
-                .paymentMethod(request.getPaymentMethod())
-                .status(OrderStatus.PENDING)
-                .createdAt(LocalDateTime.now())
-                .shippingFee(shippingFee)
-                .build();
-        orderRepository.save(order);
-
-        shippingFee.setOrder(order);
-        shippingFeeRepository.save(shippingFee);
-
-        BigDecimal total = BigDecimal.ZERO;
-        List<OrderItem> orderItems = new ArrayList<>();
-
-        for (CartItem cartItem : selectedItems) {
-            ProductVariant variant = cartItem.getVariant();
-            int quantity = cartItem.getQuantity();
-
-            BigDecimal basePrice = variant.getPriceOverride() != null
-                    ? variant.getPriceOverride()
-                    : variant.getProduct().getPrice();
-
-            BigDecimal finalPrice = basePrice;
-
-            FlashSaleItem flashItem = flashSaleItemRepository.findByVariant(variant);
-            if (flashItem != null) {
-                FlashSale flashSale = flashItem.getFlashSale();
-
-                if (flashSale != null && flashSale.getStatus() == UserStatus.ACTIVE) {
-                    Integer limit = flashItem.getQuantityLimit();
-                    Integer sold = flashItem.getSoldQuantity() != null ? flashItem.getSoldQuantity() : 0;
-
-                    if (limit == null || sold + quantity <= limit) {
-                        DiscountType type = flashItem.getDiscountType();
-                        BigDecimal discountValue = flashItem.getDiscountedPrice(); // dùng chung
-
-                        if (discountValue != null && discountValue.compareTo(BigDecimal.ZERO) > 0) {
-                            if (type == DiscountType.PERCENTAGE) {
-                                // giảm phần trăm
-                                finalPrice = basePrice.multiply(BigDecimal.valueOf(100).subtract(discountValue))
-                                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-                            } else if (type == DiscountType.AMOUNT) {
-                                // giảm số tiền trực tiếp
-                                finalPrice = basePrice.subtract(discountValue).max(BigDecimal.ZERO);
-                            }
-                        }
-
-                        // Cập nhật sold_quantity
-                        flashItem.setSoldQuantity(sold + quantity);
-                        flashSaleItemService.save(flashItem);
-                    }
-                }
-            }
-
-            OrderItem orderItem = OrderItem.builder()
-                    .order(order)
-                    .variant(variant)
-                    .quantity(quantity)
-                    .priceAtTime(finalPrice)
+            UserVoucher userVoucher = UserVoucher.builder()
+                    .user(user)
+                    .voucher(voucher)
+                    .used(true)
+                    .usedAt(LocalDateTime.now())
                     .build();
-            orderItemRepository.save(orderItem);
-
-            total = total.add(finalPrice.multiply(BigDecimal.valueOf(quantity)));
-            orderItems.add(orderItem);
-        }
-
-        // Optional voucher
-        if (request.getVoucherId() != null && request.getVoucherId() > 0) {
-            Voucher voucher = voucherRepository.findById(request.getVoucherId())
-                    .orElseThrow(() -> new HttpNotFound("Voucher not found"));
-
-            if (voucher.getQuantity() <= 0) {
-                throw new HttpBadRequest("Voucher has been fully used.");
-            }
-
-            voucher.setQuantity(voucher.getQuantity() - 1);
-            voucherRepository.save(voucher);
-
-            order.setVoucher(voucher);
+            userVoucherRepository.save(userVoucher);
 
             if (voucher.getDiscountAmount() != null) {
                 BigDecimal amount = BigDecimal.valueOf(voucher.getDiscountAmount());
@@ -658,6 +532,166 @@ public class CartServiceImpl implements ICartService {
 
         return OrderCheckoutResponseDTO.fromOrder(order, orderItems);
     }
+
+
+//    @Override
+//    public OrderCheckoutResponseDTO checkoutByCartItemId(Long userId, Long cartItemId, OrderRequestSelectedDTO request) {
+//        User user = userRepository.findById(userId)
+//                .orElseThrow(() -> new HttpNotFound("User Not Found"));
+//
+//        Address address = addressRepository.findById(request.getAddressId())
+//                .orElseThrow(() -> new HttpNotFound("Shipping Address Not Found"));
+//
+//        List<CartItem> selectedItems = cartItemRepository.findAllById(request.getCartItemIds());
+//        if (selectedItems.isEmpty()) {
+//            throw new HttpNotFound("No selected cart items found.");
+//        }
+//
+//        for (CartItem item : selectedItems) {
+//            if (!item.getCart().getUser().getId().equals(userId)) {
+//                throw new HttpUnAuthorized("Access Denied");
+//            }
+//        }
+//
+//        ShippingFee shippingFee = shippingFeeService.calculateAndSaveShippingFee(userId, address);
+//
+//        Order order = Order.builder()
+//                .user(user)
+//                .shippingAddress(address)
+//                .paymentMethod(request.getPaymentMethod())
+//                .status(OrderStatus.PENDING)
+//                .createdAt(LocalDateTime.now())
+//                .shippingFee(shippingFee)
+//                .build();
+//        orderRepository.save(order);
+//
+//        shippingFee.setOrder(order);
+//        shippingFeeRepository.save(shippingFee);
+//
+//        BigDecimal total = BigDecimal.ZERO;
+//        List<OrderItem> orderItems = new ArrayList<>();
+//
+//        for (CartItem cartItem : selectedItems) {
+//            ProductVariant variant = cartItem.getVariant();
+//            int quantity = cartItem.getQuantity();
+//
+//            BigDecimal basePrice = variant.getPriceOverride() != null
+//                    ? variant.getPriceOverride()
+//                    : variant.getProduct().getPrice();
+//
+//            BigDecimal finalPrice = basePrice;
+//
+//            FlashSaleItem flashItem = flashSaleItemRepository.findByVariant(variant);
+//            if (flashItem != null) {
+//                FlashSale flashSale = flashItem.getFlashSale();
+//
+//                if (flashSale != null && flashSale.getStatus() == UserStatus.ACTIVE) {
+//                    Integer limit = flashItem.getQuantityLimit();
+//                    Integer sold = flashItem.getSoldQuantity() != null ? flashItem.getSoldQuantity() : 0;
+//
+//                    if (limit == null || sold + quantity <= limit) {
+//                        DiscountType type = flashItem.getDiscountType();
+//                        BigDecimal discountValue = flashItem.getDiscountedPrice(); // dùng chung
+//
+//                        // giảm phần trăm
+//                        if (discountValue != null && discountValue.compareTo(BigDecimal.ZERO) > 0) {
+//                            if (type == DiscountType.PERCENTAGE) {
+//
+//                                // giảm số tiền trực tiếp
+//                                finalPrice = basePrice.multiply(BigDecimal.valueOf(100).subtract(discountValue))
+//                                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+//                            } else if (type == DiscountType.AMOUNT) {
+//                                finalPrice = basePrice.subtract(discountValue).max(BigDecimal.ZERO);
+//                            }
+//                        }
+//
+//                        // Cập nhật sold_quantity
+//                        flashItem.setSoldQuantity(sold + quantity);
+//                        flashSaleItemService.save(flashItem);
+//                    }
+//                }
+//            }
+//
+//            OrderItem orderItem = OrderItem.builder()
+//                    .order(order)
+//                    .variant(variant)
+//                    .quantity(quantity)
+//                    .priceAtTime(finalPrice)
+//                    .build();
+//            orderItemRepository.save(orderItem);
+//
+//            total = total.add(finalPrice.multiply(BigDecimal.valueOf(quantity)));
+//            orderItems.add(orderItem);
+//        }
+//
+//        // Optional voucher
+//        if (request.getVoucherId() != null && request.getVoucherId() > 0) {
+//            Voucher voucher = voucherRepository.findById(request.getVoucherId())
+//                    .orElseThrow(() -> new HttpNotFound("Voucher not found"));
+//
+//            if (voucher.getQuantity() <= 0) {
+//                throw new HttpBadRequest("Phiếu giảm giá đã được sử dụng đầy");
+//            }
+//
+//            voucher.setQuantity(voucher.getQuantity() - 1);
+//            voucherRepository.save(voucher);
+//
+//            order.setVoucher(voucher);
+//
+//            UserVoucher userVoucher = UserVoucher.builder()
+//                    .user(user)
+//                    .voucher(voucher)
+//                    .used(true)
+//                    .usedAt(LocalDateTime.now())
+//                    .build();
+//            userVoucherRepository.save(userVoucher);
+//
+//            if (voucher.getDiscountAmount() != null) {
+//                BigDecimal amount = BigDecimal.valueOf(voucher.getDiscountAmount());
+//                order.setDiscountAmount(amount.doubleValue());
+//                total = total.subtract(amount);
+//            } else if (voucher.getDiscountPercent() != null) {
+//                BigDecimal percent = BigDecimal.valueOf(voucher.getDiscountPercent());
+//                BigDecimal discount = total.multiply(percent).divide(BigDecimal.valueOf(100));
+//                order.setDiscountPercent(percent.doubleValue());
+//                total = total.subtract(discount);
+//            }
+//        }
+//
+//        // Áp dụng điểm người dùng
+//        int used = request.getUsedPoints() != null ? request.getUsedPoints() : 0;
+//        if (used > 0) {
+//            UserPoint userPoint = pointRepository.findByUser(user);
+//            int currentPoints = userPoint.getTotalPoints();
+//
+//            if (used > currentPoints) {
+//                throw new IllegalArgumentException("Bạn không có đủ điểm để sử dụng");
+//            }
+//
+//            // Trừ điểm
+//            userPoint.setTotalPoints(currentPoints - used);
+//            pointRepository.save(userPoint);
+//
+//            // Ghi lại vào đơn hàng
+//            order.setUsedPoints(used);
+//            total = total.subtract(BigDecimal.valueOf(used));
+//        }
+//
+//
+//        // Add shipping fee
+//        total = total.add(BigDecimal.valueOf(shippingFee.getTotal()));
+//        order.setTotalAmount(total);
+//        orderRepository.save(order);
+//
+//        // Cộng điểm thưởng
+//        iPointService.accumulatePoints(order);
+//
+//        // Xoá cart item đã thanh toán
+//        cartItemRepository.deleteAll(selectedItems);
+//
+//        return OrderCheckoutResponseDTO.fromOrder(order, orderItems);
+//    }
+
     @Override
     public BigDecimal getCartTotal(Long userId) {
         Cart cart = getOrCreateCart(userId);

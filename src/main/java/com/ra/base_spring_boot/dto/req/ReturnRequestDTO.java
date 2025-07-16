@@ -16,6 +16,8 @@ public class ReturnRequestDTO {
 
     private String reason;
 
+    private Long itemId;
+
     private MultipartFile media; //  file ảnh hoặc video
     // link ảnh/video (đã upload Cloudinary...)
 }
