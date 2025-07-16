@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -108,7 +109,7 @@ public class CartServiceImpl implements ICartService {
                 }
             }
 
-                return CartItemResponseDTO.builder()
+            return CartItemResponseDTO.builder()
                     .cartItemId(item.getId())
                     .productName(product.getName())
                     .color(variant.getColor().getName())
@@ -677,4 +678,14 @@ public class CartServiceImpl implements ICartService {
         return total;
     }
 
+    @Override
+    public List<Long> getUsersWithCartItems() {
+        // Lấy tất cả cart, lọc ra userId duy nhất
+        return cartRepository.findAll().stream()
+                .map(cart -> cart.getUser().getId())
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
 }
+

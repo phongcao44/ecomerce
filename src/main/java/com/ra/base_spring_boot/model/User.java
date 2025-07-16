@@ -41,6 +41,9 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+//    @Column(name = "fcm_token")
+//    private String fcmToken;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
@@ -54,6 +57,7 @@ public class User {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserPoint userPoint;
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Address> addresses;
 }
