@@ -6,6 +6,7 @@ import com.ra.base_spring_boot.dto.resp.CartResponseDTO;
 import com.ra.base_spring_boot.dto.resp.OrderCheckoutResponseDTO;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public interface ICartService {
 
@@ -26,4 +27,6 @@ public interface ICartService {
     OrderCheckoutResponseDTO checkoutByCartItemId(Long userId, Long cartItemId, OrderRequestDTO request);
 
     BigDecimal getCartTotal(Long userId);
+
+    List<Long> getUsersWithCartItems();
 }

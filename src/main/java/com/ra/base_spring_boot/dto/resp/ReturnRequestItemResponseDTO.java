@@ -1,6 +1,5 @@
 package com.ra.base_spring_boot.dto.resp;
 
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.ra.base_spring_boot.model.constants.ReturnStatus;
 import lombok.AllArgsConstructor;
@@ -9,15 +8,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
-
+import java.math.BigDecimal;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReturnRequestResponseDTO {
+public class ReturnRequestItemResponseDTO {
     private Long id;
 
     private Long orderId;
@@ -32,5 +30,9 @@ public class ReturnRequestResponseDTO {
 
     private String fullName;
 
-    private List<OrderItemDetailDTO> items;
+    private String productName;
+
+    private Integer quantity;
+
+    private BigDecimal price;
 }
