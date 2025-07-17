@@ -240,16 +240,16 @@ public class OrderServiceImpl implements IOrderService {
                            String imageUrl = product.getImages() != null && !product.getImages().isEmpty()
                                    ? product.getImages().get(0).getImageUrl()
                                    : null;
-
-                           // Tạo thông tin biến thể
-
+                           Integer quantity = item.getQuantity();
+                           BigDecimal price = product.getPrice().multiply(BigDecimal.valueOf(quantity));
                            return new DeliveredItemResponse(
                                    item.getId(),
                                    order.getId(),
                                    product.getName(),
+                                   order.getStatus(),
                                    item.getQuantity(),
                                    imageUrl,
-                                   item.getPriceAtTime()
+                                   price
                            );
                        })
                ).toList();
