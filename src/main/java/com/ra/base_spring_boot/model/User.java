@@ -41,6 +41,9 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+//    @Column(name = "fcm_token")
+//    private String fcmToken;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
