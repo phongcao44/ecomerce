@@ -12,4 +12,5 @@ public interface ICartRepository extends JpaRepository<Cart, Long> {
     List<Cart> findByUser(User user);
 
     List<Cart> findByCreatedAtBefore(LocalDateTime createdAtBefore);
+
 }

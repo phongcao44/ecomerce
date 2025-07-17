@@ -81,7 +81,7 @@ public class AddressServiceImpl implements IAddressService {
     public void delete(Long userId, Long id) {
         Address address = findById(id);
         if(address.getUser().getId().equals(userId)){
-            iAddressRepository.deleteById(id);
+            iAddressRepository.delete(address);
         }
     }
 
@@ -126,4 +126,3 @@ public class AddressServiceImpl implements IAddressService {
     }
 
 }
-

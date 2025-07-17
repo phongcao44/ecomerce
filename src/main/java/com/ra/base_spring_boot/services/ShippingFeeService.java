@@ -6,4 +6,7 @@ import com.ra.base_spring_boot.model.ShippingFee;
 
 public interface ShippingFeeService {
     ShippingFee calculateAndSaveShippingFee(Long userId, Address address);
+
+    ShippingFee calculateShippingFeeByAddressId(Long addressId);
+
 }

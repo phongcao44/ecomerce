@@ -2,6 +2,8 @@ package com.ra.base_spring_boot.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
 
 @Entity
@@ -10,6 +12,8 @@ import lombok.*;
 @Getter
 @Setter
 @Builder
+@SQLDelete(sql = "UPDATE address SET deleted = true where id = ?")
+@Where(clause = "deleted = false")
 @Table(name = "address")
 public class Address {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,4 +42,6 @@ public class Address {
     private Integer provinceId;
     @Column(name = "province")
     private String province;
+
+    private boolean deleted = false;
 }

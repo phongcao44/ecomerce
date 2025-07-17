@@ -13,7 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ReturnRequestDTO {
 
     private Long orderId;
-
+    private Long itemId;
     private String reason;
 
     private Long itemId;

@@ -3,7 +3,9 @@ package com.ra.base_spring_boot.controller;
 import com.ra.base_spring_boot.dto.req.CartItemRequestDTO;
 import com.ra.base_spring_boot.dto.req.OrderRequestAllDTO;
 import com.ra.base_spring_boot.dto.req.OrderRequestSelectedDTO;
+import com.ra.base_spring_boot.dto.req.OrderRequestDTO;
 import com.ra.base_spring_boot.dto.resp.OrderCheckoutResponseDTO;
+import com.ra.base_spring_boot.repository.ICartRepository;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.ICartService;
 import jakarta.validation.Valid;
@@ -18,6 +20,10 @@ import org.springframework.web.bind.annotation.*;
 public class CartController {
     @Autowired
     private ICartService cartService;
+    @Autowired
+    private ICartRepository cartRepository;
+//    @Autowired
+//    private IPushNotificationService pushNotificationService;
 
     @GetMapping
     public ResponseEntity<?> getCart(@AuthenticationPrincipal MyUserDetails userDetails) {
@@ -99,5 +105,6 @@ public class CartController {
         return ResponseEntity.ok(response);
     }
 
-}
+    }
+
 

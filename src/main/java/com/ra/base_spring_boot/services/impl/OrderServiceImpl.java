@@ -7,10 +7,13 @@ import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.model.Order;
 import com.ra.base_spring_boot.model.constants.OrderStatus;
 
+import com.ra.base_spring_boot.model.constants.ReturnStatus;
 import com.ra.base_spring_boot.repository.IOrderRepository;
+import com.ra.base_spring_boot.repository.IReturnRequestRepository;
 import com.ra.base_spring_boot.services.IOrderService;
 import com.ra.base_spring_boot.services.IPaymentService;
 import com.ra.base_spring_boot.services.IProductService;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,13 +21,10 @@ import org.springframework.stereotype.Service;
 
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 
 
 @Service
@@ -33,7 +33,8 @@ public class OrderServiceImpl implements IOrderService {
     private IOrderRepository orderRepository;
     @Autowired
     private IPaymentService paymentService;
-
+    @Autowired
+    private IReturnRequestRepository returnRequestRepository;
     @Override
     public List<Order> findByOrderId(Long orderId) {
         return orderRepository.findAll();
@@ -197,6 +198,63 @@ public class OrderServiceImpl implements IOrderService {
     public List<Order> findByUserIdAndStatus(Long userId, OrderStatus status) {
         return orderRepository.findByUserIdAndStatus(userId, status);
     }
+
+   /* public List<DeliveredItemResponse> getOrderStatusDelivered(Long userId) {
+        List<Order> ordersDelivered = orderRepository.findByUserIdAndStatus(userId, OrderStatus.DELIVERED);
+        List<DeliveredItemResponse> responseList = new ArrayList<>();
+
+        for (Order order : ordersDelivered) {
+            for (OrderItem item : order.getOrderItems()) {
+                if (returnRequestRepository.existsByOrderItem(item)) {
+                    continue; // đã yêu cầu trả hàng → ẩn
+                }
+
+                Product product = item.getVariant().getProduct();
+                String variantInfo = item.getVariant().getColor().getName() + " - " + item.getVariant().getSize();
+                String imageUrl = "";
+                if (product.getImages() != null && !product.getImages().isEmpty()) {
+                    imageUrl = product.getImages().get(0).getImageUrl();
+
+                    responseList.add(new DeliveredItemResponse(
+                            item.getId(),
+                            order.getId(),
+                            product.getName(),
+                            item.getQuantity(),
+                            imageUrl
+                    ));
+                }
+            }
+        }
+            return responseList;
+    }
+*/
+   @Override
+   public List<DeliveredItemResponse> getDeliveredItemsByUser(User user) {
+       List<Order> orders = orderRepository.findByUserIdAndStatus(user.getId(), OrderStatus.DELIVERED);
+
+       return orders.stream()
+               .flatMap(order -> order.getOrderItems().stream()
+                       .filter(item -> !returnRequestRepository.existsByOrderItem(item)) // lọc item chưa bị trả hàng
+                       .map(item -> {
+                           Product product = item.getVariant().getProduct();
+                           String imageUrl = product.getImages() != null && !product.getImages().isEmpty()
+                                   ? product.getImages().get(0).getImageUrl()
+                                   : null;
+                           Integer quantity = item.getQuantity();
+                           BigDecimal price = product.getPrice().multiply(BigDecimal.valueOf(quantity));
+                           return new DeliveredItemResponse(
+                                   item.getId(),
+                                   order.getId(),
+                                   product.getName(),
+                                   order.getStatus(),
+                                   item.getQuantity(),
+                                   imageUrl,
+                                   price
+                           );
+                       })
+               ).toList();
+   }
+
 
     @Override
     public long countByStatus(OrderStatus status) {
