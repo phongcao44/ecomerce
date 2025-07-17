@@ -30,7 +30,7 @@ public class OrderResponse {
 
     private LocalDateTime createdAt;
 
-    //private AddressResponse  shippingAddress;
+    private AddressResponse  shippingAddress;
 
     private PaymentResponse payment;
 

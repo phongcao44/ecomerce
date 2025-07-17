@@ -174,7 +174,7 @@ public class OrderController {
                     .payment(paymentResponse)
                     .status(order.getStatus())
                     .totalAmount(order.getTotalAmount())
-                   // .shippingAddress(addressResponse)
+                   .shippingAddress(addressResponse)
                     .build();
         }).collect(Collectors.toList());
         return ResponseEntity.ok(orderResponses);
@@ -203,6 +203,7 @@ public class OrderController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new DataError("Đơn hàng đã giao chỉ được đổi sang RETURNED hoặc CANCELLED", 400));
             }
+
 
             // Cập nhật trạng thái
          //   order.setStatus(status);
@@ -256,6 +257,9 @@ public class OrderController {
             }, 1, TimeUnit.MINUTES);
             //khóa sms tới đây nè
 
+            // Sau khi mọi thứ hợp lệ thì cập nhật trạng thái
+            order.setStatus(status);
+
             // Lưu lại đơn hàng
             Order updatedOrder = orderService.save(order);
 
@@ -290,15 +294,15 @@ public class OrderController {
 
                     .username(userDto.getUsername())
 
-//                    .userId(user.getId())
+                    //.userId(user.getId())
 
                     .createdAt(updatedOrder.getCreatedAt())
                     .paymentMethod(updatedOrder.getPaymentMethod())
                     .status(updatedOrder.getStatus())
                     .totalAmount(updatedOrder.getTotalAmount())
 
-                    //.shippingAddress(addressResponse)
-                    //.orderItems(orderItemDetailResponses)
+                    .shippingAddress(addressResponse)
+                    .orderItems(orderItemDetailResponses)
                     .build();
             if (status == OrderStatus.DELIVERED) {
                 pointService.accumulatePoints(updatedOrder);

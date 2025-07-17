@@ -1,7 +1,8 @@
 package com.ra.base_spring_boot.services;
 
 import com.ra.base_spring_boot.dto.req.CartItemRequestDTO;
-import com.ra.base_spring_boot.dto.req.OrderRequestDTO;
+import com.ra.base_spring_boot.dto.req.OrderRequestAllDTO;
+import com.ra.base_spring_boot.dto.req.OrderRequestSelectedDTO;
 import com.ra.base_spring_boot.dto.resp.CartResponseDTO;
 import com.ra.base_spring_boot.dto.resp.OrderCheckoutResponseDTO;
 
@@ -20,11 +21,11 @@ public interface ICartService {
 
     void clearCart(Long userId);
 
-    OrderCheckoutResponseDTO checkout(Long userId, OrderRequestDTO request);
+    OrderCheckoutResponseDTO checkout(Long userId, OrderRequestAllDTO request);
 
-    OrderCheckoutResponseDTO checkoutSelectedItems(Long userId, OrderRequestDTO request);
+    OrderCheckoutResponseDTO checkoutSelectedItems(Long userId, OrderRequestSelectedDTO request);
 
-    OrderCheckoutResponseDTO checkoutByCartItemId(Long userId, Long cartItemId, OrderRequestDTO request);
+    // OrderCheckoutResponseDTO checkoutByCartItemId(Long userId, Long cartItemId, OrderRequestSelectedDTO request);
 
     BigDecimal getCartTotal(Long userId);
 
