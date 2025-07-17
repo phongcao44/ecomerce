@@ -68,4 +68,10 @@ public class DistancePriceController {
         }
 
     }
+
+    @GetMapping("/calculate/{addressId}")
+    public ResponseEntity<ShippingFee> calculateShippingFee(@PathVariable Long addressId) {
+        ShippingFee fee = shippingFeeService.calculateShippingFeeByAddressId(addressId);
+        return ResponseEntity.ok(fee);
+    }
 }

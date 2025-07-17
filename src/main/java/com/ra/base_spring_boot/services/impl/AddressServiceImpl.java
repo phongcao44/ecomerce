@@ -101,17 +101,17 @@ public class AddressServiceImpl implements IAddressService {
     public List<AddressRespone> findAllByUserId(Long userId) {
         List<Address> list =  iAddressRepository.findAllByUserId(userId);
 
-     return list.stream().map(
-             address -> AddressRespone.builder()
-                     .addressId(address.getId())
-                     .provinceName(address.getProvince())
-                     .districtName(address.getDistrict())
-                     .wardName(address.getWard())
-                     .recipientName(address.getRecipientName())
-                     .phone(address.getPhone())
-                     .fullAddress(address.getFullAddress())
-                     .build()
-     ).collect(Collectors.toList());
+        return list.stream().map(
+                address -> AddressRespone.builder()
+                        .addressId(address.getId())
+                        .provinceName(address.getProvince())
+                        .districtName(address.getDistrict())
+                        .wardName(address.getWard())
+                        .recipientName(address.getRecipientName())
+                        .phone(address.getPhone())
+                        .fullAddress(address.getFullAddress())
+                        .build()
+        ).collect(Collectors.toList());
     }
 
 }
