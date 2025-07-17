@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.req.AddUserRequest;
 import com.ra.base_spring_boot.dto.req.FormRegister;
+import com.ra.base_spring_boot.dto.req.UserDetailRequest;
 import com.ra.base_spring_boot.dto.resp.*;
 import com.ra.base_spring_boot.model.Address;
 import com.ra.base_spring_boot.model.Role;
@@ -217,6 +218,19 @@ public class UserServiceImpl implements IUserService {
                 .createTime(user.getCreatedAt())
                 .updateTime(user.getUpdatedAt())
                 .rank(user.getUserPoint().getUserRank())
+                .build();
+    }
+
+    @Override
+    public UserDetailResponse updateUserDetails(Long userId, UserDetailRequest userDetailRequest) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        user.setUsername(userDetailRequest.getUserName());
+        user.setEmail(userDetailRequest.getEmail());
+        userRepository.save(user);
+        return UserDetailResponse.builder()
+                .userId(userId)
+                .userName(userDetailRequest.getUserName())
+                .userEmail(userDetailRequest.getEmail())
                 .build();
     }
 

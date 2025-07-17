@@ -13,9 +13,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class ReturnRequestDTO {
 
     private Long orderId;
-
+    private Long itemId;
     private String reason;
-
     private MultipartFile media; //  file ảnh hoặc video
     // link ảnh/video (đã upload Cloudinary...)
 }
