@@ -53,10 +53,15 @@ public class ProductServiceImpl implements IProductService {
                         .brand(product.getBrand())
                         .status(product.getStatus())
                         .categoryName(product.getCategory().getName())
+                        .imageUrl(product.getImages() != null && !product.getImages().isEmpty()
+                                ? product.getImages().get(0).getImageUrl()
+                                : null)
+                        .returnPolicyId(product.getReturnPolicy() != null ? product.getReturnPolicy().getId() : null)
+                        .returnPolicyTitle(product.getReturnPolicy() != null ? product.getReturnPolicy().getTitle() : null)
+                        .returnPolicyContent(product.getReturnPolicy() != null ? product.getReturnPolicy().getContent() : null)
                         .build()
         ).collect(Collectors.toList());
         return responseDTOS;
-
     }
 
     @Override
@@ -72,6 +77,12 @@ public class ProductServiceImpl implements IProductService {
                 .status(product.getStatus())
                 .brand(product.getBrand())
                 .categoryName(product.getCategory().getName())
+                .imageUrl(product.getImages() != null && !product.getImages().isEmpty()
+                        ? product.getImages().get(0).getImageUrl()
+                        : null)
+                .returnPolicyId(product.getReturnPolicy() != null ? product.getReturnPolicy().getId() : null)
+                .returnPolicyTitle(product.getReturnPolicy() != null ? product.getReturnPolicy().getTitle() : null)
+                .returnPolicyContent(product.getReturnPolicy() != null ? product.getReturnPolicy().getContent() : null)
                 .build();
 
     }
@@ -104,6 +115,12 @@ public class ProductServiceImpl implements IProductService {
                 .brand(product.getBrand())
                 .status(product.getStatus())
                 .categoryName(product.getCategory().getName())
+                .imageUrl(product.getImages() != null && !product.getImages().isEmpty()
+                        ? product.getImages().get(0).getImageUrl()
+                        : null)
+                .returnPolicyId(product.getReturnPolicy() != null ? product.getReturnPolicy().getId() : null)
+                .returnPolicyTitle(product.getReturnPolicy() != null ? product.getReturnPolicy().getTitle() : null)
+                .returnPolicyContent(product.getReturnPolicy() != null ? product.getReturnPolicy().getContent() : null)
                 .build();
     }
 
@@ -133,6 +150,12 @@ public class ProductServiceImpl implements IProductService {
                 .brand(updated.getBrand())
                 .status(updated.getStatus())
                 .categoryName(updated.getCategory().getName())
+                .imageUrl(product.getImages() != null && !product.getImages().isEmpty()
+                        ? product.getImages().get(0).getImageUrl()
+                        : null)
+                .returnPolicyId(product.getReturnPolicy() != null ? product.getReturnPolicy().getId() : null)
+                .returnPolicyTitle(product.getReturnPolicy() != null ? product.getReturnPolicy().getTitle() : null)
+                .returnPolicyContent(product.getReturnPolicy() != null ? product.getReturnPolicy().getContent() : null)
                 .build();
 
     }
@@ -167,6 +190,12 @@ public class ProductServiceImpl implements IProductService {
                 .brand(updated.getBrand())
                 .status(updated.getStatus())
                 .categoryName(updated.getCategory().getName())
+                .imageUrl(updated.getImages() != null && !updated.getImages().isEmpty()
+                        ? updated.getImages().get(0).getImageUrl()
+                        : null)
+                .returnPolicyId(updated.getReturnPolicy() != null ? updated.getReturnPolicy().getId() : null)
+                .returnPolicyTitle(updated.getReturnPolicy() != null ? updated.getReturnPolicy().getTitle() : null)
+                .returnPolicyContent(updated.getReturnPolicy() != null ? updated.getReturnPolicy().getContent() : null)
                 .build();
     }
 

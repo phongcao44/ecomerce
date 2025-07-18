@@ -22,4 +22,8 @@ public class ProductResponseDTO {
     private String brand;
     private ProductStatus status;
     private String categoryName;
+    private String imageUrl;
+    private Long returnPolicyId;
+    private String returnPolicyTitle;
+    private String returnPolicyContent;
 }
