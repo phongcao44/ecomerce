@@ -109,11 +109,14 @@ public class VoucherServiceImpl implements IVoucherService {
         Voucher voucher = Voucher.builder()
                 .code(request.getCode())
                 .discountPercent(request.getDiscountPercent())
+                .discountAmount(request.getDiscountAmount())
                 .maxDiscount(request.getMaxDiscount())
                 .minOrderAmount(request.getMinOrderAmount())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .quantity(request.getQuantity())
+                .active(request.isActive())
+                .collectible(request.isCollectible())
                 .build();
         iVoucherRepository.save(voucher);
         VoucherResponse response = mapToResponse(voucher);
@@ -132,34 +135,36 @@ public class VoucherServiceImpl implements IVoucherService {
         System.out.println(voucherRequest.getVoucherId() + "day chinh la voucher ID");
         Voucher voucher = iVoucherRepository.findById(voucherId)
                 .orElseThrow(() -> new RuntimeException("Voucher not exist!"));
-
         voucher.setCode(voucherRequest.getCode());
         voucher.setDiscountPercent(voucherRequest.getDiscountPercent());
         voucher.setMaxDiscount(voucherRequest.getMaxDiscount());
+        voucher.setDiscountAmount(voucherRequest.getDiscountAmount());
         voucher.setMinOrderAmount(voucherRequest.getMinOrderAmount());
         voucher.setStartDate(voucherRequest.getStartDate());
         voucher.setEndDate(voucherRequest.getEndDate());
         voucher.setQuantity(voucherRequest.getQuantity());
-        voucher.setCollectible(voucher.isCollectible());
-        voucher.setActive(voucher.isActive());
+        voucher.setCollectible(voucherRequest.isCollectible());
+        voucher.setActive(voucherRequest.isActive());
         iVoucherRepository.save(voucher);
 
         return VoucherResponse.builder()
+                .id(voucherId)
                 .code(voucherRequest.getCode())
                 .discountPercent(voucherRequest.getDiscountPercent())
                 .maxDiscount(voucherRequest.getMaxDiscount())
+                .discountAmount(voucherRequest.getDiscountAmount())
                 .minOrderAmount(voucherRequest.getMinOrderAmount())
                 .startDate(voucherRequest.getStartDate())
                 .endDate(voucherRequest.getEndDate())
                 .quantity(voucherRequest.getQuantity())
-                .collectible(voucher.isCollectible())
-                .active(voucher.isActive())
+                .collectible(voucherRequest.isCollectible())
+                .active(voucherRequest.isActive())
                 .build();
     }
 
     private VoucherResponse mapToResponse(Voucher v) {
         return new VoucherResponse(
-                v.getId(), v.getCode(), v.getDiscountPercent(),
+                v.getId(), v.getCode(), v.getDiscountPercent(), v.getDiscountAmount(),
                 v.getMaxDiscount(), v.getStartDate(), v.getEndDate(),
                 v.getQuantity(), v.getMinOrderAmount(),v.isCollectible(), v.isActive()
         );
@@ -236,6 +241,7 @@ public class VoucherServiceImpl implements IVoucherService {
                         .id(voucher.getId())
                         .code(voucher.getCode())
                         .discountPercent(voucher.getDiscountPercent())
+                        .discountAmount(voucher.getDiscountAmount())
                         .maxDiscount(voucher.getMaxDiscount())
                         .startDate(voucher.getStartDate())
                         .endDate(voucher.getEndDate())

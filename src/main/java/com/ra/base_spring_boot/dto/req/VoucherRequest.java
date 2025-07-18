@@ -14,10 +14,13 @@ public class VoucherRequest {
     private String code;
     private double discountPercent;
     private double maxDiscount;
+    private Double discountAmount;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private int quantity;
     private double minOrderAmount;
     private boolean collectible;
     private long voucherId;
+    private boolean active;
+
 }

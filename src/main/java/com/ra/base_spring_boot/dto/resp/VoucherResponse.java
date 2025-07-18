@@ -15,6 +15,7 @@ public class VoucherResponse {
     private String code;
     private double discountPercent;
     private double maxDiscount;
+    private Double discountAmount;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private long quantity;
