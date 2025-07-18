@@ -23,6 +23,7 @@ public class ProductResponseDTO {
     private ProductStatus status;
     private Integer stockQuantity;
     private Integer variantCount;
+    private Long categoryId;
     private String categoryName;
     private String imageUrl;
     private Long returnPolicyId;
