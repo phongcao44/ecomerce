@@ -82,7 +82,7 @@ public class VoucherServiceImpl implements IVoucherService {
 
         BigDecimal orderAmount = cartService.getCartTotal(userID);
 
-        LocalDate now = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
         if (!voucher.isActive() || voucher.getQuantity() <= 0
                 || now.isBefore(voucher.getStartDate()) || now.isAfter(voucher.getEndDate())) {
             throw new RuntimeException("Voucher expired");
@@ -128,20 +128,33 @@ public class VoucherServiceImpl implements IVoucherService {
     }
 
     @Override
-    public VoucherResponse update(VoucherRequest voucherRequest) {
-        Voucher voucher = iVoucherRepository.findById(voucherRequest.getVoucherId())
+    public VoucherResponse update(VoucherRequest voucherRequest, Long voucherId) {
+        System.out.println(voucherRequest.getVoucherId() + "day chinh la voucher ID");
+        Voucher voucher = iVoucherRepository.findById(voucherId)
                 .orElseThrow(() -> new RuntimeException("Voucher not exist!"));
 
         voucher.setCode(voucherRequest.getCode());
         voucher.setDiscountPercent(voucherRequest.getDiscountPercent());
+        voucher.setMaxDiscount(voucherRequest.getMaxDiscount());
         voucher.setMinOrderAmount(voucherRequest.getMinOrderAmount());
         voucher.setStartDate(voucherRequest.getStartDate());
         voucher.setEndDate(voucherRequest.getEndDate());
         voucher.setQuantity(voucherRequest.getQuantity());
+        voucher.setCollectible(voucher.isCollectible());
+        voucher.setActive(voucher.isActive());
         iVoucherRepository.save(voucher);
 
-                VoucherResponse response = mapToResponse(voucher);
-                return response;
+        return VoucherResponse.builder()
+                .code(voucherRequest.getCode())
+                .discountPercent(voucherRequest.getDiscountPercent())
+                .maxDiscount(voucherRequest.getMaxDiscount())
+                .minOrderAmount(voucherRequest.getMinOrderAmount())
+                .startDate(voucherRequest.getStartDate())
+                .endDate(voucherRequest.getEndDate())
+                .quantity(voucherRequest.getQuantity())
+                .collectible(voucher.isCollectible())
+                .active(voucher.isActive())
+                .build();
     }
 
     private VoucherResponse mapToResponse(Voucher v) {
@@ -218,9 +231,19 @@ public class VoucherServiceImpl implements IVoucherService {
     @Override
     public List<VoucherResponse> getAllVouchers(){
         List<Voucher> vouchers = iVoucherRepository.findAll();
-        return  vouchers.stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
-    }
+        return  vouchers.stream().map(
+                voucher -> VoucherResponse.builder()
+                        .id(voucher.getId())
+                        .code(voucher.getCode())
+                        .discountPercent(voucher.getDiscountPercent())
+                        .maxDiscount(voucher.getMaxDiscount())
+                        .startDate(voucher.getStartDate())
+                        .endDate(voucher.getEndDate())
+                        .quantity(voucher.getQuantity())
+                        .minOrderAmount(voucher.getMinOrderAmount())
+                        .collectible(voucher.isCollectible())
+                        .active(voucher.isActive())
+                        .build()
+        ).collect(Collectors.toList());
 
-}
+}}

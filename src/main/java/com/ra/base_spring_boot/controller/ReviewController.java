@@ -68,4 +68,8 @@ public class ReviewController {
 
         return ResponseEntity.ok(reviewService.editReviewByProductId(user.getUser().getId(), request));
     }
+    @GetMapping("/admin/review/list")
+    public ResponseEntity<?> getReviewsByProductId(@AuthenticationPrincipal MyUserDetails user){
+        return ResponseEntity.ok(reviewService.getAllProductReviews());
+    }
 }
