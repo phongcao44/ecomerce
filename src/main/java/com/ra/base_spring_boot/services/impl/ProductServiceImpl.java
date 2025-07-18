@@ -61,6 +61,7 @@ public class ProductServiceImpl implements IProductService {
                     .status(product.getStatus())
                     .stockQuantity(totalStock)
                     .variantCount(product.getVariants() != null ? product.getVariants().size() : 0)
+                    .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
                     .categoryName(product.getCategory().getName())
                     .imageUrl(product.getImages() != null && !product.getImages().isEmpty()
                             ? product.getImages().get(0).getImageUrl()
@@ -79,6 +80,12 @@ public class ProductServiceImpl implements IProductService {
         Product product = productRepository.findById(id).orElse(null);
         if (product == null) return null;
 
+        int totalStock = product.getVariants() != null
+                ? product.getVariants().stream()
+                .mapToInt(variant -> variant.getStockQuantity() != null ? variant.getStockQuantity() : 0)
+                .sum()
+                : 0;
+
         return ProductResponseDTO.builder()
                 .id(product.getId())
                 .name(product.getName())
@@ -86,6 +93,9 @@ public class ProductServiceImpl implements IProductService {
                 .price(product.getPrice())
                 .status(product.getStatus())
                 .brand(product.getBrand())
+                .stockQuantity(totalStock)
+                .variantCount(product.getVariants() != null ? product.getVariants().size() : 0)
+                .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
                 .categoryName(product.getCategory().getName())
                 .imageUrl(product.getImages() != null && !product.getImages().isEmpty()
                         ? product.getImages().get(0).getImageUrl()
@@ -262,6 +272,7 @@ public class ProductServiceImpl implements IProductService {
                     .status(product.getStatus())
                     .stockQuantity(totalStock)
                     .variantCount(product.getVariants() != null ? product.getVariants().size() : 0)
+                    .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
                     .categoryName(product.getCategory().getName())
                     .imageUrl(product.getImages() != null && !product.getImages().isEmpty()
                             ? product.getImages().get(0).getImageUrl()
