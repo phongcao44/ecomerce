@@ -78,8 +78,8 @@ public class UserServiceImpl implements IUserService {
                         user.getRoles().stream()
                                 .map(role -> String.valueOf(role.getName()))
                                 .collect(Collectors.toSet()),
-                        user.getUserPoint().getUserRank(), // Nếu có
-                        user.getStatus() // Hoặc user.getUserStatus()
+                        user.getUserPoint().getUserRank(),
+                        user.getStatus()
                 ));
     }
 
