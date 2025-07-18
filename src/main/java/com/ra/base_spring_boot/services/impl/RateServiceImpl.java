@@ -1,6 +1,7 @@
 package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.req.ReviewRequest;
+import com.ra.base_spring_boot.dto.resp.ListProductReviewResponse;
 import com.ra.base_spring_boot.dto.resp.RatingSummaryResponse;
 import com.ra.base_spring_boot.dto.resp.ReviewResponse;
 import com.ra.base_spring_boot.model.Product;
@@ -74,6 +75,7 @@ public class RateServiceImpl implements IRateService {
         return reviewRepo.findByProduct_Id(productId).stream()
                 .map(review -> ReviewResponse.builder()
                         .id(review.getId())
+                        .productName(review.getProduct().getName())
                         .rating(review.getRating())
                         .comment(review.getComment())
                         .userName(review.getUser().getUsername())
@@ -123,6 +125,21 @@ public class RateServiceImpl implements IRateService {
                 .userName(review.getUser().getUsername())
                 .createdAt(review.getCreatedAt())
                 .build();
+    }
+
+    @Override
+    public List<?> getAllProductReviews() {
+        List<ListProductReviewResponse> reviews = reviewRepo.findReviewSummariesGroupedByProduct();
+        int total = reviews.size();
+
+        return reviews.stream().map(
+                review -> ListProductReviewResponse.builder()
+                        .productId(review.getProductId())
+                        .rating(review.getRating())
+                        .productName(review.getProductName())
+                        .totalReviews(review.getTotalReviews())
+                        .build()
+        ).collect(Collectors.toList());
     }
 
 

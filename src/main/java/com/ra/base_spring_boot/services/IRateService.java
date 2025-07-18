@@ -13,4 +13,5 @@ public interface IRateService {
         RatingSummaryResponse getRatingSummaryByProductId(Long productId);
         void deleteReviewByProductId(long userId,Long productId);
         ReviewResponse editReviewByProductId(Long userId,ReviewRequest request);
+        List<?> getAllProductReviews();
 }
