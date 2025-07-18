@@ -20,7 +20,7 @@ public class ProductSpecificationController {
         return productSpecificationService.getAll();
     }
 
-    @GetMapping("/product/product{id}")
+    @GetMapping("/product/{id}")
     public List<ProductSpecificationResponseDTO> getByProduct(@PathVariable Long id) {
         return productSpecificationService.getByProductId(id);
     }

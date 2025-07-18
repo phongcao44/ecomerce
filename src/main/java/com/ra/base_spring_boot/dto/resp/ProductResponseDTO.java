@@ -21,5 +21,11 @@ public class ProductResponseDTO {
     private BigDecimal price;
     private String brand;
     private ProductStatus status;
+    private Integer stockQuantity;
+    private Integer variantCount;
     private String categoryName;
+    private String imageUrl;
+    private Long returnPolicyId;
+    private String returnPolicyTitle;
+    private String returnPolicyContent;
 }

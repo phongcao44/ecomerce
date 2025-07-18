@@ -25,7 +25,7 @@ public interface IProductService {
     ProductResponseDTO update(long id, ProductRequestDTO dto);
 
     // phân trang
-    Page<ProductResponseDTO> pagination(Pageable pageable);
+    Page<ProductResponseDTO> pagination(Pageable pageable, String keyword, String status);
 
     List<ProductResponseDTO> search(String keyword);
 
