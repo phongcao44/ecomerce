@@ -50,7 +50,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public Page<ViewUserResponse> getAllUsersPaginateAndFilter(String keyword, String status, Pageable pageable) {
+    public Page<ViewUserResponse> getAllUsersPaginateAndFilter(String keyword, String status, String rank, Pageable pageable) {
         Specification<User> spec = Specification.where(null);
 
         if (keyword != null && !keyword.trim().isEmpty()) {
@@ -67,6 +67,13 @@ public class UserServiceImpl implements IUserService {
                     cb.equal(root.get("status"), status)
             );
         }
+
+        if (rank != null && !rank.trim().isEmpty()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("userPoint").get("userRank"), rank)
+            );
+        }
+
 
         return userRepository.findAll(spec, pageable)
                 .map(user -> new ViewUserResponse(

@@ -63,12 +63,13 @@ public class UserController {
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String orderBy,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String status
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String rank
     ) {
         Sort.Direction direction = orderBy.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-        Page<ViewUserResponse> users = userService.getAllUsersPaginateAndFilter(keyword, status, pageable);
+        Page<ViewUserResponse> users = userService.getAllUsersPaginateAndFilter(keyword, status, rank, pageable);
 
         return ResponseEntity.ok(
                 ResponseWrapper.builder()
