@@ -2,6 +2,8 @@ package com.ra.base_spring_boot.repository;
 
 import com.ra.base_spring_boot.model.Product;
 import com.ra.base_spring_boot.model.constants.OrderStatus;
+import com.ra.base_spring_boot.model.constants.ProductStatus;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -42,6 +44,12 @@ public interface IProductRepository extends JpaRepository<Product, Long> {
     ORDER BY COUNT(oi.id) ASC
 """)
     List<Object[]> findTop5LeastSellingWithRatingAndView(@Param("status") OrderStatus status, Pageable pageable);
+
+    Page<Product> findByNameContainingIgnoreCase(String keyword, Pageable pageable);
+
+    Page<Product> findByStatus(ProductStatus status, Pageable pageable);
+
+    Page<Product> findByNameContainingIgnoreCaseAndStatus(String keyword, ProductStatus status, Pageable pageable);
 
 
 }

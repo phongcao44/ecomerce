@@ -3,7 +3,6 @@ package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.req.ProductRequestDTO;
 import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
-import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.exception.HttpForbiden;
 import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.dto.resp.Top5Product;
@@ -17,6 +16,7 @@ import com.ra.base_spring_boot.repository.IProductRepository;
 import com.ra.base_spring_boot.repository.IReturnPolicyRepository;
 import com.ra.base_spring_boot.services.IProductService;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -43,24 +43,34 @@ public class ProductServiceImpl implements IProductService {
     public List<ProductResponseDTO> findAll() {
         List<Product> products = productRepository.findAll();
         // Convert Entity => DTO
-        List<ProductResponseDTO> responseDTOS;
-        responseDTOS = products.stream().map(product ->
-                ProductResponseDTO.builder()
-                        .id(product.getId())
-                        .name(product.getName())
-                        .description(product.getDescription())
-                        .price(product.getPrice())
-                        .brand(product.getBrand())
-                        .status(product.getStatus())
-                        .categoryName(product.getCategory().getName())
-                        .imageUrl(product.getImages() != null && !product.getImages().isEmpty()
-                                ? product.getImages().get(0).getImageUrl()
-                                : null)
-                        .returnPolicyId(product.getReturnPolicy() != null ? product.getReturnPolicy().getId() : null)
-                        .returnPolicyTitle(product.getReturnPolicy() != null ? product.getReturnPolicy().getTitle() : null)
-                        .returnPolicyContent(product.getReturnPolicy() != null ? product.getReturnPolicy().getContent() : null)
-                        .build()
-        ).collect(Collectors.toList());
+        List<ProductResponseDTO> responseDTOS = products.stream()
+                .map(product -> {
+            // Tổng stockQuantity từ danh sách productVariants
+            int totalStock = product.getVariants() != null
+                    ? product.getVariants().stream()
+                    .mapToInt(variant -> variant.getStockQuantity() != null ? variant.getStockQuantity() : 0)
+                    .sum()
+                    : 0;
+
+            return ProductResponseDTO.builder()
+                    .id(product.getId())
+                    .name(product.getName())
+                    .description(product.getDescription())
+                    .price(product.getPrice())
+                    .brand(product.getBrand())
+                    .status(product.getStatus())
+                    .stockQuantity(totalStock)
+                    .variantCount(product.getVariants() != null ? product.getVariants().size() : 0)
+                    .categoryName(product.getCategory().getName())
+                    .imageUrl(product.getImages() != null && !product.getImages().isEmpty()
+                            ? product.getImages().get(0).getImageUrl()
+                            : null)
+                    .returnPolicyId(product.getReturnPolicy() != null ? product.getReturnPolicy().getId() : null)
+                    .returnPolicyTitle(product.getReturnPolicy() != null ? product.getReturnPolicy().getTitle() : null)
+                    .returnPolicyContent(product.getReturnPolicy() != null ? product.getReturnPolicy().getContent() : null)
+                    .build();
+        }).collect(Collectors.toList());
+
         return responseDTOS;
     }
 
@@ -201,22 +211,66 @@ public class ProductServiceImpl implements IProductService {
 
 
     @Override
-    public Page<ProductResponseDTO> pagination(Pageable pageable) {
-        List<Product> products = productRepository.findAll(pageable).getContent();
-        List<ProductResponseDTO> responseDTOS;
-        responseDTOS = products.stream().map(product ->
-                ProductResponseDTO.builder()
-                        .id(product.getId())
-                        .name(product.getName())
-                        .description(product.getDescription())
-                        .price(product.getPrice())
-                        .brand(product.getBrand())
-                        .status(product.getStatus())
-                        .categoryName(product.getCategory().getName())
-                        .build()
-        ).collect(Collectors.toList());
-        return new PageImpl<>(responseDTOS, pageable, responseDTOS.size());
+    public Page<ProductResponseDTO> pagination(Pageable pageable, String keyword, String status) {
+        Page<Product> productPage;
 
+        // Chuyển đổi status (String) thành Enum
+        ProductStatus productStatus = null;
+        if (status != null && !status.isBlank()) {
+            try {
+                productStatus = ProductStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                try {
+                    throw new BadRequestException("Trạng thái sản phẩm không hợp lệ: " + status);
+                } catch (BadRequestException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        }
+
+        // Nếu có cả keyword và status
+        if (keyword != null && !keyword.isBlank() && productStatus != null) {
+            productPage = productRepository.findByNameContainingIgnoreCaseAndStatus(keyword, productStatus, pageable);
+        }
+        // Chỉ có keyword
+        else if (keyword != null && !keyword.isBlank()) {
+            productPage = productRepository.findByNameContainingIgnoreCase(keyword, pageable);
+        }
+        // Chỉ có status
+        else if (productStatus != null) {
+            productPage = productRepository.findByStatus(productStatus, pageable);
+        }
+        // Không có filter
+        else {
+            productPage = productRepository.findAll(pageable);
+        }
+
+        // Mapping Product -> ProductResponseDTO
+        return productPage.map(product -> {
+            int totalStock = product.getVariants() != null
+                    ? product.getVariants().stream()
+                    .mapToInt(variant -> variant.getStockQuantity() != null ? variant.getStockQuantity() : 0)
+                    .sum()
+                    : 0;
+
+            return ProductResponseDTO.builder()
+                    .id(product.getId())
+                    .name(product.getName())
+                    .description(product.getDescription())
+                    .price(product.getPrice())
+                    .brand(product.getBrand())
+                    .status(product.getStatus())
+                    .stockQuantity(totalStock)
+                    .variantCount(product.getVariants() != null ? product.getVariants().size() : 0)
+                    .categoryName(product.getCategory().getName())
+                    .imageUrl(product.getImages() != null && !product.getImages().isEmpty()
+                            ? product.getImages().get(0).getImageUrl()
+                            : null)
+                    .returnPolicyId(product.getReturnPolicy() != null ? product.getReturnPolicy().getId() : null)
+                    .returnPolicyTitle(product.getReturnPolicy() != null ? product.getReturnPolicy().getTitle() : null)
+                    .returnPolicyContent(product.getReturnPolicy() != null ? product.getReturnPolicy().getContent() : null)
+                    .build();
+        });
     }
 
     @Override
