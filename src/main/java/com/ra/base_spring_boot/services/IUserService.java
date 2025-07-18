@@ -9,6 +9,8 @@ import com.ra.base_spring_boot.model.User;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface IUserService {
     List<ViewUserResponse> findAll();
@@ -22,4 +24,5 @@ public interface IUserService {
     User findOrCreate(String email, String name);
     UserDetailResponse findUserDetails(Long userId);
     UserDetailResponse updateUserDetails(Long userId, UserDetailRequest userDetailRequest);
+    Page<ViewUserResponse> getAllUsersPaginateAndFilter(String keyword, String status, Pageable pageable);
 }
