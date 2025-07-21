@@ -14,6 +14,7 @@ public class FlashSaleServiceImpl implements IFlashSaleService {
     private IFlashSaleRepository flashSaleRepository;
     @Override
     public List<FlashSale> getFlashSale() {
+
         return flashSaleRepository.findAll();
     }
 

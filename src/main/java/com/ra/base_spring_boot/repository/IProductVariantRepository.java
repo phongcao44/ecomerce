@@ -8,5 +8,7 @@ import java.util.List;
 public interface IProductVariantRepository extends JpaRepository<ProductVariant, Long> {
     List<ProductVariant> findByProductId(Long productId);
 
+    List<ProductVariant> findByProduct_NameIgnoreCase(String productName);
+
     Long Id(Long id);
 }

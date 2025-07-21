@@ -3,7 +3,6 @@ package com.ra.base_spring_boot.controller;
 import com.ra.base_spring_boot.dto.req.CartItemRequestDTO;
 import com.ra.base_spring_boot.dto.req.OrderRequestAllDTO;
 import com.ra.base_spring_boot.dto.req.OrderRequestSelectedDTO;
-import com.ra.base_spring_boot.dto.req.OrderRequestDTO;
 import com.ra.base_spring_boot.dto.resp.OrderCheckoutResponseDTO;
 import com.ra.base_spring_boot.repository.ICartRepository;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;

@@ -17,6 +17,8 @@ public interface IProductImageService {
 
     List<ProductImageResponseDTO> getByVariantId(Long variantId);
 
+    List<ProductImageResponseDTO> findAllImagesByProductName(String productName);
+
     void delete(Long id);
 }
 

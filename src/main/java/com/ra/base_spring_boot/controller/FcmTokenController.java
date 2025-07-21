@@ -20,12 +20,19 @@ public class FcmTokenController {
     private final FcmTokenService fcmTokenService;
 
     @PostMapping
-    public ResponseEntity<?> saveToken(@RequestBody FcmTokenRequest request) {
-        System.out.println("➡️ TOKEN: " + request.getToken());
-        System.out.println("➡️ DEVICE: " + request.getDeviceInfo());
+    public ResponseEntity<?> saveToken(@AuthenticationPrincipal MyUserDetails userDetails,@RequestBody FcmTokenRequest request) {
+        System.out.println("TOKEN: " + request.getToken());
+        System.out.println(" DEVICEee: " + request.getDeviceInfo());
+        System.out.println("userid:" + request.getUserId());
+        if (userDetails.getUser().getId() == null) {
+            System.out.println("userDetails is NULL");
+            return ResponseEntity.status(401).body("Unauthorized");
+        }
 
+        Long userId = userDetails.getUser().getId();
+        System.out.println("USER ID: " + userId);
 
-        fcmTokenService.saveToken(1L, request.getToken(), request.getDeviceInfo());
+        fcmTokenService.saveToken(userId, request.getToken(), request.getDeviceInfo());
         return ResponseEntity.ok("Token saved successfully");
     }
 }
