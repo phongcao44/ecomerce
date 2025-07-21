@@ -21,7 +21,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -29,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -129,6 +137,137 @@ public class ProductServiceImpl implements IProductService {
                             .createdAt(product.getCreatedAt())
                             .build();
                 }).collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<ProductResponseDTO> getProductsPaginate(
+            String keyword,
+            Long categoryId,
+            String status,
+            String brandName,
+            BigDecimal priceMin,
+            BigDecimal priceMax,
+            Integer minRating,
+            int page,
+            int limit,
+            String sortBy,
+            String orderBy
+    ) {
+        Pageable pageable = PageRequest.of(
+                page, limit,
+                orderBy.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC,
+                sortBy
+        );
+
+        Specification<Product> spec = Specification.where(null);
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("name")), "%" + keyword.toLowerCase() + "%"));
+        }
+
+        if (categoryId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("category").get("id"), categoryId));
+        }
+
+        if (status != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+        }
+
+        if (brandName != null && !brandName.trim().isEmpty()) {
+            spec = spec.and((root, query, cb) -> cb.equal(cb.lower(root.get("brand")), brandName.toLowerCase()));
+        }
+
+        if (priceMin != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("price"), priceMin));
+        }
+
+        if (priceMax != null) {
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("price"), priceMax));
+        }
+
+        // Không có rating field trong entity gốc thì phải join hoặc custom query. Đây chỉ minh hoạ:
+        if (minRating != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("averageRating"), minRating));
+        }
+
+        Page<Product> productPage = productRepository.findAll(spec, pageable);
+
+        // Flash sale logic như findAll:
+        List<FlashSale> activeFlashSales = flashSaleRepository.findAll().stream()
+                .filter(flashSale -> flashSale.getStatus() == UserStatus.ACTIVE
+                        && flashSale.getStartTime().isBefore(LocalDateTime.now())
+                        && flashSale.getEndTime().isAfter(LocalDateTime.now()))
+                .toList();
+
+        List<FlashSaleItem> activeFlashSaleItems = new ArrayList<>();
+        for (FlashSale flashSale : activeFlashSales) {
+            activeFlashSaleItems.addAll(flashSaleItemRepository.findByFlashSaleId(flashSale.getId()));
+        }
+
+        Map<Long, FlashSaleItem> flashSaleItemMap = activeFlashSaleItems.stream()
+                .filter(item -> item.getVariant() != null)
+                .collect(Collectors.toMap(item -> item.getVariant().getId(), item -> item, (a, b) -> a));
+
+        Page<ProductResponseDTO> dtoPage = productPage.map(product -> {
+            List<ProductVariantResponseDTO> variantDTOs = product.getVariants() != null
+                    ? product.getVariants().stream().map(variant -> {
+                BigDecimal priceOriginal = variant.getPriceOverride();
+                BigDecimal finalPrice = priceOriginal;
+
+                ProductVariantResponseDTO variantDTO = ProductVariantResponseDTO.builder()
+                        .id(variant.getId())
+                        .productName(product.getName())
+                        .colorName(variant.getColor() != null ? variant.getColor().getName() : null)
+                        .sizeName(variant.getSize() != null ? variant.getSize().getSizeName() : null)
+                        .stockQuantity(variant.getStockQuantity())
+                        .priceOverride(priceOriginal)
+                        .build();
+
+                if (flashSaleItemMap.containsKey(variant.getId())) {
+                    FlashSaleItem item = flashSaleItemMap.get(variant.getId());
+                    variantDTO.setDiscountOverrideByFlashSale(item.getDiscountedPrice());
+                    variantDTO.setDiscountType(item.getDiscountType().name());
+
+                    if (item.getDiscountType() == DiscountType.PERCENTAGE) {
+                        BigDecimal percent = item.getDiscountedPrice();
+                        BigDecimal discountAmount = priceOriginal.multiply(percent).divide(BigDecimal.valueOf(100));
+                        finalPrice = priceOriginal.subtract(discountAmount);
+                    } else if (item.getDiscountType() == DiscountType.AMOUNT) {
+                        BigDecimal discountAmount = item.getDiscountedPrice();
+                        finalPrice = priceOriginal.subtract(discountAmount);
+                    }
+                }
+
+                variantDTO.setFinalPriceAfterDiscount(finalPrice);
+                return variantDTO;
+            }).collect(Collectors.toList()) : new ArrayList<>();
+
+            int totalStock = variantDTOs.stream()
+                    .mapToInt(dto -> dto.getStockQuantity() != null ? dto.getStockQuantity() : 0)
+                    .sum();
+
+            return ProductResponseDTO.builder()
+                    .id(product.getId())
+                    .name(product.getName())
+                    .description(product.getDescription())
+                    .price(product.getPrice())
+                    .brand(product.getBrand())
+                    .status(product.getStatus())
+                    .stockQuantity(totalStock)
+                    .variantCount(variantDTOs.size())
+                    .variants(variantDTOs)
+                    .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
+                    .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
+                    .imageUrl(product.getImages() != null && !product.getImages().isEmpty()
+                            ? product.getImages().get(0).getImageUrl() : null)
+                    .returnPolicyId(product.getReturnPolicy() != null ? product.getReturnPolicy().getId() : null)
+                    .returnPolicyTitle(product.getReturnPolicy() != null ? product.getReturnPolicy().getTitle() : null)
+                    .returnPolicyContent(product.getReturnPolicy() != null ? product.getReturnPolicy().getContent() : null)
+                    .createdAt(product.getCreatedAt())
+                    .build();
+        });
+
+        return dtoPage;
     }
 
     @Override

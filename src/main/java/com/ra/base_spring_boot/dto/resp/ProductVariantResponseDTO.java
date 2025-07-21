@@ -14,6 +14,9 @@ public class ProductVariantResponseDTO {
 
     private String productName;
 
+    private Long colorId;
+    private Long sizeId;
+
     private String colorName;
 
     private String sizeName;

@@ -67,11 +67,14 @@ public class ProductVariantServiceImpl implements IProductVariantService {
             ProductVariantResponseDTO dto = ProductVariantResponseDTO.builder()
                     .id(variant.getId())
                     .productName(variant.getProduct().getName())
-                    .colorName(variant.getColor() !=null ? variant.getColor().getName():null)
-                    .sizeName(variant.getSize() !=null ? variant.getSize().getSizeName():null)
+                    .colorId(variant.getColor() != null ? variant.getColor().getId() : null) // thêm
+                    .colorName(variant.getColor() != null ? variant.getColor().getName() : null)
+                    .sizeId(variant.getSize() != null ? variant.getSize().getId() : null)     // thêm
+                    .sizeName(variant.getSize() != null ? variant.getSize().getSizeName() : null)
                     .stockQuantity(variant.getStockQuantity())
                     .priceOverride(variant.getPriceOverride())
                     .build();
+
 
             // Nếu variant đang có Flash Sale thì gán giá giảm
             if (flashSaleItemMap.containsKey(variant.getId())) {
@@ -95,18 +98,78 @@ public class ProductVariantServiceImpl implements IProductVariantService {
 
 
 
+//    @Override
+//    public List<ProductVariantResponseDTO> findByProductId(Long productId) {
+//        List<ProductVariant> variants = productVariantRepository.findByProductId(productId);
+//        return variants.stream().map(variant -> ProductVariantResponseDTO.builder()
+//                .id(variant.getId())
+//                .productName(variant.getProduct().getName())
+//                .colorName(variant.getColor() !=null ? variant.getColor().getName() : null)
+//                .sizeName(variant.getSize() != null ? variant.getSize().getSizeName() : null)
+//                .stockQuantity(variant.getStockQuantity())
+//                .priceOverride(variant.getPriceOverride())
+//                .build()).collect(Collectors.toList());
+//    }
+
     @Override
     public List<ProductVariantResponseDTO> findByProductId(Long productId) {
+        // B1: Lấy danh sách Flash Sale đang hoạt động
+        List<FlashSale> activeFlashSales = flashSaleRepository.findAll().stream()
+                .filter(flashSale -> flashSale.getStatus() == UserStatus.ACTIVE
+                        && flashSale.getStartTime().isBefore(LocalDateTime.now())
+                        && flashSale.getEndTime().isAfter(LocalDateTime.now()))
+                .collect(Collectors.toList());
+
+        // B2: Lấy tất cả các item thuộc các Flash Sale đang hoạt động
+        List<FlashSaleItem> activeFlashSaleItems = new ArrayList<>();
+        for (FlashSale flashSale : activeFlashSales) {
+            activeFlashSaleItems.addAll(flashSaleItemRepository.findByFlashSaleId(flashSale.getId()));
+        }
+
+        // B3: Map variantId -> FlashSaleItem
+        Map<Long, FlashSaleItem> flashSaleItemMap = activeFlashSaleItems.stream()
+                .filter(item -> item.getVariant() != null)
+                .collect(Collectors.toMap(item -> item.getVariant().getId(), item -> item, (a, b) -> a));
+
+        // B4: Lấy variants theo productId
         List<ProductVariant> variants = productVariantRepository.findByProductId(productId);
-        return variants.stream().map(variant -> ProductVariantResponseDTO.builder()
-                .id(variant.getId())
-                .productName(variant.getProduct().getName())
-                .colorName(variant.getColor() !=null ? variant.getColor().getName() : null)
-                .sizeName(variant.getSize() != null ? variant.getSize().getSizeName() : null)
-                .stockQuantity(variant.getStockQuantity())
-                .priceOverride(variant.getPriceOverride())
-                .build()).collect(Collectors.toList());
+
+        // B5: Build DTO y chang findAll
+        return variants.stream().map(variant -> {
+            BigDecimal priceOriginal = variant.getPriceOverride();
+            BigDecimal finalPrice = priceOriginal;
+
+            ProductVariantResponseDTO dto = ProductVariantResponseDTO.builder()
+                    .id(variant.getId())
+                    .productName(variant.getProduct().getName())
+                    .colorId(variant.getColor() != null ? variant.getColor().getId() : null) // thêm
+                    .colorName(variant.getColor() != null ? variant.getColor().getName() : null)
+                    .sizeId(variant.getSize() != null ? variant.getSize().getId() : null)     // thêm
+                    .sizeName(variant.getSize() != null ? variant.getSize().getSizeName() : null)
+                    .stockQuantity(variant.getStockQuantity())
+                    .priceOverride(variant.getPriceOverride())
+                    .build();
+
+
+            if (flashSaleItemMap.containsKey(variant.getId())) {
+                FlashSaleItem item = flashSaleItemMap.get(variant.getId());
+                dto.setDiscountOverrideByFlashSale(item.getDiscountedPrice());
+                dto.setDiscountType(item.getDiscountType().name());
+
+                if (item.getDiscountType() == DiscountType.PERCENTAGE) {
+                    BigDecimal percent = item.getDiscountedPrice();
+                    BigDecimal discountAmount = priceOriginal.multiply(percent).divide(BigDecimal.valueOf(100));
+                    finalPrice = priceOriginal.subtract(discountAmount);
+                } else if (item.getDiscountType() == DiscountType.AMOUNT) {
+                    BigDecimal discountAmount = item.getDiscountedPrice();
+                    finalPrice = priceOriginal.subtract(discountAmount);
+                }
+            }
+            dto.setFinalPriceAfterDiscount(finalPrice);
+            return dto;
+        }).collect(Collectors.toList());
     }
+
 
 
     @Override
@@ -184,8 +247,10 @@ public class ProductVariantServiceImpl implements IProductVariantService {
         return ProductVariantResponseDTO.builder()
                 .id(variant.getId())
                 .productName(product.getName())
-                .colorName(color !=null ? color.getName() : null)
-                .sizeName(size !=null ? size.getSizeName() : null)
+                .colorId(color != null ? color.getId() : null)      // thêm
+                .colorName(color != null ? color.getName() : null)
+                .sizeId(size != null ? size.getId() : null)         // thêm
+                .sizeName(size != null ? size.getSizeName() : null)
                 .stockQuantity(variant.getStockQuantity())
                 .priceOverride(variant.getPriceOverride())
                 .build();

@@ -69,7 +69,7 @@ public class PaymentController {
     }
 
     @GetMapping("/vnpay-payment/{orderId}")
-    public ResponseEntity<?> createPayment(@RequestParam("orderId") Long orderId, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    public ResponseEntity<?> createPayment(@PathVariable("orderId") Long orderId, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         //truyền giá vào
         Optional<Order> orderOptional = orderRepository.findById(orderId);
         if (orderOptional.isEmpty()) {
@@ -171,6 +171,7 @@ public class PaymentController {
        // return ResponseEntity.ok(gson.toJson(responseMap));
         return ResponseEntity.ok(responseMap);
     }
+
     @GetMapping("/payment-info")
     public ResponseEntity<?> getPaymentInfo(@RequestParam(value = "vnp_Amount") String amount,
                                             @RequestParam(value = "vnp_BankCode") String bankCode,
