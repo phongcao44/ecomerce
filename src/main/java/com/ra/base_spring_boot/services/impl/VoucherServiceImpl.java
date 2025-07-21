@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.req.VoucherRequest;
 import com.ra.base_spring_boot.dto.resp.VoucherResponse;
+import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.model.UserVoucher;
 import com.ra.base_spring_boot.model.Voucher;
@@ -168,7 +169,7 @@ public class VoucherServiceImpl implements IVoucherService {
     @Override
     public void assignWelcomeVoucher(User user) {
         Voucher voucher = iVoucherRepository.findByCode("WELCOME")
-                .orElseThrow(() -> new RuntimeException("Voucher not exist!"));
+                .orElseThrow(() -> new HttpBadRequest("Voucher not exist!"));
         UserVoucher userVoucher = new UserVoucher();
         userVoucher.setUser(user);
         userVoucher.setVoucher(voucher);
@@ -178,24 +179,24 @@ public class VoucherServiceImpl implements IVoucherService {
     @Override
     public void collectVoucher(Long userId, String code) {
         User user = iUserRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Voucher not exist!"));
+                .orElseThrow(() -> new HttpBadRequest("Voucher not exist!"));
         Voucher voucher = iVoucherRepository.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Voucher not exist!"));
+                .orElseThrow(() -> new HttpBadRequest("Voucher not exist!"));
         if(!voucher.isCollectible()) {
-            throw new RuntimeException("This voucher cannot be collected");
+            throw new HttpBadRequest("This voucher cannot be collected");
         }
         if(iUserVoucherRepository.existsByUserAndVoucher(user,voucher)) {
-            throw new RuntimeException("This voucher have been collected");
+            throw new HttpBadRequest("This voucher have been collected");
         }
         if(voucher.getCollected()>= voucher.getQuantity()){
-            throw new RuntimeException("This voucher have been out of stock");
+            throw new HttpBadRequest("This voucher have been out of stock");
         }
         UserVoucher userVoucher = iUserVoucherRepository
                 .findByUserAndVoucher(user, voucher)
                 .orElse(null);
 
         if(iUserVoucherRepository.existsByUserAndVoucher(user,voucher)) {
-            throw new RuntimeException("You have already collected this voucher");
+            throw new HttpBadRequest("You have already collected this voucher");
         }else{
             userVoucher = new UserVoucher();
             userVoucher.setUser(user);

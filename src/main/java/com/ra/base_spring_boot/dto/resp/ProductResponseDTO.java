@@ -8,6 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 
 
 @NoArgsConstructor
@@ -29,4 +31,6 @@ public class ProductResponseDTO {
     private Long returnPolicyId;
     private String returnPolicyTitle;
     private String returnPolicyContent;
+    private LocalDateTime createdAt;
+    public List<ProductVariantResponseDTO> variants;
 }
