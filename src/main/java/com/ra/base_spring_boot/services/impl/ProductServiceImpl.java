@@ -3,17 +3,16 @@ package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.req.ProductRequestDTO;
 import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
+import com.ra.base_spring_boot.dto.resp.ProductVariantResponseDTO;
 import com.ra.base_spring_boot.exception.HttpForbiden;
 import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.dto.resp.Top5Product;
-import com.ra.base_spring_boot.model.Category;
-import com.ra.base_spring_boot.model.Product;
+import com.ra.base_spring_boot.model.*;
+import com.ra.base_spring_boot.model.constants.DiscountType;
 import com.ra.base_spring_boot.model.constants.OrderStatus;
-import com.ra.base_spring_boot.model.ReturnPolicy;
 import com.ra.base_spring_boot.model.constants.ProductStatus;
-import com.ra.base_spring_boot.repository.ICategoryRepository;
-import com.ra.base_spring_boot.repository.IProductRepository;
-import com.ra.base_spring_boot.repository.IReturnPolicyRepository;
+import com.ra.base_spring_boot.model.constants.UserStatus;
+import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.services.IProductService;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
@@ -24,61 +23,171 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements IProductService {
 
-    @Autowired
     private final IProductRepository productRepository;
-    @Autowired
     private final ICategoryRepository categoryRepository;
-
     private final IReturnPolicyRepository returnPolicyRepository;
+
+    @Autowired
+    private IColorRepository colorRepository;
+    @Autowired
+    private ISizeRepository sizeRepository;
+    @Autowired
+    private IFlashSaleItemRepository  flashSaleItemRepository;
+    @Autowired
+    private IFlashSaleRepository flashSaleRepository;
 
 
     @Override
     public List<ProductResponseDTO> findAll() {
+        // Lấy các flash sale đang hoạt động (giống như findById nếu muốn áp giá giảm)
+        List<FlashSale> activeFlashSales = flashSaleRepository.findAll().stream()
+                .filter(flashSale -> flashSale.getStatus() == UserStatus.ACTIVE
+                        && flashSale.getStartTime().isBefore(LocalDateTime.now())
+                        && flashSale.getEndTime().isAfter(LocalDateTime.now()))
+                .toList();
+
+        List<FlashSaleItem> activeFlashSaleItems = new ArrayList<>();
+        for (FlashSale flashSale : activeFlashSales) {
+            activeFlashSaleItems.addAll(flashSaleItemRepository.findByFlashSaleId(flashSale.getId()));
+        }
+
+        Map<Long, FlashSaleItem> flashSaleItemMap = activeFlashSaleItems.stream()
+                .filter(item -> item.getVariant() != null)
+                .collect(Collectors.toMap(item -> item.getVariant().getId(), item -> item, (a, b) -> a));
+
         List<Product> products = productRepository.findAll();
-        // Convert Entity => DTO
-        List<ProductResponseDTO> responseDTOS = products.stream()
+
+        return products.stream()
                 .map(product -> {
-            // Tổng stockQuantity từ danh sách productVariants
-            int totalStock = product.getVariants() != null
-                    ? product.getVariants().stream()
-                    .mapToInt(variant -> variant.getStockQuantity() != null ? variant.getStockQuantity() : 0)
-                    .sum()
-                    : 0;
+                    List<ProductVariantResponseDTO> variantDTOs = product.getVariants() != null
+                            ? product.getVariants().stream().map(variant -> {
+                        BigDecimal priceOriginal = variant.getPriceOverride();
+                        BigDecimal finalPrice = priceOriginal;
 
-            return ProductResponseDTO.builder()
-                    .id(product.getId())
-                    .name(product.getName())
-                    .description(product.getDescription())
-                    .price(product.getPrice())
-                    .brand(product.getBrand())
-                    .status(product.getStatus())
-                    .stockQuantity(totalStock)
-                    .variantCount(product.getVariants() != null ? product.getVariants().size() : 0)
-                    .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
-                    .categoryName(product.getCategory().getName())
-                    .imageUrl(product.getImages() != null && !product.getImages().isEmpty()
-                            ? product.getImages().get(0).getImageUrl()
-                            : null)
-                    .returnPolicyId(product.getReturnPolicy() != null ? product.getReturnPolicy().getId() : null)
-                    .returnPolicyTitle(product.getReturnPolicy() != null ? product.getReturnPolicy().getTitle() : null)
-                    .returnPolicyContent(product.getReturnPolicy() != null ? product.getReturnPolicy().getContent() : null)
-                    .build();
-        }).collect(Collectors.toList());
+                        ProductVariantResponseDTO variantDTO = ProductVariantResponseDTO.builder()
+                                .id(variant.getId())
+                                .productName(product.getName())
+                                .colorName(variant.getColor() != null ? variant.getColor().getName() : null)
+                                .sizeName(variant.getSize() != null ? variant.getSize().getSizeName() : null)
+                                .stockQuantity(variant.getStockQuantity())
+                                .priceOverride(priceOriginal)
+                                .build();
 
-        return responseDTOS;
+                        if (flashSaleItemMap.containsKey(variant.getId())) {
+                            FlashSaleItem item = flashSaleItemMap.get(variant.getId());
+                            variantDTO.setDiscountOverrideByFlashSale(item.getDiscountedPrice());
+                            variantDTO.setDiscountType(item.getDiscountType().name());
+
+                            if (item.getDiscountType() == DiscountType.PERCENTAGE) {
+                                BigDecimal percent = item.getDiscountedPrice();
+                                BigDecimal discountAmount = priceOriginal.multiply(percent).divide(BigDecimal.valueOf(100));
+                                finalPrice = priceOriginal.subtract(discountAmount);
+                            } else if (item.getDiscountType() == DiscountType.AMOUNT) {
+                                BigDecimal discountAmount = item.getDiscountedPrice();
+                                finalPrice = priceOriginal.subtract(discountAmount);
+                            }
+                        }
+
+                        variantDTO.setFinalPriceAfterDiscount(finalPrice);
+                        return variantDTO;
+                    }).collect(Collectors.toList())
+                            : new ArrayList<>();
+
+                    int totalStock = variantDTOs.stream()
+                            .mapToInt(dto -> dto.getStockQuantity() != null ? dto.getStockQuantity() : 0)
+                            .sum();
+
+                    return ProductResponseDTO.builder()
+                            .id(product.getId())
+                            .name(product.getName())
+                            .description(product.getDescription())
+                            .price(product.getPrice())
+                            .brand(product.getBrand())
+                            .status(product.getStatus())
+                            .stockQuantity(totalStock)
+                            .variantCount(variantDTOs.size())
+                            .variants(variantDTOs)
+                            .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
+                            .categoryName(product.getCategory().getName())
+                            .imageUrl(product.getImages() != null && !product.getImages().isEmpty()
+                                    ? product.getImages().get(0).getImageUrl()
+                                    : null)
+                            .returnPolicyId(product.getReturnPolicy() != null ? product.getReturnPolicy().getId() : null)
+                            .returnPolicyTitle(product.getReturnPolicy() != null ? product.getReturnPolicy().getTitle() : null)
+                            .returnPolicyContent(product.getReturnPolicy() != null ? product.getReturnPolicy().getContent() : null)
+                            .createdAt(product.getCreatedAt())
+                            .build();
+                }).collect(Collectors.toList());
     }
 
     @Override
     public ProductResponseDTO findById(long id) {
         Product product = productRepository.findById(id).orElse(null);
         if (product == null) return null;
+
+        // Lấy flash sale đang hoạt động
+        List<FlashSale> activeFlashSales = flashSaleRepository.findAll().stream()
+                .filter(flashSale -> flashSale.getStatus() == UserStatus.ACTIVE
+                        && flashSale.getStartTime().isBefore(LocalDateTime.now())
+                        && flashSale.getEndTime().isAfter(LocalDateTime.now()))
+                .toList();
+
+        // Lấy danh sách item trong flash sale
+        List<FlashSaleItem> activeFlashSaleItems = new ArrayList<>();
+        for (FlashSale flashSale : activeFlashSales) {
+            activeFlashSaleItems.addAll(flashSaleItemRepository.findByFlashSaleId(flashSale.getId()));
+        }
+
+        // Map variantId -> FlashSaleItem
+        Map<Long, FlashSaleItem> flashSaleItemMap = activeFlashSaleItems.stream()
+                .filter(item -> item.getVariant() != null)
+                .collect(Collectors.toMap(item -> item.getVariant().getId(), item -> item, (a, b) -> a));
+
+        // Map các variant sang DTO
+        List<ProductVariantResponseDTO> variantDTOs = product.getVariants() != null
+                ? product.getVariants().stream().map(variant -> {
+            BigDecimal priceOriginal = variant.getPriceOverride();
+            BigDecimal finalPrice = priceOriginal;
+
+            ProductVariantResponseDTO dto = ProductVariantResponseDTO.builder()
+                    .id(variant.getId())
+                    .productName(product.getName())
+                    .colorName(variant.getColor() != null ? variant.getColor().getName() : null)
+                    .sizeName(variant.getSize() != null ? variant.getSize().getSizeName() : null)
+                    .stockQuantity(variant.getStockQuantity())
+                    .priceOverride(priceOriginal)
+                    .build();
+
+            if (flashSaleItemMap.containsKey(variant.getId())) {
+                FlashSaleItem item = flashSaleItemMap.get(variant.getId());
+                dto.setDiscountOverrideByFlashSale(item.getDiscountedPrice());
+                dto.setDiscountType(item.getDiscountType().name());
+
+                // Tính giá sau giảm
+                if (item.getDiscountType() == DiscountType.PERCENTAGE) {
+                    BigDecimal percent = item.getDiscountedPrice();
+                    BigDecimal discountAmount = priceOriginal.multiply(percent).divide(BigDecimal.valueOf(100));
+                    finalPrice = priceOriginal.subtract(discountAmount);
+                } else if (item.getDiscountType() == DiscountType.AMOUNT) {
+                    finalPrice = priceOriginal.subtract(item.getDiscountedPrice());
+                }
+            }
+
+            dto.setFinalPriceAfterDiscount(finalPrice);
+            return dto;
+        }).collect(Collectors.toList())
+                : null;
 
         int totalStock = product.getVariants() != null
                 ? product.getVariants().stream()
@@ -94,8 +203,7 @@ public class ProductServiceImpl implements IProductService {
                 .status(product.getStatus())
                 .brand(product.getBrand())
                 .stockQuantity(totalStock)
-                .variantCount(product.getVariants() != null ? product.getVariants().size() : 0)
-                .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
+                .variantCount(variantDTOs != null ? variantDTOs.size() : 0)
                 .categoryName(product.getCategory().getName())
                 .imageUrl(product.getImages() != null && !product.getImages().isEmpty()
                         ? product.getImages().get(0).getImageUrl()
@@ -103,11 +211,11 @@ public class ProductServiceImpl implements IProductService {
                 .returnPolicyId(product.getReturnPolicy() != null ? product.getReturnPolicy().getId() : null)
                 .returnPolicyTitle(product.getReturnPolicy() != null ? product.getReturnPolicy().getTitle() : null)
                 .returnPolicyContent(product.getReturnPolicy() != null ? product.getReturnPolicy().getContent() : null)
+                .variants(variantDTOs)
+                .createdAt(product.getCreatedAt())
                 .build();
-
     }
-
-    @Override
+        @Override
     public ProductResponseDTO save(ProductRequestDTO dto) {
         Category category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new HttpNotFound("Category Not Found"));
