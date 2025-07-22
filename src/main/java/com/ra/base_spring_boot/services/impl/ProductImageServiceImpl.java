@@ -183,6 +183,30 @@ public class ProductImageServiceImpl implements IProductImageService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<ProductImageResponseDTO> findAllImagesByProductName(String productName) {
+        List<ProductImage> images = productImageRepository.findByProduct_NameIgnoreCase(productName);
+
+        // Chuyển đổi danh sách ProductImage Entity sang danh sách ProductImageResponseDTO
+        return images.stream()
+                .map(this::mapImageToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    private ProductImageResponseDTO mapImageToResponseDTO(ProductImage image) {
+        return ProductImageResponseDTO.builder()
+                .id(image.getId())
+                .imageUrl(image.getImageUrl())
+                .isMain(image.getIsMain())
+                .productId(image.getProduct() != null ? image.getProduct().getId() : null)
+                .productName(image.getProduct() != null ? image.getProduct().getName() : null)
+                .variantId(image.getVariant() != null ? image.getVariant().getId() : null)
+                .variantColor(image.getVariant() != null && image.getVariant().getColor() != null
+                        ? image.getVariant().getColor().getName() : null)
+                .variantSize(image.getVariant() != null && image.getVariant().getSize() != null
+                        ? image.getVariant().getSize().getSizeName() : null)
+                .build();
+    }
 
     @Override
     public void delete(Long id) {

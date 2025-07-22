@@ -3,20 +3,19 @@ package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.req.ProductRequestDTO;
 import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
-import com.ra.base_spring_boot.exception.HttpBadRequest;
+import com.ra.base_spring_boot.dto.resp.ProductVariantResponseDTO;
 import com.ra.base_spring_boot.exception.HttpForbiden;
 import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.dto.resp.Top5Product;
-import com.ra.base_spring_boot.model.Category;
-import com.ra.base_spring_boot.model.Product;
+import com.ra.base_spring_boot.model.*;
+import com.ra.base_spring_boot.model.constants.DiscountType;
 import com.ra.base_spring_boot.model.constants.OrderStatus;
-import com.ra.base_spring_boot.model.ReturnPolicy;
 import com.ra.base_spring_boot.model.constants.ProductStatus;
-import com.ra.base_spring_boot.repository.ICategoryRepository;
-import com.ra.base_spring_boot.repository.IProductRepository;
-import com.ra.base_spring_boot.repository.IReturnPolicyRepository;
+import com.ra.base_spring_boot.model.constants.UserStatus;
+import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.services.IProductService;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -24,45 +23,186 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements IProductService {
 
-    @Autowired
     private final IProductRepository productRepository;
-    @Autowired
     private final ICategoryRepository categoryRepository;
-
     private final IReturnPolicyRepository returnPolicyRepository;
+
+    @Autowired
+    private IColorRepository colorRepository;
+    @Autowired
+    private ISizeRepository sizeRepository;
+    @Autowired
+    private IFlashSaleItemRepository  flashSaleItemRepository;
+    @Autowired
+    private IFlashSaleRepository flashSaleRepository;
+    @Autowired
+    private IReviewRepository  reviewRepository;
 
 
     @Override
     public List<ProductResponseDTO> findAll() {
-        List<Product> products = productRepository.findAll();
-        // Convert Entity => DTO
-        List<ProductResponseDTO> responseDTOS;
-        responseDTOS = products.stream().map(product ->
-                ProductResponseDTO.builder()
-                        .id(product.getId())
-                        .name(product.getName())
-                        .description(product.getDescription())
-                        .price(product.getPrice())
-                        .brand(product.getBrand())
-                        .status(product.getStatus())
-                        .categoryName(product.getCategory().getName())
-                        .build()
-        ).collect(Collectors.toList());
-        return responseDTOS;
+        // Lấy các flash sale đang hoạt động (giống như findById nếu muốn áp giá giảm)
+        List<FlashSale> activeFlashSales = flashSaleRepository.findAll().stream()
+                .filter(flashSale -> flashSale.getStatus() == UserStatus.ACTIVE
+                        && flashSale.getStartTime().isBefore(LocalDateTime.now())
+                        && flashSale.getEndTime().isAfter(LocalDateTime.now()))
+                .toList();
 
+        List<FlashSaleItem> activeFlashSaleItems = new ArrayList<>();
+        for (FlashSale flashSale : activeFlashSales) {
+            activeFlashSaleItems.addAll(flashSaleItemRepository.findByFlashSaleId(flashSale.getId()));
+        }
+
+        Map<Long, FlashSaleItem> flashSaleItemMap = activeFlashSaleItems.stream()
+                .filter(item -> item.getVariant() != null)
+                .collect(Collectors.toMap(item -> item.getVariant().getId(), item -> item, (a, b) -> a));
+
+        List<Product> products = productRepository.findAll();
+
+        return products.stream()
+                .map(product -> {
+                    List<ProductVariantResponseDTO> variantDTOs = product.getVariants() != null
+                            ? product.getVariants().stream().map(variant -> {
+                        BigDecimal priceOriginal = variant.getPriceOverride();
+                        BigDecimal finalPrice = priceOriginal;
+
+                        ProductVariantResponseDTO variantDTO = ProductVariantResponseDTO.builder()
+                                .id(variant.getId())
+                                .productName(product.getName())
+                                .colorName(variant.getColor() != null ? variant.getColor().getName() : null)
+                                .sizeName(variant.getSize() != null ? variant.getSize().getSizeName() : null)
+                                .stockQuantity(variant.getStockQuantity())
+                                .priceOverride(priceOriginal)
+                                .build();
+
+                        if (flashSaleItemMap.containsKey(variant.getId())) {
+                            FlashSaleItem item = flashSaleItemMap.get(variant.getId());
+                            variantDTO.setDiscountOverrideByFlashSale(item.getDiscountedPrice());
+                            variantDTO.setDiscountType(item.getDiscountType().name());
+
+                            if (item.getDiscountType() == DiscountType.PERCENTAGE) {
+                                BigDecimal percent = item.getDiscountedPrice();
+                                BigDecimal discountAmount = priceOriginal.multiply(percent).divide(BigDecimal.valueOf(100));
+                                finalPrice = priceOriginal.subtract(discountAmount);
+                            } else if (item.getDiscountType() == DiscountType.AMOUNT) {
+                                BigDecimal discountAmount = item.getDiscountedPrice();
+                                finalPrice = priceOriginal.subtract(discountAmount);
+                            }
+                        }
+
+                        variantDTO.setFinalPriceAfterDiscount(finalPrice);
+                        return variantDTO;
+                    }).collect(Collectors.toList())
+                            : new ArrayList<>();
+
+                    int totalStock = variantDTOs.stream()
+                            .mapToInt(dto -> dto.getStockQuantity() != null ? dto.getStockQuantity() : 0)
+                            .sum();
+
+                    List<Review> reviews = reviewRepository.findAllByProduct(product);
+                    long totalReviews = reviews.size();
+                    double averageRating = reviews.stream().mapToDouble(Review::getRating).average().orElse(0.0);
+
+                    return ProductResponseDTO.builder()
+                            .id(product.getId())
+                            .name(product.getName())
+                            .description(product.getDescription())
+                            .price(product.getPrice())
+                            .brand(product.getBrand())
+                            .status(product.getStatus())
+                            .stockQuantity(totalStock)
+                            .variantCount(variantDTOs.size())
+                            .variants(variantDTOs)
+                            .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
+                            .categoryName(product.getCategory().getName())
+                            .imageUrl(product.getImages() != null && !product.getImages().isEmpty()
+                                    ? product.getImages().get(0).getImageUrl()
+                                    : null)
+                            .returnPolicyId(product.getReturnPolicy() != null ? product.getReturnPolicy().getId() : null)
+                            .returnPolicyTitle(product.getReturnPolicy() != null ? product.getReturnPolicy().getTitle() : null)
+                            .returnPolicyContent(product.getReturnPolicy() != null ? product.getReturnPolicy().getContent() : null)
+                            .createdAt(product.getCreatedAt())
+                            .averageRating(averageRating)
+                            .totalReviews(totalReviews) // dùng lại field này cho view nếu không tách riêng
+                            .build();
+                }).collect(Collectors.toList());
     }
 
     @Override
     public ProductResponseDTO findById(long id) {
         Product product = productRepository.findById(id).orElse(null);
         if (product == null) return null;
+
+        // Lấy flash sale đang hoạt động
+        List<FlashSale> activeFlashSales = flashSaleRepository.findAll().stream()
+                .filter(flashSale -> flashSale.getStatus() == UserStatus.ACTIVE
+                        && flashSale.getStartTime().isBefore(LocalDateTime.now())
+                        && flashSale.getEndTime().isAfter(LocalDateTime.now()))
+                .toList();
+
+        // Lấy danh sách item trong flash sale
+        List<FlashSaleItem> activeFlashSaleItems = new ArrayList<>();
+        for (FlashSale flashSale : activeFlashSales) {
+            activeFlashSaleItems.addAll(flashSaleItemRepository.findByFlashSaleId(flashSale.getId()));
+        }
+
+        // Map variantId -> FlashSaleItem
+        Map<Long, FlashSaleItem> flashSaleItemMap = activeFlashSaleItems.stream()
+                .filter(item -> item.getVariant() != null)
+                .collect(Collectors.toMap(item -> item.getVariant().getId(), item -> item, (a, b) -> a));
+
+        // Map các variant sang DTO
+        List<ProductVariantResponseDTO> variantDTOs = product.getVariants() != null
+                ? product.getVariants().stream().map(variant -> {
+            BigDecimal priceOriginal = variant.getPriceOverride();
+            BigDecimal finalPrice = priceOriginal;
+
+            ProductVariantResponseDTO dto = ProductVariantResponseDTO.builder()
+                    .id(variant.getId())
+                    .productName(product.getName())
+                    .colorName(variant.getColor() != null ? variant.getColor().getName() : null)
+                    .sizeName(variant.getSize() != null ? variant.getSize().getSizeName() : null)
+                    .stockQuantity(variant.getStockQuantity())
+                    .priceOverride(priceOriginal)
+                    .build();
+
+            if (flashSaleItemMap.containsKey(variant.getId())) {
+                FlashSaleItem item = flashSaleItemMap.get(variant.getId());
+                dto.setDiscountOverrideByFlashSale(item.getDiscountedPrice());
+                dto.setDiscountType(item.getDiscountType().name());
+
+                // Tính giá sau giảm
+                if (item.getDiscountType() == DiscountType.PERCENTAGE) {
+                    BigDecimal percent = item.getDiscountedPrice();
+                    BigDecimal discountAmount = priceOriginal.multiply(percent).divide(BigDecimal.valueOf(100));
+                    finalPrice = priceOriginal.subtract(discountAmount);
+                } else if (item.getDiscountType() == DiscountType.AMOUNT) {
+                    finalPrice = priceOriginal.subtract(item.getDiscountedPrice());
+                }
+            }
+
+            dto.setFinalPriceAfterDiscount(finalPrice);
+            return dto;
+        }).collect(Collectors.toList())
+                : null;
+
+        int totalStock = product.getVariants() != null
+                ? product.getVariants().stream()
+                .mapToInt(variant -> variant.getStockQuantity() != null ? variant.getStockQuantity() : 0)
+                .sum()
+                : 0;
 
         return ProductResponseDTO.builder()
                 .id(product.getId())
@@ -71,12 +211,20 @@ public class ProductServiceImpl implements IProductService {
                 .price(product.getPrice())
                 .status(product.getStatus())
                 .brand(product.getBrand())
+                .stockQuantity(totalStock)
+                .variantCount(variantDTOs != null ? variantDTOs.size() : 0)
                 .categoryName(product.getCategory().getName())
+                .imageUrl(product.getImages() != null && !product.getImages().isEmpty()
+                        ? product.getImages().get(0).getImageUrl()
+                        : null)
+                .returnPolicyId(product.getReturnPolicy() != null ? product.getReturnPolicy().getId() : null)
+                .returnPolicyTitle(product.getReturnPolicy() != null ? product.getReturnPolicy().getTitle() : null)
+                .returnPolicyContent(product.getReturnPolicy() != null ? product.getReturnPolicy().getContent() : null)
+                .variants(variantDTOs)
+                .createdAt(product.getCreatedAt())
                 .build();
-
     }
-
-    @Override
+        @Override
     public ProductResponseDTO save(ProductRequestDTO dto) {
         Category category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new HttpNotFound("Category Not Found"));
@@ -104,6 +252,12 @@ public class ProductServiceImpl implements IProductService {
                 .brand(product.getBrand())
                 .status(product.getStatus())
                 .categoryName(product.getCategory().getName())
+                .imageUrl(product.getImages() != null && !product.getImages().isEmpty()
+                        ? product.getImages().get(0).getImageUrl()
+                        : null)
+                .returnPolicyId(product.getReturnPolicy() != null ? product.getReturnPolicy().getId() : null)
+                .returnPolicyTitle(product.getReturnPolicy() != null ? product.getReturnPolicy().getTitle() : null)
+                .returnPolicyContent(product.getReturnPolicy() != null ? product.getReturnPolicy().getContent() : null)
                 .build();
     }
 
@@ -133,6 +287,12 @@ public class ProductServiceImpl implements IProductService {
                 .brand(updated.getBrand())
                 .status(updated.getStatus())
                 .categoryName(updated.getCategory().getName())
+                .imageUrl(product.getImages() != null && !product.getImages().isEmpty()
+                        ? product.getImages().get(0).getImageUrl()
+                        : null)
+                .returnPolicyId(product.getReturnPolicy() != null ? product.getReturnPolicy().getId() : null)
+                .returnPolicyTitle(product.getReturnPolicy() != null ? product.getReturnPolicy().getTitle() : null)
+                .returnPolicyContent(product.getReturnPolicy() != null ? product.getReturnPolicy().getContent() : null)
                 .build();
 
     }
@@ -167,27 +327,78 @@ public class ProductServiceImpl implements IProductService {
                 .brand(updated.getBrand())
                 .status(updated.getStatus())
                 .categoryName(updated.getCategory().getName())
+                .imageUrl(updated.getImages() != null && !updated.getImages().isEmpty()
+                        ? updated.getImages().get(0).getImageUrl()
+                        : null)
+                .returnPolicyId(updated.getReturnPolicy() != null ? updated.getReturnPolicy().getId() : null)
+                .returnPolicyTitle(updated.getReturnPolicy() != null ? updated.getReturnPolicy().getTitle() : null)
+                .returnPolicyContent(updated.getReturnPolicy() != null ? updated.getReturnPolicy().getContent() : null)
                 .build();
     }
 
 
     @Override
-    public Page<ProductResponseDTO> pagination(Pageable pageable) {
-        List<Product> products = productRepository.findAll(pageable).getContent();
-        List<ProductResponseDTO> responseDTOS;
-        responseDTOS = products.stream().map(product ->
-                ProductResponseDTO.builder()
-                        .id(product.getId())
-                        .name(product.getName())
-                        .description(product.getDescription())
-                        .price(product.getPrice())
-                        .brand(product.getBrand())
-                        .status(product.getStatus())
-                        .categoryName(product.getCategory().getName())
-                        .build()
-        ).collect(Collectors.toList());
-        return new PageImpl<>(responseDTOS, pageable, responseDTOS.size());
+    public Page<ProductResponseDTO> pagination(Pageable pageable, String keyword, String status) {
+        Page<Product> productPage;
 
+        // Chuyển đổi status (String) thành Enum
+        ProductStatus productStatus = null;
+        if (status != null && !status.isBlank()) {
+            try {
+                productStatus = ProductStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                try {
+                    throw new BadRequestException("Trạng thái sản phẩm không hợp lệ: " + status);
+                } catch (BadRequestException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        }
+
+        // Nếu có cả keyword và status
+        if (keyword != null && !keyword.isBlank() && productStatus != null) {
+            productPage = productRepository.findByNameContainingIgnoreCaseAndStatus(keyword, productStatus, pageable);
+        }
+        // Chỉ có keyword
+        else if (keyword != null && !keyword.isBlank()) {
+            productPage = productRepository.findByNameContainingIgnoreCase(keyword, pageable);
+        }
+        // Chỉ có status
+        else if (productStatus != null) {
+            productPage = productRepository.findByStatus(productStatus, pageable);
+        }
+        // Không có filter
+        else {
+            productPage = productRepository.findAll(pageable);
+        }
+
+        // Mapping Product -> ProductResponseDTO
+        return productPage.map(product -> {
+            int totalStock = product.getVariants() != null
+                    ? product.getVariants().stream()
+                    .mapToInt(variant -> variant.getStockQuantity() != null ? variant.getStockQuantity() : 0)
+                    .sum()
+                    : 0;
+
+            return ProductResponseDTO.builder()
+                    .id(product.getId())
+                    .name(product.getName())
+                    .description(product.getDescription())
+                    .price(product.getPrice())
+                    .brand(product.getBrand())
+                    .status(product.getStatus())
+                    .stockQuantity(totalStock)
+                    .variantCount(product.getVariants() != null ? product.getVariants().size() : 0)
+                    .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
+                    .categoryName(product.getCategory().getName())
+                    .imageUrl(product.getImages() != null && !product.getImages().isEmpty()
+                            ? product.getImages().get(0).getImageUrl()
+                            : null)
+                    .returnPolicyId(product.getReturnPolicy() != null ? product.getReturnPolicy().getId() : null)
+                    .returnPolicyTitle(product.getReturnPolicy() != null ? product.getReturnPolicy().getTitle() : null)
+                    .returnPolicyContent(product.getReturnPolicy() != null ? product.getReturnPolicy().getContent() : null)
+                    .build();
+        });
     }
 
     @Override
@@ -211,10 +422,10 @@ public class ProductServiceImpl implements IProductService {
 
     @Override
     public void delete(Long id) {
-        if (!productRepository.existsById(id)) {
-            throw new HttpForbiden("This product has variations you need to delete the variations first");
-        }
-        productRepository.deleteById(id);
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new HttpNotFound("Product not found with id: " + id));
+        product.setDeleted(true); // đánh dấu xóa mềm
+        productRepository.save(product);
     }
 
     @Override
@@ -266,4 +477,29 @@ public class ProductServiceImpl implements IProductService {
                     .build();
         }).toList();
     }
+
+    @Override
+    public ProductResponseDTO findByName(String productName) {
+        // Tìm kiếm sản phẩm theo tên, không phân biệt hoa thường
+        Optional<Product> productOptional = productRepository.findByNameIgnoreCase(productName);
+
+        // Nếu không tìm thấy thì trả về null (hoặc có thể ném exception nếu muốn)
+        if (productOptional.isEmpty()) {
+            return null;
+        }
+
+        Product product = productOptional.get();
+
+        // Convert Entity => DTO
+        return ProductResponseDTO.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .description(product.getDescription())
+                .price(product.getPrice())
+                .brand(product.getBrand())
+                .status(product.getStatus())
+                .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
+                .build();
+    }
+
 }

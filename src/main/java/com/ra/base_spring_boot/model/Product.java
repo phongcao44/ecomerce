@@ -5,7 +5,10 @@ import com.ra.base_spring_boot.model.constants.ProductStatus;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Where;
+
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -15,6 +18,7 @@ import java.util.List;
 @Setter
 @Builder
 @Table(name = "products")
+@Where(clause = "deleted = false") // ẩn bảng ghi đã xóa
 public class Product {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -30,6 +34,9 @@ public class Product {
 
     @Column(name = "brand")
     private String brand;
+    
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
@@ -49,5 +56,7 @@ public class Product {
     @JoinColumn(name = "return_policy_id")
     private ReturnPolicy returnPolicy;
 
+    @Column(name = "deleted")
+    private Boolean deleted = false;
 }
 

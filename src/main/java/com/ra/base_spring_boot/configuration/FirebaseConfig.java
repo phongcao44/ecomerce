@@ -23,11 +23,11 @@ public class FirebaseConfig {
 
             if (FirebaseApp.getApps().isEmpty()) {
                 FirebaseApp.initializeApp(options);
-                System.out.println("✅ FirebaseApp đã được khởi tạo");
+                System.out.println(" FirebaseApp đã được khởi tạo");
             }
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("❌ Không thể khởi tạo FirebaseApp: " + e.getMessage());
+            System.err.println("Không thể khởi tạo FirebaseApp: " + e.getMessage());
         }
     }
 }

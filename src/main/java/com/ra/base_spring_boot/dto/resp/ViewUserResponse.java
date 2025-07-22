@@ -24,4 +24,5 @@ public class ViewUserResponse {
     private Set<String> roles;
     private UserRank userRank;
     private UserStatus userStatus;
+
 }
