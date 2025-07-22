@@ -21,7 +21,7 @@ public class CartReminderScheduler {
     private final NotificationService notificationService;
 
     // Chạy mỗi 10s để test (sản phẩm nên là mỗi ngày)
-    @Scheduled(fixedRate = 100000000)
+    @Scheduled(fixedRate = 10000)
     public void remindUsersAboutCart() {
         log.info("⏰ Đang chạy nhắc nhở giỏ hàng...");
 
