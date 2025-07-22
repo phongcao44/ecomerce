@@ -287,4 +287,59 @@ public class ProductVariantServiceImpl implements IProductVariantService {
                 .sizeDescription(size !=null ? size.getDescription() : null)
                 .build();
     }
+
+    @Override
+    public List<ProductVariantDetailDTO> findAllVariantDetails() {
+        return productVariantRepository.findAll().stream().map(variant -> {
+            Product product = variant.getProduct();
+            Color color = variant.getColor();
+            Size size = variant.getSize();
+
+            return ProductVariantDetailDTO.builder()
+                    .variantId(variant.getId())
+                    .productName(product.getName())
+                    .productDescription(product.getDescription())
+                    .brand(product.getBrand())
+                    .price(product.getPrice())
+                    .priceOverride(variant.getPriceOverride())
+                    .stockQuantity(variant.getStockQuantity())
+                    .colorName(color != null ? color.getName() : null)
+                    .colorHex(color != null ? color.getHexCode() : null)
+                    .sizeName(size != null ? size.getSizeName() : null)
+                    .sizeDescription(size != null ? size.getDescription() : null)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ProductVariantDetailDTO> findAllVariantsByProductName(String productName) {
+        List<ProductVariant> variants = productVariantRepository.findByProduct_NameIgnoreCase(productName);
+
+        // Chuyển đổi danh sách ProductVariant Entity sang danh sách ProductVariantDetailDTO
+        return variants.stream()
+                .map(this::mapVariantToDetailDTO)
+                .collect(Collectors.toList());
+    }
+
+    private ProductVariantDetailDTO mapVariantToDetailDTO(ProductVariant variant) {
+        Product product = variant.getProduct();
+        Color color = variant.getColor();
+        Size size = variant.getSize();
+
+        return ProductVariantDetailDTO.builder()
+                .variantId(variant.getId())
+                .productName(product.getName())
+                .productDescription(product.getDescription())
+                .brand(product.getBrand())
+                .price(product.getPrice())
+                .priceOverride(variant.getPriceOverride())
+                .stockQuantity(variant.getStockQuantity())
+                .colorName(color != null ? color.getName() : null)
+                .colorHex(color != null ? color.getHexCode() : null)
+                .sizeName(size != null ? size.getSizeName() : null)
+                .sizeDescription(size != null ? size.getDescription() : null)
+                .build();
+    }
+
 }
+

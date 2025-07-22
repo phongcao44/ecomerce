@@ -19,4 +19,6 @@ public class CategoryFlatResponse {
     private Long parentId;
 
     private String parentName;
+
+    private String image;
 }

@@ -1,5 +1,7 @@
 package com.ra.base_spring_boot.controller;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.ra.base_spring_boot.dto.DataError;
 import com.ra.base_spring_boot.dto.req.AddParentCategoryRequest;
 import com.ra.base_spring_boot.dto.req.CategoryRequest;
@@ -14,10 +16,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -28,6 +34,9 @@ public class CategoryController {
     public ICategoryService categoryService;
     @Autowired
     public ICategoryRepository categoryRepository;
+    @Autowired
+    public Cloudinary cloudinary;
+
     // list danh mục cha
     @GetMapping("/categories/list/parent")
         public ResponseEntity<Page<CategoryResponse>> getCategories(@RequestParam(name = "page",defaultValue = "0") int page,
@@ -77,12 +86,25 @@ public class CategoryController {
         return new ResponseEntity<>(category,HttpStatus.OK);
     }
 
+    private Map uploadImageToCloudinary(MultipartFile file) {
+        try {
+            return cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+                    "folder", "category"
+            ));
+        } catch (IOException e) {
+            throw new RuntimeException("Upload ảnh thất bại", e);
+        }
+    }
     //add danh mục dùng chung
-    @PostMapping("/add")
-    public ResponseEntity<?> addCategory(@RequestBody CategoryRequest categoryRequest) {
+    @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> addCategory(@ModelAttribute CategoryRequest categoryRequest) {
         Category category = new Category();
+
+        // Upload ảnh từ categoryRequest.getImage()
+        Map uploadResult = uploadImageToCloudinary(categoryRequest.getImage());
         category.setName(categoryRequest.getName());
         category.setDescription(categoryRequest.getDescription());
+        category.setIcon(uploadResult.get("secure_url").toString());
 
         if (categoryRequest.getParentId() != null) {
             Optional<Category> parentCategory = categoryRepository.findById(categoryRequest.getParentId());
@@ -91,12 +113,14 @@ public class CategoryController {
             } else {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Danh mục cha không tồn tại");
             }
-        }else {
+        } else {
             category.setParent(null);
         }
+
         categoryRepository.save(category);
-        return ResponseEntity.ok("them thanh cong goy");
+        return ResponseEntity.ok("Thêm thành công rồi");
     }
+
 
 
     //add danh mục dùng rieeng cho con
@@ -135,34 +159,51 @@ public class CategoryController {
     }
 
     //sửa danh mục cha
-    @PutMapping("/admin/categories/edit/parent/{id}")
-    public ResponseEntity<?> updateParentCategory(@PathVariable Long id, @RequestBody AddParentCategoryRequest categoryRequest) {
+    @PutMapping(value = "/admin/categories/edit/parent/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateParentCategory(
+            @PathVariable Long id,
+            @ModelAttribute AddParentCategoryRequest categoryRequest) {
+
         Optional<Category> categoryOptional = categoryRepository.findById(id);
-        if (categoryRepository.existsByName(categoryRequest.getName())) {
-            throw new IllegalArgumentException("Tên danh mục đã tồn tại");
-        }
+
         if (categoryOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new DataError("Không tìm thấy danh mục cha", 404));
         }
 
         Category category = categoryOptional.get();
 
-        // Kiểm tra có phaỉ llà cha khong
+        // Kiểm tra không phải là danh mục cha
         if (category.getParent() != null) {
             return ResponseEntity.badRequest().body("Danh mục này không phải là danh mục cha");
         }
 
+        // Kiểm tra tên mới có bị trùng (nếu tên thay đổi)
+        if (!category.getName().equals(categoryRequest.getName())
+                && categoryRepository.existsByName(categoryRequest.getName())) {
+            return ResponseEntity.badRequest().body("Tên danh mục đã tồn tại");
+        }
+
         category.setName(categoryRequest.getName());
         category.setDescription(categoryRequest.getDescription());
+
+        // Nếu có ảnh mới thì upload và cập nhật icon
+        if (categoryRequest.getImage() != null && !categoryRequest.getImage().isEmpty()) {
+            Map uploadResult = uploadImageToCloudinary(categoryRequest.getImage());
+            category.setIcon(uploadResult.get("secure_url").toString());
+        }
 
         categoryRepository.save(category);
 
         return ResponseEntity.ok("Cập nhật danh mục cha thành công");
     }
 
+
     // sửa con
-    @PutMapping("/admin/categories/edit/son/{id}")
-    public ResponseEntity<?> updateSubCategory(@PathVariable Long id, @RequestBody CategoryRequest categoryRequest) {
+    @PutMapping(value = "/admin/categories/edit/son/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateSubCategory(
+            @PathVariable Long id,
+            @ModelAttribute CategoryRequest categoryRequest) {
+
         Optional<Category> categoryOptional = categoryRepository.findById(id);
 
         if (categoryOptional.isEmpty()) {
@@ -172,27 +213,40 @@ public class CategoryController {
 
         Category category = categoryOptional.get();
 
-        // Kiểm tra nếu không có parent, tức là nó không phải danh mục con
+        // Kiểm tra nếu không có parent, tức là không phải danh mục con
         if (category.getParent() == null) {
             return ResponseEntity.badRequest().body("Danh mục này không phải danh mục con");
         }
 
-        // Kiểm tra danh mục cha mới có tồn tại không
+        // Kiểm tra danh mục cha mới (nếu có)
         if (categoryRequest.getParentId() != null) {
             Optional<Category> parentOptional = categoryRepository.findById(categoryRequest.getParentId());
             if (parentOptional.isEmpty()) {
                 return ResponseEntity.badRequest().body("Danh mục cha không tồn tại");
             }
+
+            // Không được gán chính nó làm cha
+            if (categoryRequest.getParentId().equals(id)) {
+                return ResponseEntity.badRequest().body("Không thể gán chính nó làm danh mục cha");
+            }
+
             category.setParent(parentOptional.get());
         }
 
         category.setName(categoryRequest.getName().trim());
         category.setDescription(categoryRequest.getDescription().trim());
 
+        // Nếu có ảnh mới thì upload
+        if (categoryRequest.getImage() != null && !categoryRequest.getImage().isEmpty()) {
+            Map uploadResult = uploadImageToCloudinary(categoryRequest.getImage());
+            category.setIcon(uploadResult.get("secure_url").toString());
+        }
+
         categoryRepository.save(category);
 
         return ResponseEntity.ok("Cập nhật danh mục con thành công");
     }
+
 
 
     //dele cha

@@ -17,4 +17,5 @@ public class CategoryDetailResponse {
     private String description;
     private Long parentId;
     private List<CategoryDetailResponse> children;
+    private String image;
 }

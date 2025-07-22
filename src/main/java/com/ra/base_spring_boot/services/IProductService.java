@@ -48,5 +48,7 @@ public interface IProductService {
             String sortBy,
             String orderBy
     );
+
+    ProductResponseDTO findByName(String productName);
 }
 

@@ -1,6 +1,7 @@
 package com.ra.base_spring_boot.dto.resp;
 
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,5 +18,7 @@ public class CategoryResponse {
     private String description;
 
     private Long parentId;
+
+    private String image;
 
 }
