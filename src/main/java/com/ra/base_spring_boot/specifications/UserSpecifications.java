@@ -9,8 +9,14 @@ public class UserSpecifications {
     }
 
     public static Specification<User> hasRank(String rank) {
-        return (root, query, cb) -> cb.equal(root.get("userRank"), rank);
+        return (root, query, cb) -> {
+            if (rank == null || rank.trim().isEmpty()) {
+                return cb.conjunction();
+            }
+            return cb.equal(root.get("userPoint").get("userRank"), rank);
+        };
     }
+
 
     public static Specification<User> hasKeyword(String keyword) {
         return (root, query, cb) -> cb.or(

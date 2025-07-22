@@ -7,7 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 
-
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface IProductService {
@@ -34,6 +34,20 @@ public interface IProductService {
     List<Top5Product> getTop5BestSellingProducts();
 
     List<Top5Product> getTop5LestSellingProducts();
+
+    Page<ProductResponseDTO> getProductsPaginate(
+            String keyword,
+            Long categoryId,
+            String status,
+            String brandName,
+            BigDecimal priceMin,
+            BigDecimal priceMax,
+            Integer minRating,
+            int page,
+            int limit,
+            String sortBy,
+            String orderBy
+    );
 
     ProductResponseDTO findByName(String productName);
 }

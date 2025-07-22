@@ -23,7 +23,7 @@ public class AbandonedCartService {
     @Autowired
     private EmailService emailService;
 
-//    @Scheduled(cron = "0 0 9 * * *") // Mỗi ngày lúc 9h sáng
+   @Scheduled(cron = "0 0 9 * * *") // Mỗi ngày lúc 9h sáng
     //@Scheduled(fixedRate = 30000L)
     public void notifyAbandonedCarts() {
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);

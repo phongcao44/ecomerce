@@ -49,10 +49,12 @@ public class VoucherController {
     public List<VoucherResponse> getVouchers(@AuthenticationPrincipal MyUserDetails userDetails) {
         return voucherService.findVoucherByUserId(userDetails.getUser().getId());
     }
-    @PutMapping("admin/voucher/update")
+    @PutMapping("admin/voucher/update/{voucherId}")
     public ResponseEntity<VoucherResponse> update(
-            @RequestBody VoucherRequest request) {
-        return ResponseEntity.ok(voucherService.update(request));
+            @RequestBody VoucherRequest request,
+            @PathVariable Long voucherId
+    ) {
+        return ResponseEntity.ok(voucherService.update(request,voucherId));
     }
     @DeleteMapping("admin/voucher/delete")
     public ResponseEntity<?> delete(@RequestBody VoucherRequest request) {

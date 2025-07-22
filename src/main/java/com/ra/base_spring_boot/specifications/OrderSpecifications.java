@@ -16,4 +16,8 @@ public class OrderSpecifications {
                         criteriaBuilder.like(root.get("user").get("username"), "%" + keyword + "%")
                 );
     }
+
+    public static Specification<Order> hasUserId(Long userId) {
+        return (root, query, cb) -> cb.equal(root.get("user").get("id"), userId);
+    }
 }
