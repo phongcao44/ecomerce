@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface IProductRepository extends JpaRepository<Product, Long> {
     @Query("""
@@ -28,6 +29,8 @@ public interface IProductRepository extends JpaRepository<Product, Long> {
     List<Product> findProductByNameContainsIgnoreCase(String name);
 
     List<Product> findByCategoryIdIn(List<Long> categoryIds);
+
+    Optional<Product> findByNameIgnoreCase(String name);
 
     @Query("""
     SELECT p, 

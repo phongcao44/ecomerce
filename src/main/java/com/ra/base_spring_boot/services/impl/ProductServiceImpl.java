@@ -28,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -476,4 +477,29 @@ public class ProductServiceImpl implements IProductService {
                     .build();
         }).toList();
     }
+
+    @Override
+    public ProductResponseDTO findByName(String productName) {
+        // Tìm kiếm sản phẩm theo tên, không phân biệt hoa thường
+        Optional<Product> productOptional = productRepository.findByNameIgnoreCase(productName);
+
+        // Nếu không tìm thấy thì trả về null (hoặc có thể ném exception nếu muốn)
+        if (productOptional.isEmpty()) {
+            return null;
+        }
+
+        Product product = productOptional.get();
+
+        // Convert Entity => DTO
+        return ProductResponseDTO.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .description(product.getDescription())
+                .price(product.getPrice())
+                .brand(product.getBrand())
+                .status(product.getStatus())
+                .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
+                .build();
+    }
+
 }

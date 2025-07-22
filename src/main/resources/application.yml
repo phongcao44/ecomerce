@@ -88,6 +88,9 @@ ghn:
 textbee:
   apiKey: a91dbad8-8208-4661-aebc-70afa9ecf388
   deviceId: 68747523c430dcc62c1ef2fa
+gemini:
+  api:
+    key: AIzaSyDsGYGJMq-ixrIm541EKShclOW1s8HSDSc
 
 
 

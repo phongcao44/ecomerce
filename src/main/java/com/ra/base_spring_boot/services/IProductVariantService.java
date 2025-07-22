@@ -17,6 +17,9 @@ public interface IProductVariantService {
 
     ProductVariantDetailDTO getVariantDetail(Long variantId);
 
+    List<ProductVariantDetailDTO> findAllVariantDetails();
+
+    List<ProductVariantDetailDTO> findAllVariantsByProductName(String productName);
 
     void delete(Long id);
 }
