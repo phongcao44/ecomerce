@@ -114,6 +114,7 @@ public class BannerServiceImpl implements IBannerService {
 
     @Override
     public List<Banner> getAll() {
+
         return bannerRepository.findAll();
     }
 

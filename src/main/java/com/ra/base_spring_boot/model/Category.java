@@ -25,6 +25,9 @@ public class Category {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "icon")
+    private String icon;
+
     @ManyToOne
     @JoinColumn(name = "parent_id")
     private Category parent;
