@@ -19,6 +19,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+
+
 import java.net.URI;
 import java.util.List;
 import java.util.Set;
@@ -49,6 +55,30 @@ public class UserController {
         );
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
+
+    @GetMapping("/paginate")
+    public ResponseEntity<?> handleGetAllUsersPaginateAndFilter(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String orderBy,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status
+    ) {
+        Sort.Direction direction = orderBy.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+        Page<ViewUserResponse> users = userService.getAllUsersPaginateAndFilter(keyword, status, pageable);
+
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data(users)
+                        .build()
+        );
+    }
+
 
     @PatchMapping("/{userId}/changeRole/{roleId}")
     public ResponseEntity<?> handleChangeRole(@PathVariable long userId, @PathVariable long roleId) {

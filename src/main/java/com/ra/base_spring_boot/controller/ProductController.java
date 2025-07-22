@@ -79,12 +79,16 @@ public class ProductController {
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "limit", defaultValue = "3") int limit,
             @RequestParam(name = "sortBy", defaultValue = "price") String sortBy,
-            @RequestParam(name = "orderBy", defaultValue = "asc") String orderBy) {
+            @RequestParam(name = "orderBy", defaultValue = "asc") String orderBy,
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @RequestParam(name = "status", required = false) String status
+    ) {
         Sort sort = orderBy.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, limit, sort);
-        Page<ProductResponseDTO> products = productService.pagination(pageable);
+        Page<ProductResponseDTO> products = productService.pagination(pageable, keyword, status);
         return new ResponseEntity<>(products, HttpStatus.OK);
     }
+
 
     // Thêm mới Product
     @PostMapping("/admin/product/add")
@@ -101,7 +105,7 @@ public class ProductController {
 
 
     // Cập nhật Product
-    @PutMapping("admin/product/update/{id}")
+    @PutMapping("/admin/product/update/{id}")
     public ResponseEntity<?> update(@PathVariable int id, @RequestBody ProductRequestDTO dto) {
         ProductResponseDTO response = productService.update(id, dto);
         if (response != null) {
@@ -128,7 +132,7 @@ public class ProductController {
     }
 
     // xóa sản phẩm theo id
-    @DeleteMapping("admin/product/delete/{id}")
+    @DeleteMapping("/admin/product/delete/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         try {
             productService.delete(id);

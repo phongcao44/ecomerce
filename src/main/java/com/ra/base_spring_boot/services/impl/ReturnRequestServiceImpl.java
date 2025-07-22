@@ -124,6 +124,12 @@
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm trong đơn hàng"));
             String mediaUrl = uploadMedia(dto.getMedia());
 
+            boolean isDuplicate = returnRequestRepository.existsByOrderItem(orderItem);
+            if (isDuplicate) {
+                throw new HttpBadRequest("Sản phẩm này đã gửi yêu cầu trả hàng rồi");
+            }
+
+
             ReturnRequest request = ReturnRequest.builder()
                     .user(user)
                     .order(order)
