@@ -6,4 +6,5 @@ import lombok.Data;
 public class FcmTokenRequest {
     private String token;
     private String deviceInfo;
+    private String userId;
 }

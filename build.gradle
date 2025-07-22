@@ -22,9 +22,9 @@ configurations {
 
 repositories {
     mavenCentral()
+    google()
     maven {
-        url "https://maven.google.com"
-        name "Google"
+        url "https://maven.pkg.dev/ai-generativelanguage/java"
     }
 }
 
@@ -79,6 +79,8 @@ dependencies {
     implementation 'com.google.http-client:google-http-client-jackson2:1.43.3'
 
     implementation 'com.google.firebase:firebase-admin:9.2.0'
+
+    implementation 'com.google.genai:google-genai:1.0.0'
 
 }
 
