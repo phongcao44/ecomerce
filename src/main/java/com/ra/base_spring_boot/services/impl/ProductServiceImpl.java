@@ -58,6 +58,8 @@ public class ProductServiceImpl implements IProductService {
     private IFlashSaleItemRepository  flashSaleItemRepository;
     @Autowired
     private IFlashSaleRepository flashSaleRepository;
+    @Autowired
+    private IReviewRepository  reviewRepository;
 
 
     @Override
@@ -120,6 +122,10 @@ public class ProductServiceImpl implements IProductService {
                             .mapToInt(dto -> dto.getStockQuantity() != null ? dto.getStockQuantity() : 0)
                             .sum();
 
+                    List<Review> reviews = reviewRepository.findAllByProduct(product);
+                    long totalReviews = reviews.size();
+                    double averageRating = reviews.stream().mapToDouble(Review::getRating).average().orElse(0.0);
+
                     return ProductResponseDTO.builder()
                             .id(product.getId())
                             .name(product.getName())
@@ -139,6 +145,8 @@ public class ProductServiceImpl implements IProductService {
                             .returnPolicyTitle(product.getReturnPolicy() != null ? product.getReturnPolicy().getTitle() : null)
                             .returnPolicyContent(product.getReturnPolicy() != null ? product.getReturnPolicy().getContent() : null)
                             .createdAt(product.getCreatedAt())
+                            .averageRating(averageRating)
+                            .totalReviews(totalReviews) // dùng lại field này cho view nếu không tách riêng
                             .build();
                 }).collect(Collectors.toList());
     }
@@ -557,10 +565,10 @@ public class ProductServiceImpl implements IProductService {
 
     @Override
     public void delete(Long id) {
-        if (!productRepository.existsById(id)) {
-            throw new HttpForbiden("This product has variations you need to delete the variations first");
-        }
-        productRepository.deleteById(id);
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new HttpNotFound("Product not found with id: " + id));
+        product.setDeleted(true); // đánh dấu xóa mềm
+        productRepository.save(product);
     }
 
     @Override
