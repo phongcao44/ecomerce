@@ -161,6 +161,7 @@ public class UserServiceImpl implements IUserService {
     @Override
     public User findUser(long userId) {
         return userRepository.findById(userId).orElse(null);
+
     }
     public void processOAuthPostLogin(String email, String name) {
         Optional<User> optionalUser = userRepository.findByEmail(email);
