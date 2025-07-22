@@ -241,7 +241,8 @@ public class OrderServiceImpl implements IOrderService {
                                    ? product.getImages().get(0).getImageUrl()
                                    : null;
                            Integer quantity = item.getQuantity();
-                           BigDecimal price = product.getPrice().multiply(BigDecimal.valueOf(quantity));
+                           BigDecimal price = item.getVariant().getPriceOverride()
+                                   .multiply(BigDecimal.valueOf(quantity));
                            return new DeliveredItemResponse(
                                    item.getId(),
                                    order.getId(),

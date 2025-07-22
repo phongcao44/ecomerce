@@ -7,15 +7,13 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+@NoArgsConstructor
+@AllArgsConstructor
 @Data
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class ReviewResponse {
-    private Long id;
+public class ListProductReviewResponse {
+    private Long productId;
     private String productName;
-    private int rating;
-    private String comment;
-    private String userName;
-    private LocalDateTime createdAt;
+    private double rating;
+    private long totalReviews;
 }

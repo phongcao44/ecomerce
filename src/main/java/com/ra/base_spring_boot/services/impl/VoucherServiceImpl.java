@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.req.VoucherRequest;
 import com.ra.base_spring_boot.dto.resp.VoucherResponse;
+import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.model.UserVoucher;
 import com.ra.base_spring_boot.model.Voucher;
@@ -82,7 +83,7 @@ public class VoucherServiceImpl implements IVoucherService {
 
         BigDecimal orderAmount = cartService.getCartTotal(userID);
 
-        LocalDate now = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
         if (!voucher.isActive() || voucher.getQuantity() <= 0
                 || now.isBefore(voucher.getStartDate()) || now.isAfter(voucher.getEndDate())) {
             throw new RuntimeException("Voucher expired");
@@ -109,11 +110,14 @@ public class VoucherServiceImpl implements IVoucherService {
         Voucher voucher = Voucher.builder()
                 .code(request.getCode())
                 .discountPercent(request.getDiscountPercent())
+                .discountAmount(request.getDiscountAmount())
                 .maxDiscount(request.getMaxDiscount())
                 .minOrderAmount(request.getMinOrderAmount())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .quantity(request.getQuantity())
+                .active(request.isActive())
+                .collectible(request.isCollectible())
                 .build();
         iVoucherRepository.save(voucher);
         VoucherResponse response = mapToResponse(voucher);
@@ -128,25 +132,40 @@ public class VoucherServiceImpl implements IVoucherService {
     }
 
     @Override
-    public VoucherResponse update(VoucherRequest voucherRequest) {
-        Voucher voucher = iVoucherRepository.findById(voucherRequest.getVoucherId())
+    public VoucherResponse update(VoucherRequest voucherRequest, Long voucherId) {
+        System.out.println(voucherRequest.getVoucherId() + "day chinh la voucher ID");
+        Voucher voucher = iVoucherRepository.findById(voucherId)
                 .orElseThrow(() -> new RuntimeException("Voucher not exist!"));
-
         voucher.setCode(voucherRequest.getCode());
         voucher.setDiscountPercent(voucherRequest.getDiscountPercent());
+        voucher.setMaxDiscount(voucherRequest.getMaxDiscount());
+        voucher.setDiscountAmount(voucherRequest.getDiscountAmount());
         voucher.setMinOrderAmount(voucherRequest.getMinOrderAmount());
         voucher.setStartDate(voucherRequest.getStartDate());
         voucher.setEndDate(voucherRequest.getEndDate());
         voucher.setQuantity(voucherRequest.getQuantity());
+        voucher.setCollectible(voucherRequest.isCollectible());
+        voucher.setActive(voucherRequest.isActive());
         iVoucherRepository.save(voucher);
 
-                VoucherResponse response = mapToResponse(voucher);
-                return response;
+        return VoucherResponse.builder()
+                .id(voucherId)
+                .code(voucherRequest.getCode())
+                .discountPercent(voucherRequest.getDiscountPercent())
+                .maxDiscount(voucherRequest.getMaxDiscount())
+                .discountAmount(voucherRequest.getDiscountAmount())
+                .minOrderAmount(voucherRequest.getMinOrderAmount())
+                .startDate(voucherRequest.getStartDate())
+                .endDate(voucherRequest.getEndDate())
+                .quantity(voucherRequest.getQuantity())
+                .collectible(voucherRequest.isCollectible())
+                .active(voucherRequest.isActive())
+                .build();
     }
 
     private VoucherResponse mapToResponse(Voucher v) {
         return new VoucherResponse(
-                v.getId(), v.getCode(), v.getDiscountPercent(),
+                v.getId(), v.getCode(), v.getDiscountPercent(), v.getDiscountAmount(),
                 v.getMaxDiscount(), v.getStartDate(), v.getEndDate(),
                 v.getQuantity(), v.getMinOrderAmount(),v.isCollectible(), v.isActive()
         );
@@ -155,7 +174,7 @@ public class VoucherServiceImpl implements IVoucherService {
     @Override
     public void assignWelcomeVoucher(User user) {
         Voucher voucher = iVoucherRepository.findByCode("WELCOME")
-                .orElseThrow(() -> new RuntimeException("Voucher not exist!"));
+                .orElseThrow(() -> new HttpBadRequest("Voucher not exist!"));
         UserVoucher userVoucher = new UserVoucher();
         userVoucher.setUser(user);
         userVoucher.setVoucher(voucher);
@@ -165,24 +184,24 @@ public class VoucherServiceImpl implements IVoucherService {
     @Override
     public void collectVoucher(Long userId, String code) {
         User user = iUserRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Voucher not exist!"));
+                .orElseThrow(() -> new HttpBadRequest("Voucher not exist!"));
         Voucher voucher = iVoucherRepository.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Voucher not exist!"));
+                .orElseThrow(() -> new HttpBadRequest("Voucher not exist!"));
         if(!voucher.isCollectible()) {
-            throw new RuntimeException("This voucher cannot be collected");
+            throw new HttpBadRequest("This voucher cannot be collected");
         }
         if(iUserVoucherRepository.existsByUserAndVoucher(user,voucher)) {
-            throw new RuntimeException("This voucher have been collected");
+            throw new HttpBadRequest("This voucher have been collected");
         }
         if(voucher.getCollected()>= voucher.getQuantity()){
-            throw new RuntimeException("This voucher have been out of stock");
+            throw new HttpBadRequest("This voucher have been out of stock");
         }
         UserVoucher userVoucher = iUserVoucherRepository
                 .findByUserAndVoucher(user, voucher)
                 .orElse(null);
 
         if(iUserVoucherRepository.existsByUserAndVoucher(user,voucher)) {
-            throw new RuntimeException("You have already collected this voucher");
+            throw new HttpBadRequest("You have already collected this voucher");
         }else{
             userVoucher = new UserVoucher();
             userVoucher.setUser(user);
@@ -218,9 +237,20 @@ public class VoucherServiceImpl implements IVoucherService {
     @Override
     public List<VoucherResponse> getAllVouchers(){
         List<Voucher> vouchers = iVoucherRepository.findAll();
-        return  vouchers.stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
-    }
+        return  vouchers.stream().map(
+                voucher -> VoucherResponse.builder()
+                        .id(voucher.getId())
+                        .code(voucher.getCode())
+                        .discountPercent(voucher.getDiscountPercent())
+                        .discountAmount(voucher.getDiscountAmount())
+                        .maxDiscount(voucher.getMaxDiscount())
+                        .startDate(voucher.getStartDate())
+                        .endDate(voucher.getEndDate())
+                        .quantity(voucher.getQuantity())
+                        .minOrderAmount(voucher.getMinOrderAmount())
+                        .collectible(voucher.isCollectible())
+                        .active(voucher.isActive())
+                        .build()
+        ).collect(Collectors.toList());
 
-}
+}}

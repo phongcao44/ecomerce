@@ -3,6 +3,8 @@ package com.ra.base_spring_boot.dto.resp;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -13,8 +15,9 @@ public class VoucherResponse {
     private String code;
     private double discountPercent;
     private double maxDiscount;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private Double discountAmount;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
     private long quantity;
     private double minOrderAmount;
     private boolean collectible;

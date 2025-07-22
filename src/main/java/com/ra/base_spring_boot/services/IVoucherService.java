@@ -12,7 +12,7 @@ public interface IVoucherService {
     VoucherResponse applyVoucher(Long userId,String code);
     VoucherResponse create(VoucherRequest request);
     void delete(Long id);
-    VoucherResponse update(VoucherRequest request);
+    VoucherResponse update(VoucherRequest request, Long voucherId);
     void assignWelcomeVoucher(User user);
     void collectVoucher(Long userId, String code);
     List<VoucherResponse> getCollectibleVouchers(Long userId);

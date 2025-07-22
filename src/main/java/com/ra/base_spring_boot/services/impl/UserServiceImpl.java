@@ -27,6 +27,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +48,41 @@ public class UserServiceImpl implements IUserService {
         return list.stream().map(
          this::convertToResponse).collect(Collectors.toList());
     }
+
+    @Override
+    public Page<ViewUserResponse> getAllUsersPaginateAndFilter(String keyword, String status, Pageable pageable) {
+        Specification<User> spec = Specification.where(null);
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.or(
+                            cb.like(cb.lower(root.get("username")), "%" + keyword.toLowerCase() + "%"),
+                            cb.like(cb.lower(root.get("email")), "%" + keyword.toLowerCase() + "%")
+                    )
+            );
+        }
+
+        if (status != null && !status.trim().isEmpty()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("status"), status)
+            );
+        }
+
+        return userRepository.findAll(spec, pageable)
+                .map(user -> new ViewUserResponse(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getEmail(),
+                        user.getCreatedAt(),
+                        user.getUpdatedAt(),
+                        user.getRoles().stream()
+                                .map(role -> String.valueOf(role.getName()))
+                                .collect(Collectors.toSet()),
+                        user.getUserPoint().getUserRank(),
+                        user.getStatus()
+                ));
+    }
+
 
     private ViewUserResponse convertToResponse(User user) {
         Set<String> roleNames = user.getRoles().stream()
@@ -161,6 +199,7 @@ public class UserServiceImpl implements IUserService {
     @Override
     public User findUser(long userId) {
         return userRepository.findById(userId).orElse(null);
+
     }
     public void processOAuthPostLogin(String email, String name) {
         Optional<User> optionalUser = userRepository.findByEmail(email);
