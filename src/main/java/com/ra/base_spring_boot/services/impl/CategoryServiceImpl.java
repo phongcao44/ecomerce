@@ -1,5 +1,7 @@
 package com.ra.base_spring_boot.services.impl;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.ra.base_spring_boot.dto.resp.CategoryDetailResponse;
 import com.ra.base_spring_boot.dto.resp.CategoryFlatResponse;
 import com.ra.base_spring_boot.dto.resp.CategoryResponse;
@@ -12,7 +14,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -21,10 +25,16 @@ public class CategoryServiceImpl implements ICategoryService {
     @Autowired
     public ICategoryRepository categoryRepository;
 
+    @Autowired
+    public Cloudinary cloudinary;
+
+
     @Override
     public List<Category> findAll() {
         return categoryRepository.findAll();
     }
+
+
 
     @Override
     public Page<CategoryResponse> pageable(Pageable pageable) {
@@ -38,6 +48,7 @@ public class CategoryServiceImpl implements ICategoryService {
                                 .name(category.getName())
                                 .description(category.getDescription())
                                 .parentId(null)// chỉ lấy cha
+                                .image(category.getIcon())
                                 .build()
                 ).collect(Collectors.toList());
         return new PageImpl<>(responesedto, pageable, responesedto.size());
@@ -45,18 +56,21 @@ public class CategoryServiceImpl implements ICategoryService {
 
     @Override
     public Category save(Category category) {
+
         return categoryRepository.save(category);
     }
 
     @Override
     public List<CategoryResponse> pageablesub(Long parentId) {
         List<Category> subcategory = categoryRepository.findAllByParentId(parentId);
+        System.out.println(subcategory.get(0).getIcon() +"==================");
         return subcategory.stream().map(category ->
                 CategoryResponse.builder()
                         .id(category.getId())
                         .name(category.getName())
                         .description(category.getDescription())
-                        .parentId(category.getParent().getId())
+                        .parentId(category.getParent() != null ? category.getParent().getId() : null)
+                        .image(category.getIcon())
                         .build()
         ).collect(Collectors.toList());
     }
@@ -88,6 +102,7 @@ public class CategoryServiceImpl implements ICategoryService {
                     .id(cat.getId())
                     .name(cat.getName())
                     .description(cat.getDescription())
+                    .image(cat.getIcon())
                     .parentId(cat.getParent() != null ? cat.getParent().getId() : null)
                     .children(new ArrayList<>())
                     .build());
@@ -148,6 +163,7 @@ public class CategoryServiceImpl implements ICategoryService {
                     .level(level)
                     .parentId(category.getParent() != null ? category.getParent().getId() : null)
                     .parentName(category.getParent() != null ? category.getParent().getName() : null)
+                            .image(category.getIcon())
                     .build());
         }
 
