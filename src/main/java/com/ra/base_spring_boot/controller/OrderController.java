@@ -99,7 +99,8 @@ public class OrderController {
             @RequestParam(name = "sortBy", defaultValue = "createdAt") String sortBy,
             @RequestParam(name = "orderBy", defaultValue = "desc") String orderBy,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) String keyword
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long userId
     ) {
         Sort sort = orderBy.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, limit, sort);
@@ -112,6 +113,11 @@ public class OrderController {
         if (keyword != null && !keyword.isEmpty()) {
             spec = spec.and(OrderSpecifications.hasKeyword(keyword));
         }
+
+        if (userId != null) {
+            spec = spec.and(OrderSpecifications.hasUserId(userId));
+        }
+
 
         Page<Order> orderPage = iOrderRepository.findAll(spec, pageable);
 

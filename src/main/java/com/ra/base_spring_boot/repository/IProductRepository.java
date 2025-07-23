@@ -55,12 +55,4 @@ public interface IProductRepository extends JpaRepository<Product, Long>, JpaSpe
 
     Page<Product> findByNameContainingIgnoreCaseAndStatus(String keyword, ProductStatus status, Pageable pageable);
 
-    @Query("""
-               SELECT p
-               FROM Product p
-               JOIN Review r
-               GROUP BY p.id
-               HAVING AVG(r.rating) >= :minRating
-            """)
-    List<Product> findByMinRating(@Param("minRating") Integer minRating);
 }
