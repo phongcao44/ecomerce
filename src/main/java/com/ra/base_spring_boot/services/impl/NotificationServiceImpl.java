@@ -9,14 +9,16 @@ import com.ra.base_spring_boot.services.NotificationService;
 import org.springframework.stereotype.Service;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class NotificationServiceImpl implements NotificationService {
 
     @Override
-    public void sendCartReminder(List<String> tokens) {
-        System.out.println("📬 Gửi thông báo đến " + tokens.size() + " thiết bị");
+    public List<String>  sendCartReminder(List<String> tokens) {
+        System.out.println("Gửi thông báo đến " + tokens.size() + " thiết bị");
+        List<String> sentTokens = new ArrayList<>();
 
         for (String token : tokens) {
             Notification notification = Notification.builder()
@@ -31,10 +33,12 @@ public class NotificationServiceImpl implements NotificationService {
 
             try {
                 String response = FirebaseMessaging.getInstance().send(message);
-                System.out.println("✅ Gửi thành công: " + response);
+                System.out.println("Gửi thành công: " + response);
+                sentTokens.add(token); // Ghi nhận token đã gửi thành công
             } catch (FirebaseMessagingException e) {
-                System.err.println("❌ Lỗi khi gửi tới token " + token + ": " + e.getMessage());
+                System.err.println("Lỗi khi gửi tới token " + token + ": " + e.getMessage());
             }
         }
+        return sentTokens;
     }
 }

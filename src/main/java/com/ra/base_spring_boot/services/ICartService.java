@@ -30,4 +30,7 @@ public interface ICartService {
     BigDecimal getCartTotal(Long userId);
 
     List<Long> getUsersWithCartItems();
+
+    boolean hasCartItemsWithProducts(Long userId);
+
 }

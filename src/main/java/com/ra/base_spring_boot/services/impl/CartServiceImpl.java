@@ -721,5 +721,10 @@ public class CartServiceImpl implements ICartService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public boolean hasCartItemsWithProducts(Long userId) {
+        return cartItemRepository.existsByCart_User_Id(userId);
+    }
+
 }
 
