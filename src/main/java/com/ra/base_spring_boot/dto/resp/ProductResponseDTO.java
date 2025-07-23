@@ -21,6 +21,11 @@ public class ProductResponseDTO {
     private String name;
     private String description;
     private BigDecimal price;
+    private BigDecimal lowestPrice;
+    private BigDecimal discountedPrice;
+    private boolean isFlashSale;
+    private BigDecimal discountOverrideByFlashSale;
+    private String discountType;
     private String brand;
     private ProductStatus status;
     private Double averageRating;
@@ -35,4 +40,5 @@ public class ProductResponseDTO {
     private String returnPolicyContent;
     private LocalDateTime createdAt;
     public List<ProductVariantResponseDTO> variants;
+
 }

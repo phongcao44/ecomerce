@@ -34,6 +34,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,18 +76,30 @@ public class ProductController {
 
     // phân trang Product, sắp xếp
     @GetMapping("/paginate")
-    public ResponseEntity<Page<ProductResponseDTO>> getAllPaginate(
-            @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "limit", defaultValue = "3") int limit,
-            @RequestParam(name = "sortBy", defaultValue = "price") String sortBy,
-            @RequestParam(name = "orderBy", defaultValue = "asc") String orderBy,
-            @RequestParam(name = "keyword", required = false) String keyword,
-            @RequestParam(name = "status", required = false) String status
+    public ResponseEntity<?> getProductsPaginate(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String orderBy,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String brandName,
+            @RequestParam(required = false) BigDecimal priceMin,
+            @RequestParam(required = false) BigDecimal priceMax,
+            @RequestParam(required = false) Integer minRating
     ) {
-        Sort sort = orderBy.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, limit, sort);
-        Page<ProductResponseDTO> products = productService.pagination(pageable, keyword, status);
-        return new ResponseEntity<>(products, HttpStatus.OK);
+        Page<ProductResponseDTO> products = productService.getProductsPaginate(
+                keyword, categoryId, status, brandName, priceMin, priceMax, minRating, page, limit, sortBy, orderBy
+        );
+
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data(products)
+                        .build()
+        );
     }
 
 

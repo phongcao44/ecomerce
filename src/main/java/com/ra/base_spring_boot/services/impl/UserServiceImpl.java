@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,16 +42,17 @@ public class UserServiceImpl implements IUserService {
     private final IRoleRepository iRoleRepository;
     private final ConversionService conversionService;
     private final PointServiceImpl pointService;
+
     @Override
     public List<ViewUserResponse> findAll() {
         List<User> list = userRepository.findAll();
 
         return list.stream().map(
-         this::convertToResponse).collect(Collectors.toList());
+                this::convertToResponse).collect(Collectors.toList());
     }
 
     @Override
-    public Page<ViewUserResponse> getAllUsersPaginateAndFilter(String keyword, String status, Pageable pageable) {
+    public Page<ViewUserResponse> getAllUsersPaginateAndFilter(String keyword, String status, String rank, Pageable pageable) {
         Specification<User> spec = Specification.where(null);
 
         if (keyword != null && !keyword.trim().isEmpty()) {
@@ -67,6 +69,13 @@ public class UserServiceImpl implements IUserService {
                     cb.equal(root.get("status"), status)
             );
         }
+
+        if (rank != null && !rank.trim().isEmpty()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("userPoint").get("userRank"), rank)
+            );
+        }
+
 
         return userRepository.findAll(spec, pageable)
                 .map(user -> new ViewUserResponse(
@@ -97,7 +106,7 @@ public class UserServiceImpl implements IUserService {
                 .createTime(LocalDateTime.now())
                 .updateTime(LocalDateTime.now())
                 .roles(roleNames)
-                .userRank(user.getUserPoint().getUserRank())
+                .userRank(user.getUserPoint() != null ? user.getUserPoint().getUserRank() : null)
                 .userStatus(user.getStatus())
                 .build();
     }
@@ -201,6 +210,7 @@ public class UserServiceImpl implements IUserService {
         return userRepository.findById(userId).orElse(null);
 
     }
+
     public void processOAuthPostLogin(String email, String name) {
         Optional<User> optionalUser = userRepository.findByEmail(email);
         if (optionalUser.isEmpty()) {
@@ -210,6 +220,7 @@ public class UserServiceImpl implements IUserService {
             userRepository.save(newUser);
         }
     }
+
     @Override
     public User findOrCreate(String email, String name) {
         Role defaultRole = iRoleRepository.findByName(RoleName.ROLE_USER)
@@ -249,7 +260,7 @@ public class UserServiceImpl implements IUserService {
 
         return UserDetailResponse.builder()
                 .userId(user.getId())
-                 .userName(user.getUsername())
+                .userName(user.getUsername())
                 .userEmail(user.getEmail())
                 .Address(user.getAddresses())
                 .status(user.getStatus())
