@@ -24,5 +24,5 @@ public interface IUserService {
     User findOrCreate(String email, String name);
     UserDetailResponse findUserDetails(Long userId);
     UserDetailResponse updateUserDetails(Long userId, UserDetailRequest userDetailRequest);
-    Page<ViewUserResponse> getAllUsersPaginateAndFilter(String keyword, String status, Pageable pageable);
+    Page<ViewUserResponse> getAllUsersPaginateAndFilter(String keyword, String status,String rank,  Pageable pageable);
 }

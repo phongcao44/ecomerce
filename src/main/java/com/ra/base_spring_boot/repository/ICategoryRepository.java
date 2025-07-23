@@ -22,5 +22,5 @@ public interface ICategoryRepository extends JpaRepository<Category,Long> {
 
     boolean existsByName(String name);
 
-
+    List<Category> findByParentId(Long parentId);
 }
