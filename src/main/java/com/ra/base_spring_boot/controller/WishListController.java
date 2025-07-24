@@ -41,6 +41,5 @@ public class WishListController {
     @DeleteMapping
     public ResponseEntity<?> deleteWishList(@AuthenticationPrincipal MyUserDetails user, long wishlistId){
         iWishListService.deleteWishlist( wishlistId,user.getUser().getId());
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
+        return ResponseEntity.ok("Xóa sản phẩm yêu thích thành công");    }
 }

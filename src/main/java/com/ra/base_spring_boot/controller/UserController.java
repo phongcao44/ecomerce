@@ -120,4 +120,5 @@ public class UserController {
     public ResponseEntity<?> getUserView(@AuthenticationPrincipal MyUserDetails userDetails) {
         return ResponseEntity.ok(userService.findUserDetails(userDetails.getUser().getId()));
     }
+
 }
