@@ -50,15 +50,16 @@ public class ReturnPolicyServiceImpl implements IReturnPolicyService {
         ReturnPolicy policy = returnPolicyRepository.findById(id)
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy chính sách"));
 
-        if (!policy.getAdmin().getId().equals(admin.getId())) {
-            throw new HttpBadRequest("Bạn không có quyền chỉnh sửa chính sách này");
-        }
+//        if (!policy.getAdmin().getId().equals(admin.getId())) {
+//            throw new HttpBadRequest("Bạn không có quyền chỉnh sửa chính sách này");
+//        }
 
         policy.setTitle(dto.getTitle());
         policy.setContent(dto.getContent());
         policy.setReturnDays(dto.getReturnDays());
         policy.setAllowReturnWithoutReason(dto.getAllowReturnWithoutReason());
         policy.setStatus(dto.getStatus());
+        policy.setAdmin(admin);
         returnPolicyRepository.save(policy);
 
         return ReturnPolicyResponseDTO.builder()
