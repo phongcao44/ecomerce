@@ -17,4 +17,9 @@ public interface ICartItemRepository extends JpaRepository<CartItem, Long> {
 
     List<CartItem> findAllByCart_User_Id(Long userId);
 
+    // Đếm số item trong giỏ hàng của user
+    long countByCart_User_Id(Long userId);
+
+    //  kiểm tra true/false :
+    boolean existsByCart_User_Id(Long userId);
 }

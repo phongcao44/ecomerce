@@ -40,4 +40,9 @@ public class FcmTokenServiceImpl implements FcmTokenService {
                 .map(FcmToken::getToken)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public void deleteToken(String token) {
+        fcmTokenRepository.deleteByToken(token);
+    }
 }
