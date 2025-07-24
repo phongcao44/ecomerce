@@ -74,7 +74,6 @@ public class AuthServiceImpl implements IAuthService
                 .updatedAt(now)
                 .build();
         userRepository.save(user);
-        voucherService.assignWelcomeVoucher(user);
         pointService.SetUserPoints(user);
     }
 

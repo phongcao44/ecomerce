@@ -725,8 +725,10 @@ public class OrderController {
 
         List<OrderResponse> responses = orders.stream().map(order -> {
             User user = order.getUser();
+            List<Address> userAddress = user.getAddresses();
+            System.out.println("orderUser: ========" + userAddress.get(0));
             Address address = order.getShippingAddress();
-
+            System.out.println("ordership : ========= "  + order.getShippingAddress());
             UserResponse userDto = UserResponse.builder()
                     .id(user.getId())
                     .username(user.getUsername())

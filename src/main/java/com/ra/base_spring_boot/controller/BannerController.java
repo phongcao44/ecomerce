@@ -26,7 +26,17 @@ public class BannerController {
     @PostMapping(value = "admin/banners",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Banner> createBanner(BannerRequest request)
     {
-        return ResponseEntity.ok(iBannerService.create(request.getTitle(), request.getPosition(),request.isStatus(), request.getStartAt(),request.getEndAt(),request.getImage()));
+        return ResponseEntity.ok(
+                iBannerService.create(
+                        request.getTitle(),
+                        request.getPosition(),
+                        request.getTargetUrl(),
+                        request.isStatus(),
+                        request.getStartAt(),
+                        request.getEndAt(),
+                        request.getImage()
+                )
+        );
     }
 
     @PutMapping(value = "admin/banner/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -34,7 +44,15 @@ public class BannerController {
             @PathVariable Integer id,
             BannerRequest request
     ) {
-        return ResponseEntity.ok(iBannerService.update(id,request.getTitle(), request.getPosition(),request.isStatus(), request.getStartAt(),request.getEndAt(),request.getImage()));
+        return ResponseEntity.ok(
+                iBannerService.update(
+                        id,request.getTitle(),
+                        request.getPosition(),
+                        request.getTargetUrl(),
+                        request.isStatus(),
+                        request.getStartAt(),
+                        request.getEndAt(),
+                        request.getImage()));
     }
     @DeleteMapping("admin/banner/{id}")
     public ResponseEntity<?> deleteBanner(@PathVariable Integer id) {

@@ -15,6 +15,7 @@ import java.time.OffsetDateTime;
 @Builder
 public class BannerRequest {
     private String title;
+    private String targetUrl;
     private String position;
     private boolean status; // có thể vẫn giữ
     private MultipartFile image;
