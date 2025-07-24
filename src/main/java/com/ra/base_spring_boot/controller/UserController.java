@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.controller;
 
+
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.AddUserRequest;
 import com.ra.base_spring_boot.dto.req.UserDetailRequest;
@@ -23,6 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+
 
 import java.net.URI;
 import java.util.List;
@@ -52,6 +54,9 @@ public class UserController {
     @GetMapping("/admin/users")
     public ResponseEntity<List<?>> handleGetAllUsers() {
         List<ViewUserResponse> users = userService.findAll();
+        ViewUserResponse  viewUserResponse = new ViewUserResponse(
+
+        );
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
@@ -126,4 +131,5 @@ public class UserController {
     public ResponseEntity<?> getUserView(@AuthenticationPrincipal MyUserDetails userDetails) {
         return ResponseEntity.ok(userService.findUserDetails(userDetails.getUser().getId()));
     }
+
 }

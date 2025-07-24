@@ -294,10 +294,11 @@ public class ProductVariantServiceImpl implements IProductVariantService {
             Product product = variant.getProduct();
             Color color = variant.getColor();
             Size size = variant.getSize();
-
+            String productName = (variant.getProduct() != null) ? variant.getProduct().getName() : "Chưa gán sản phẩm";
+            System.out.println(product.getId()+"=============");
             return ProductVariantDetailDTO.builder()
                     .variantId(variant.getId())
-                    .productName(product.getName())
+                    .productName(productName)
                     .productDescription(product.getDescription())
                     .brand(product.getBrand())
                     .price(product.getPrice())
