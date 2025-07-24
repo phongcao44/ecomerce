@@ -15,4 +15,7 @@ public interface IProductImageRepository extends JpaRepository<ProductImage, Lon
     List<ProductImage> findByProduct_NameIgnoreCase(String name);
 
     List<ProductImage> findByVariantId(Long variantId);
+
+    Optional<ProductImage> findFirstByProductAndIsMainTrue(Product product);
+
 }
