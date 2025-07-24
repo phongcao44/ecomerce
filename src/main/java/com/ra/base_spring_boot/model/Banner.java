@@ -35,4 +35,7 @@ public class Banner extends BaseObject {
 
     @Column(name = "time_end")
     private OffsetDateTime endAt;
+
+    @Column(name = "target_url")
+    private String targetUrl;
 }

@@ -542,6 +542,8 @@ public class ProductServiceImpl implements IProductService {
                 .status(dto.getStatus())
                 .category(category)
                 .returnPolicy(returnPolicy)
+                .createdAt(LocalDateTime.now())
+                .deleted(false)
                 .build();
 
         product = productRepository.save(product);
