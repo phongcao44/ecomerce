@@ -15,6 +15,8 @@ import com.ra.base_spring_boot.dto.req.UpdateOrderStatusRequest;
 import com.ra.base_spring_boot.dto.resp.*;
 import com.ra.base_spring_boot.model.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -350,8 +352,11 @@ public class OrderController {
     }
 
 
+
     @GetMapping("/admin/order/detail/{id}")
     public ResponseEntity<?> getOrderDetail(@PathVariable Long id) {
+        Logger logger = LoggerFactory.getLogger(OrderController.class);
+
         Optional<Order> optionalOrder = iOrderRepository.findById(id);
         if (optionalOrder.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy đơn hàng");
@@ -394,20 +399,36 @@ public class OrderController {
                             .build())
                     .toList();
 
+            // Handle null Color
+            ColorDTO colorDTO = null;
+            if (variant.getColor() != null) {
+                colorDTO = ColorDTO.builder()
+                        .id(variant.getColor().getId())
+                        .name(variant.getColor().getName())
+                        .hex_code(variant.getColor().getHexCode())
+                        .build();
+            } else {
+                logger.warn("ProductVariant ID {} has null Color for Order ID {}", variant.getId(), id);
+            }
+
+            // Handle null Size
+            SizeDTO sizeDTO = null;
+            if (variant.getSize() != null) {
+                sizeDTO = SizeDTO.builder()
+                        .id(variant.getSize().getId())
+                        .name(variant.getSize().getSizeName())
+                        .description(variant.getSize().getDescription())
+                        .build();
+            } else {
+                logger.warn("ProductVariant ID {} has null Size for Order ID {}", variant.getId(), id);
+            }
+
             return OrderItemDetail.builder()
                     .productId(product.getId())
                     .productName(product.getName())
                     .variantId(variant.getId())
-                    .color(ColorDTO.builder()
-                            .id(variant.getColor().getId())
-                            .name(variant.getColor().getName())
-                            .hex_code(variant.getColor().getHexCode())
-                            .build())
-                    .size(SizeDTO.builder()
-                            .id(variant.getSize().getId())
-                            .name(variant.getSize().getSizeName())
-                            .description(variant.getSize().getDescription())
-                            .build())
+                    .color(colorDTO)
+                    .size(sizeDTO)
                     .quantity(item.getQuantity())
                     .price(item.getVariant().getPriceOverride())
                     .totalPrice(item.getVariant().getPriceOverride().multiply(BigDecimal.valueOf(item.getQuantity())))
@@ -424,26 +445,12 @@ public class OrderController {
                     .build();
         }
 
-//        // Tổng giá tiền
-//        BigDecimal subTotal = itemList.stream()
-//                .map(OrderItemDetail::getTotalPrice)
-//                .reduce(BigDecimal.ZERO, BigDecimal::add);
-//
-//        BigDecimal discount = order.getDiscountAmount() != null ? order.getDiscountAmount() : BigDecimal.ZERO;
-//        BigDecimal shippingFee = order.getShippingFee() != null ? order.getShippingFee() : BigDecimal.ZERO;
-//        BigDecimal totalAmount = subTotal.subtract(discount).add(shippingFee);
-//
         OrderDetailResponse response = OrderDetailResponse.builder()
                 .orderId(order.getId())
                 .status(order.getStatus().name())
                 .paymentStatus(order.getStatus().name())
                 .paymentMethod(order.getPaymentMethod().name())
-               // .fulfillmentStatus(order.getFulfillmentStatus())
                 .createdAt(order.getCreatedAt())
-              //  .subTotal(subTotal)
-              //  .discountAmount(discount)
-                //.shippingFee(shippingFee)
-             //   .totalAmount(totalAmount)
                 .customer(customer)
                 .shippingAddress(address)
                 .items(itemList)
@@ -452,6 +459,7 @@ public class OrderController {
 
         return ResponseEntity.ok(response);
     }
+
 
     @GetMapping("/user/order/detail/{id}")
     public ResponseEntity<?> getOrderDetailUser(Authentication authentication, @PathVariable Long id) {
@@ -725,8 +733,10 @@ public class OrderController {
 
         List<OrderResponse> responses = orders.stream().map(order -> {
             User user = order.getUser();
+            List<Address> userAddress = user.getAddresses();
+            System.out.println("orderUser: ========" + userAddress.get(0));
             Address address = order.getShippingAddress();
-
+            System.out.println("ordership : ========= "  + order.getShippingAddress());
             UserResponse userDto = UserResponse.builder()
                     .id(user.getId())
                     .username(user.getUsername())

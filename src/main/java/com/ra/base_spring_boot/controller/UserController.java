@@ -16,6 +16,7 @@ import com.ra.base_spring_boot.services.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,15 +32,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/admin/users")
+@RequestMapping("/api/v1/")
 public class UserController {
     @Autowired
     private IUserService userService;
 
-    @PostMapping("/add")
+
+    @PostMapping("/admin/users/add")
     public ResponseEntity<?> handleAddUser(@RequestBody AddUserRequest addUserRequest) {
         userService.addUser(addUserRequest);
-        return ResponseEntity.created(URI.create("api/v1/auth/add")).body(
+        return ResponseEntity.created(URI.create("/api/v1/admin/users/add")).body(
                 ResponseWrapper.builder()
                         .status(HttpStatus.CREATED)
                         .code(201)
@@ -47,7 +49,9 @@ public class UserController {
                         .build()
         );
     }
-    @GetMapping()
+
+
+    @GetMapping("/admin/users")
     public ResponseEntity<List<?>> handleGetAllUsers() {
         List<ViewUserResponse> users = userService.findAll();
         ViewUserResponse  viewUserResponse = new ViewUserResponse(
@@ -56,7 +60,8 @@ public class UserController {
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
-    @GetMapping("/paginate")
+
+    @GetMapping("/admin/users/paginate")
     public ResponseEntity<?> handleGetAllUsersPaginateAndFilter(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -81,7 +86,7 @@ public class UserController {
     }
 
 
-    @PatchMapping("/{userId}/changeRole/{roleId}")
+    @PatchMapping("/admin/users/{userId}/changeRole/{roleId}")
     public ResponseEntity<?> handleChangeRole(@PathVariable long userId, @PathVariable long roleId) {
         userService.addRole(userId, roleId);
         User user = userService.findUser(userId);
@@ -90,35 +95,41 @@ public class UserController {
                 userId,
                 roles
         );
-        return new  ResponseEntity<>(roleDTO, HttpStatus.OK);
+        return new ResponseEntity<>(roleDTO, HttpStatus.OK);
     }
-    @DeleteMapping("/{userId}/deleteRole/{roleId}")
+
+
+    @DeleteMapping("/admin/users/{userId}/deleteRole/{roleId}")
     public ResponseEntity<?> handleDeleteRole(@PathVariable long userId, @PathVariable long roleId) {
         userService.deleteRole(userId, roleId);
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{userId}/status")
+
+    @PatchMapping("/admin/users/{userId}/status")
     public ResponseEntity<?> handleStatusChange(@PathVariable long userId, @RequestBody UserStatusRequest status) {
-    userService.changeStatus(userId, status.getStatus());
-    return ResponseEntity.ok(status);
+        userService.changeStatus(userId, status.getStatus());
+        return ResponseEntity.ok(status);
     }
-    @GetMapping("/admin/getUsers/{id}")
+
+
+    @GetMapping("/admin/users/{id}")
     public ResponseEntity<?> getUsersDetail(@PathVariable long id) {
         UserDetailResponse users = userService.findUserDetails(id);
         return ResponseEntity.ok(users);
     }
 
-    @PatchMapping("/update")
+    @PatchMapping("/users/update")
     public ResponseEntity<?> updateUserDetail(
             @AuthenticationPrincipal MyUserDetails userDetails,
             @RequestBody UserDetailRequest userDetailRequest) {
-       UserDetailResponse updateUser =  userService.updateUserDetails(userDetails.getUser().getId(), userDetailRequest);
+        UserDetailResponse updateUser = userService.updateUserDetails(userDetails.getUser().getId(), userDetailRequest);
         return ResponseEntity.ok(updateUser);
-
     }
-    @GetMapping("/view/")
+
+    @GetMapping("/users/view")
     public ResponseEntity<?> getUserView(@AuthenticationPrincipal MyUserDetails userDetails) {
         return ResponseEntity.ok(userService.findUserDetails(userDetails.getUser().getId()));
     }
+
 }

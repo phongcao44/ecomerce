@@ -107,11 +107,13 @@ public class AddressServiceImpl implements IAddressService {
             iAddressRepository.save(address);
         }
     }
-
+    //lấy tất cả address của user
     @Override
     public List<AddressRespone> findAllByUserId(Long userId) {
         List<Address> list =  iAddressRepository.findAllByUserId(userId);
-
+        for(Address address:list){
+            System.out.println(address.getId());
+        }
         return list.stream().map(
                 address -> AddressRespone.builder()
                         .addressId(address.getId())

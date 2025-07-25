@@ -59,7 +59,7 @@ public class BannerServiceImpl implements IBannerService {
         }
     }
     @Override
-    public Banner create(String title, String position, Boolean status, OffsetDateTime startTime, OffsetDateTime  endTime, MultipartFile image) {
+    public Banner create(String title, String position,String targetUrl, Boolean status, OffsetDateTime startTime, OffsetDateTime endTime, MultipartFile image) {
         Map uploadResult = uploadImageToCloudinary(image);
         Banner banner = Banner.builder()
                 .title(title)
@@ -67,6 +67,7 @@ public class BannerServiceImpl implements IBannerService {
                 .status(status)
                 .startAt(startTime)
                 .endAt(endTime)
+                .targetUrl(targetUrl)
                 .bannerUrl((String) uploadResult.get("secure_url"))
                 .publicId((String) uploadResult.get("public_id"))
                 .build();
@@ -78,7 +79,7 @@ public class BannerServiceImpl implements IBannerService {
     }
 
     @Override
-    public Banner update(Integer id, String title, String position, Boolean status, OffsetDateTime startTime, OffsetDateTime  endTime, MultipartFile image) {
+    public Banner update(Integer id, String title,String targetUrl, String position, Boolean status, OffsetDateTime startTime, OffsetDateTime  endTime, MultipartFile image) {
         Banner existing = getById(id);
 
         if (image != null && !image.isEmpty()) {
@@ -97,7 +98,7 @@ public class BannerServiceImpl implements IBannerService {
         existing.setStatus(status);
         existing.setEndAt(endTime);
         existing.setStatus(status);
-
+        existing.setTargetUrl(targetUrl);
         return bannerRepository.save(existing);
     }
 

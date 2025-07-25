@@ -10,6 +10,7 @@ import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.model.UserPoint;
 import com.ra.base_spring_boot.model.constants.RoleName;
 import com.ra.base_spring_boot.model.constants.UserStatus;
+import com.ra.base_spring_boot.repository.IAddressRepository;
 import com.ra.base_spring_boot.repository.IRoleRepository;
 import com.ra.base_spring_boot.repository.IUserRepository;
 import com.ra.base_spring_boot.services.IAddressService;
@@ -42,7 +43,7 @@ public class UserServiceImpl implements IUserService {
     private final IRoleRepository iRoleRepository;
     private final ConversionService conversionService;
     private final PointServiceImpl pointService;
-
+    private final IAddressRepository iAddressRepository;
     @Override
     public List<ViewUserResponse> findAll() {
         List<User> list = userRepository.findAll();
@@ -257,12 +258,12 @@ public class UserServiceImpl implements IUserService {
                         .description(role.getDescription())
                         .build())
                 .collect(Collectors.toSet());
-
+        List<Address> list = iAddressRepository.findAllByUserId(userId);
         return UserDetailResponse.builder()
                 .userId(user.getId())
                 .userName(user.getUsername())
                 .userEmail(user.getEmail())
-                .Address(user.getAddresses())
+                .Address(list)
                 .status(user.getStatus())
                 .role(roleResponses)
                 .createTime(user.getCreatedAt())
