@@ -47,8 +47,8 @@ public class BannerController {
         return ResponseEntity.ok(
                 iBannerService.update(
                         id,request.getTitle(),
-                        request.getPosition(),
                         request.getTargetUrl(),
+                        request.getPosition(),
                         request.isStatus(),
                         request.getStartAt(),
                         request.getEndAt(),
