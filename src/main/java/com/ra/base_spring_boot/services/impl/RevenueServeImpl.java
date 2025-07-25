@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.services.impl;
 
+import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
 import com.ra.base_spring_boot.dto.resp.RevenueResponseDTO;
 import com.ra.base_spring_boot.dto.resp.Top5Product;
 import com.ra.base_spring_boot.model.Order;
@@ -74,7 +75,7 @@ public class RevenueServeImpl implements IRevenueService {
                 .count();
         int totalProducts = productRepository.findAll().size();
         int totalDelivered = deliveredOrders.size();
-        List<Top5Product> top5bestseller = productService.getTop5BestSellingProducts();
+        List<ProductResponseDTO> top5BestSellers = productService.getTop5BestSellingProducts();
 
         return RevenueResponseDTO.builder()
                 .totalRevenue(totalRevenue)
@@ -82,9 +83,10 @@ public class RevenueServeImpl implements IRevenueService {
                 .totalCustomers(totalCustomers)
                 .totalProducts(totalProducts)
                 .totalDelivered(totalDelivered)
-                .top5BestSellers(top5bestseller)
+                .top5BestSellers(top5BestSellers)
                 .build();
     }
+
 
     @Override
     public List<RevenueResponseDTO> getRevenueByDate(LocalDate date) {

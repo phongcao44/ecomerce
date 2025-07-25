@@ -16,12 +16,11 @@ import java.util.List;
 @Builder
 public class RevenueResponseDTO {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-    private LocalDate time;         // ngày / tháng / năm
+    private LocalDate time;
     private BigDecimal totalRevenue;
     private Integer totalOrders;
     private Integer totalCustomers;
     private Integer totalProducts;
     private Integer totalDelivered;
-    private List<Top5Product> top5BestSellers; // Thêm danh sách sản phẩm bán chạy nhất
-
+    private List<ProductResponseDTO> top5BestSellers;
 }
