@@ -20,10 +20,11 @@ public class Post {
 
     private String image; // Link ảnh hoặc tên file
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "LONGTEXT")
     private String content; // Nội dung chính
 
-    @Column(length = 100000000)
+    //@Column(length = 100000000)
+    @Column(columnDefinition = "LONGTEXT")
     private String description;
 
     private String location; // Vị trí (Vị trí đăng, vị trí liên quan)
