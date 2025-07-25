@@ -3,10 +3,12 @@ package com.ra.base_spring_boot.services;
 import com.ra.base_spring_boot.dto.resp.FlashSaleResponse;
 import com.ra.base_spring_boot.model.FlashSale;
 
-import java.util.stream.Stream;
+import java.util.List;
 
 public interface IFlashSaleService {
-    Stream<FlashSaleResponse> getFlashSale();
+    List<FlashSale> getFlashSale();
+
+    List<FlashSaleResponse> getFlashSaleDetails();
 
     FlashSale save(FlashSale flashSale);
 

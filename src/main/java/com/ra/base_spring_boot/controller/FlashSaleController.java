@@ -12,6 +12,7 @@ import com.ra.base_spring_boot.repository.IFlashSaleItemRepository;
 import com.ra.base_spring_boot.repository.IFlashSaleRepository;
 import com.ra.base_spring_boot.repository.IProductRepository;
 import com.ra.base_spring_boot.repository.IProductVariantRepository;
+import com.ra.base_spring_boot.services.IFlashSaleItemService;
 import com.ra.base_spring_boot.services.IFlashSaleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,13 +36,19 @@ public class FlashSaleController {
     @Autowired
     public IProductRepository productRepository;
     @Autowired
-    IFlashSaleService flashSaleService;
+    public IFlashSaleService flashSaleService;
 
     //flash_sale
     @GetMapping("/list")
-    public ResponseEntity<?> getFlashSaleList() {
-        List<FlashSaleResponse> flashSaleResponses = flashSaleService.getFlashSale().toList();
-        return ResponseEntity.ok(flashSaleResponses);
+    public ResponseEntity<?> getFlashSale() {
+        List<FlashSale> flashSales = flashSaleRepository.findAll();
+        return new ResponseEntity<>(flashSales, HttpStatus.OK);
+    }
+
+    @GetMapping("/flash_sale/detail")
+    public ResponseEntity<?> getFlashSaleDetails() {
+        List<FlashSaleResponse> responses = flashSaleService.getFlashSaleDetails();
+        return ResponseEntity.ok(responses);
     }
 
     @PostMapping("/add")
