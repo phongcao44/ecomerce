@@ -31,7 +31,8 @@ public interface IProductService {
 
     void delete(Long id);
 
-    List<Top5Product> getTop5BestSellingProducts();
+    //    List<Top5Product> getTop5BestSellingProducts();
+    List<ProductResponseDTO> getTop5BestSellingProducts();
 
     List<Top5Product> getTop5LestSellingProducts();
 

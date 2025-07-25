@@ -193,15 +193,16 @@ public class ProductController {
                         product.getDescription(),
                         product.getPrice(),
                         product.getBrand()
-                        ))
+                ))
                 .toList();
         return ResponseEntity.ok(responses);
     }
 
+
     @GetMapping("/products/bestSell")
-    public ResponseEntity<List<?>> getBestSellProduct() {
-        List<Top5Product> topProduct = productService.getTop5BestSellingProducts();
-        return ResponseEntity.ok(topProduct);
+    public ResponseEntity<List<ProductResponseDTO>> getBestSellProduct() {
+        List<ProductResponseDTO> topProducts = productService.getTop5BestSellingProducts();
+        return ResponseEntity.ok(topProducts);
     }
 
 
@@ -220,7 +221,6 @@ public class ProductController {
     public List<ProductViewResponse> getLeastViewedProducts(@RequestParam(defaultValue = "10") Long limit) {
         return productViewService.getLestViewProducts(limit);
     }
-
 
 
     @GetMapping("/products/topLeastSell")
