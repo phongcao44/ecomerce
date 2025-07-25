@@ -56,7 +56,6 @@ public class ReturnPolicyServiceImpl implements IReturnPolicyService {
         policy.setAllowReturnWithoutReason(dto.getAllowReturnWithoutReason());
         policy.setStatus(dto.getStatus());
         policy.setAdmin(admin);
-
         returnPolicyRepository.save(policy);
 
         return ReturnPolicyResponseDTO.builder()

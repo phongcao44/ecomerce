@@ -407,7 +407,9 @@ public class ProductServiceImpl implements IProductService {
             ProductVariantResponseDTO dto = ProductVariantResponseDTO.builder()
                     .id(variant.getId())
                     .productName(product.getName())
+                    .colorId(variant.getColor() != null ? variant.getColor().getId() : null) // Thêm colorId
                     .colorName(variant.getColor() != null ? variant.getColor().getName() : null)
+                    .sizeId(variant.getSize() != null ? variant.getSize().getId() : null) // Thêm sizeId
                     .sizeName(variant.getSize() != null ? variant.getSize().getSizeName() : null)
                     .stockQuantity(variant.getStockQuantity())
                     .priceOverride(priceOriginal)
@@ -523,7 +525,7 @@ public class ProductServiceImpl implements IProductService {
                 .build();
     }
 
-
+    
     @Override
     public ProductResponseDTO save(ProductRequestDTO dto) {
         Category category = categoryRepository.findById(dto.getCategoryId())
