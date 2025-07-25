@@ -15,6 +15,7 @@ import java.util.List;
 public class GeminiRequest {
     private String prompt;
     private List<ChatTurn> history;
+    private Long userId;
     public static class HistoryTurn {
         private String role;
         private String message;
