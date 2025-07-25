@@ -25,7 +25,7 @@ public class Top5Product {
         String mainImage = product.getImages().stream()
                 .filter(img -> Boolean.TRUE.equals(img.getIsMain()))
                 .findFirst()
-                .map(img -> img.getImageUrl())
+                .map(ProductImage::getImageUrl)
                 .orElse(null); // fallback nếu không có ảnh chính
 
         return Top5Product.builder()

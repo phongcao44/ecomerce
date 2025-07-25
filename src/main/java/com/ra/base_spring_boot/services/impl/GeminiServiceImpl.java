@@ -60,16 +60,16 @@ public class GeminiServiceImpl implements GeminiService {
                 .collect(Collectors.joining("\n"));
 
         // 3. Lấy chương trình flash sale
-        String flashSalePrompt = flashSaleService.getFlashSale().stream()
-                .map(flashSale -> String.format(
-                        "- Tên: %s\n  Mô tả: %s\n  Bắt đầu: %s\n  Kết thúc: %s\n  Trạng thái: %s",
-                        flashSale.getName(),
-                        flashSale.getDescription(),
-                        flashSale.getStartTime(),
-                        flashSale.getEndTime(),
-                        flashSale.getStatus()
-                ))
-                .collect(Collectors.joining("\n"));
+//        String flashSalePrompt = flashSaleService.getFlashSale().stream()
+//                .map(flashSale -> String.format(
+//                        "- Tên: %s\n  Mô tả: %s\n  Bắt đầu: %s\n  Kết thúc: %s\n  Trạng thái: %s",
+//                        flashSale.getName(),
+//                        flashSale.getDescription(),
+//                        flashSale.getStartTime(),
+//                        flashSale.getEndTime(),
+//                        flashSale.getStatus()
+//                ))
+//                .collect(Collectors.joining("\n"));
 
         // 4. Lấy thông tin sản phẩm
         List<ProductResponseDTO> products = productService.findAll();
@@ -184,7 +184,7 @@ public class GeminiServiceImpl implements GeminiService {
                 imagePrompt,
                 SizePrompt,
                 specPrompt,
-                flashSalePrompt,
+//                flashSalePrompt,
                 focusProductContext,
                 historyContext,
                 request.getPrompt());

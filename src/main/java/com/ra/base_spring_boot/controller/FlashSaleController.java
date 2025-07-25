@@ -1,6 +1,7 @@
 package com.ra.base_spring_boot.controller;
 
 import com.ra.base_spring_boot.dto.req.FlashSaleItemRequest;
+import com.ra.base_spring_boot.dto.req.FlashSaleRequest;
 import com.ra.base_spring_boot.dto.resp.FlashSaleItemRespone;
 import com.ra.base_spring_boot.dto.resp.FlashSaleResponse;
 import com.ra.base_spring_boot.model.FlashSale;
@@ -11,6 +12,7 @@ import com.ra.base_spring_boot.repository.IFlashSaleItemRepository;
 import com.ra.base_spring_boot.repository.IFlashSaleRepository;
 import com.ra.base_spring_boot.repository.IProductRepository;
 import com.ra.base_spring_boot.repository.IProductVariantRepository;
+import com.ra.base_spring_boot.services.IFlashSaleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,44 +34,42 @@ public class FlashSaleController {
     public IProductVariantRepository productVariantRepository;
     @Autowired
     public IProductRepository productRepository;
+    @Autowired
+    IFlashSaleService flashSaleService;
 
     //flash_sale
     @GetMapping("/list")
-    public ResponseEntity<?> getFlashSale() {
-        List<FlashSale> flashSales = flashSaleRepository.findAll();
-        return new ResponseEntity<>(flashSales, HttpStatus.OK);
+    public ResponseEntity<?> getFlashSaleList() {
+        List<FlashSaleResponse> flashSaleResponses = flashSaleService.getFlashSale().toList();
+        return ResponseEntity.ok(flashSaleResponses);
     }
 
     @PostMapping("/add")
-    public ResponseEntity<?> addFlashSale(@RequestBody FlashSaleResponse request) {
+    public ResponseEntity<?> addFlashSale(@RequestBody FlashSaleRequest request) {
         FlashSale flashSale = FlashSale.builder()
                 .name(request.getName())
                 .description(request.getDescription())
                 .startTime(request.getStartTime())
                 .endTime(request.getEndTime())
-                .status(request.getStatus()).build();
+                .status(request.getStatus())
+                .build();
         flashSaleRepository.save(flashSale);
-        return new ResponseEntity<>(flashSale, HttpStatus.OK);
+        return new ResponseEntity<>(flashSale, HttpStatus.CREATED);
     }
 
-    @PostMapping("/edit/{id}")
-    public ResponseEntity<?> editFlashSale(@PathVariable Long id, @RequestBody FlashSaleResponse request) {
-        Optional<FlashSale> flashSale = flashSaleRepository.findById(id);
-        if (flashSale.isEmpty()) {
-            return new ResponseEntity<>("Không tìm thấy sản phẩm nào trong flash sale này", HttpStatus.NOT_FOUND);
-        } else {
-            FlashSale editFlashSale = flashSale.get();
-            editFlashSale.setName(request.getName());
-            editFlashSale.setDescription(request.getDescription());
-            editFlashSale.setStartTime(request.getStartTime());
-            editFlashSale.setEndTime(request.getEndTime());
-            editFlashSale.setStatus(request.getStatus());
-
-            FlashSale updatedFlashSale = flashSaleRepository.save(editFlashSale);
-
-            return new ResponseEntity<>(updatedFlashSale, HttpStatus.OK);
-        }
+    @PutMapping("/edit/{id}")
+    public ResponseEntity<?> editFlashSale(@PathVariable Long id, @RequestBody FlashSaleRequest request) {
+        FlashSale flashSale = flashSaleRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy Flash Sale"));
+        flashSale.setName(request.getName());
+        flashSale.setDescription(request.getDescription());
+        flashSale.setStartTime(request.getStartTime());
+        flashSale.setEndTime(request.getEndTime());
+        flashSale.setStatus(request.getStatus());
+        flashSaleRepository.save(flashSale);
+        return ResponseEntity.ok(flashSale);
     }
+
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteFlashSale(@PathVariable Long id) {
