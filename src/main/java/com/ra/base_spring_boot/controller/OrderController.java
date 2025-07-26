@@ -494,7 +494,7 @@ public class OrderController {
             Product product = variant.getProduct();
 
             List<ProductImageDTO> imageList = product.getImages().stream()
-                    .filter(img -> img.getVariant() == null || img.getVariant().getId().equals(variant.getId()))
+// .filter(img -> img.getVariant() == null || img.getVariant().getId().equals(variant.getId()))
                     .map(img -> ProductImageDTO.builder()
                             .id(img.getId())
                             .image_url(img.getImageUrl())
@@ -502,6 +502,7 @@ public class OrderController {
                             .variant_id(img.getVariant() != null ? img.getVariant().getId() : null)
                             .build())
                     .toList();
+
 
             return OrderItemDetail.builder()
                     .productId(product.getId())
@@ -753,7 +754,7 @@ public class OrderController {
                     .paymentMethod(order.getPaymentMethod())
                     .status(order.getStatus())
                     .totalAmount(order.getTotalAmount())
-//                    .shippingAddress(addressResponse)
+                    .shippingAddress(addressResponse)
                     .build();
         }).collect(Collectors.toList());
 

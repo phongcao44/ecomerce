@@ -1,18 +1,15 @@
 package com.ra.base_spring_boot.controller;
 
+import com.ra.base_spring_boot.dto.req.CollectVoucherRequest;
 import com.ra.base_spring_boot.dto.req.VoucherRequest;
-import com.ra.base_spring_boot.dto.resp.CollectVoucherRequest;
 import com.ra.base_spring_boot.dto.resp.VoucherResponse;
-import com.ra.base_spring_boot.model.Voucher;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.IVoucherService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/")
