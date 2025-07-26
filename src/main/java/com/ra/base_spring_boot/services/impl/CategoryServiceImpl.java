@@ -135,6 +135,7 @@ public class CategoryServiceImpl implements ICategoryService {
                     .description(current.getDescription())
                     .parentId(current.getParent() != null ? current.getParent().getId() : null)
                     .level(getCategoryLevel(current))
+                    .image(current.getIcon())
                     .build());
 
             optional = Optional.ofNullable(current.getParent());
