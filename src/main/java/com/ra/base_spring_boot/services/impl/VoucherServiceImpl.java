@@ -3,6 +3,7 @@ package com.ra.base_spring_boot.services.impl;
 import com.ra.base_spring_boot.dto.req.VoucherRequest;
 import com.ra.base_spring_boot.dto.resp.VoucherResponse;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
+import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.model.UserVoucher;
 import com.ra.base_spring_boot.model.Voucher;
@@ -53,8 +54,9 @@ public class VoucherServiceImpl implements IVoucherService {
                     return VoucherResponse.builder()
                             .id(v.getId())
                             .code(v.getCode())
-                            .discountPercent(v.getDiscountPercent())
+                            .discountPercent(v.getDiscountPercent() != null ? v.getDiscountPercent() : 0.0)
                             .maxDiscount(v.getMaxDiscount())
+                            .discountAmount(v.getDiscountAmount() != null ? v.getDiscountAmount() : 0.0)
                             .startDate(v.getStartDate())
                             .endDate(v.getEndDate())
                             .minOrderAmount(v.getMinOrderAmount())
@@ -183,35 +185,44 @@ public class VoucherServiceImpl implements IVoucherService {
 
     @Override
     public void collectVoucher(Long userId, String code) {
+        // 1. Kiểm tra User tồn tại
         User user = iUserRepository.findById(userId)
-                .orElseThrow(() -> new HttpBadRequest("Voucher not exist!"));
+                .orElseThrow(() -> new HttpBadRequest("User not found!"));
+
+        // 2. Kiểm tra Voucher tồn tại
         Voucher voucher = iVoucherRepository.findByCode(code)
-                .orElseThrow(() -> new HttpBadRequest("Voucher not exist!"));
-        if(!voucher.isCollectible()) {
+                .orElseThrow(() -> new HttpBadRequest("Voucher not found!"));
+
+        // 3. Kiểm tra Voucher có thể thu thập không
+        if (!voucher.isCollectible()) {
             throw new HttpBadRequest("This voucher cannot be collected");
         }
-        if(iUserVoucherRepository.existsByUserAndVoucher(user,voucher)) {
-            throw new HttpBadRequest("This voucher have been collected");
-        }
-        if(voucher.getCollected()>= voucher.getQuantity()){
-            throw new HttpBadRequest("This voucher have been out of stock");
-        }
-        UserVoucher userVoucher = iUserVoucherRepository
-                .findByUserAndVoucher(user, voucher)
-                .orElse(null);
 
-        if(iUserVoucherRepository.existsByUserAndVoucher(user,voucher)) {
+        // 4. Kiểm tra Voucher đã thu thập hay chưa
+        if (iUserVoucherRepository.existsByUserAndVoucher(user, voucher)) {
             throw new HttpBadRequest("You have already collected this voucher");
-        }else{
-            userVoucher = new UserVoucher();
-            userVoucher.setUser(user);
-            userVoucher.setVoucher(voucher);
-            userVoucher.setUsed(false);
         }
+
+        // 5. Null-safe collected & quantity
+        int collected = voucher.getCollected();
+        int quantity = voucher.getQuantity();
+
+        if (collected >= quantity) {
+            throw new HttpBadRequest("This voucher is out of stock");
+        }
+
+        // 6. Tạo mới UserVoucher
+        UserVoucher userVoucher = new UserVoucher();
+        userVoucher.setUser(user);
+        userVoucher.setVoucher(voucher);
+        userVoucher.setUsed(false);
         iUserVoucherRepository.save(userVoucher);
-        voucher.setCollected(voucher.getCollected() + 1);
+
+        // 7. Cập nhật số lượng đã thu thập của Voucher
+        voucher.setCollected(collected + 1);
         iVoucherRepository.save(voucher);
     }
+
 
     @Override
     public List<VoucherResponse> getCollectibleVouchers(Long userId) {
@@ -227,6 +238,7 @@ public class VoucherServiceImpl implements IVoucherService {
                 .code(voucher.getCode())
                 .discountPercent(voucher.getDiscountPercent())
                 .maxDiscount(voucher.getMaxDiscount())
+                .discountAmount(voucher.getDiscountAmount())
                 .startDate(voucher.getStartDate())
                 .endDate(voucher.getEndDate())
                 .quantity(voucher.getQuantity())

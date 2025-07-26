@@ -13,8 +13,8 @@ import java.time.LocalDateTime;
 public class VoucherResponse {
     private Long id;
     private String code;
-    private double discountPercent;
-    private double maxDiscount;
+    private Double discountPercent;
+    private Double maxDiscount;
     private Double discountAmount;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
