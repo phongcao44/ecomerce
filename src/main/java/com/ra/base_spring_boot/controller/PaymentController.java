@@ -212,6 +212,7 @@ public class PaymentController {
           // return ResponseEntity.status(HttpStatus.NOT_FOUND).body("co truc tracj goy");
        }
        Payment savepayment = paymentRepository.save(payment);
+
       // orderRepository.deleteById(orderId);
        return ResponseEntity.ok(savepayment);
     }

@@ -4,6 +4,8 @@ import com.ra.base_spring_boot.dto.req.FlashSaleItemRequest;
 import com.ra.base_spring_boot.dto.req.FlashSaleRequest;
 import com.ra.base_spring_boot.dto.resp.FlashSaleItemRespone;
 import com.ra.base_spring_boot.dto.resp.FlashSaleResponse;
+import com.ra.base_spring_boot.dto.resp.FlashSaleVariantDetailResponse;
+import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
 import com.ra.base_spring_boot.model.FlashSale;
 import com.ra.base_spring_boot.model.FlashSaleItem;
 import com.ra.base_spring_boot.model.Product;
@@ -15,11 +17,13 @@ import com.ra.base_spring_boot.repository.IProductVariantRepository;
 import com.ra.base_spring_boot.services.IFlashSaleItemService;
 import com.ra.base_spring_boot.services.IFlashSaleService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -38,6 +42,28 @@ public class FlashSaleController {
     @Autowired
     public IFlashSaleService flashSaleService;
 
+    @GetMapping("/flash_sale_items/detail/{id}")
+    public ResponseEntity<?> getFlashSaleVariantDetailsByFlashSaleId(@PathVariable Long id) {
+        try {
+            List<FlashSaleVariantDetailResponse> responses = flashSaleService.getFlashSaleItemsByFlashSaleId(id);
+            return ResponseEntity.ok(responses);
+        } catch (ChangeSetPersister.NotFoundException e) {
+            return new ResponseEntity<>("Không tìm thấy flash sale với ID: " + id, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("/active")
+    public ResponseEntity<?> getActiveFlashSale() {
+        LocalDateTime now = LocalDateTime.now(); // Current time: 01:45 PM +07, July 26, 2025
+        Optional<FlashSale> activeFlashSale = flashSaleRepository.findByStartTimeLessThanEqualAndEndTimeGreaterThanEqual(now, now);
+
+        if (activeFlashSale.isPresent()) {
+            return new ResponseEntity<>(activeFlashSale.get(), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("Không tìm thấy flash sale đang diễn ra", HttpStatus.NOT_FOUND);
+        }
+    }
+
     //flash_sale
     @GetMapping("/list")
     public ResponseEntity<?> getFlashSale() {
@@ -45,11 +71,15 @@ public class FlashSaleController {
         return new ResponseEntity<>(flashSales, HttpStatus.OK);
     }
 
-    @GetMapping("/flash_sale/detail")
-    public ResponseEntity<?> getFlashSaleDetails() {
-        List<FlashSaleResponse> responses = flashSaleService.getFlashSaleDetails();
+    @GetMapping("/detail/{id}")
+    public ResponseEntity<?> getFlashSaleDetails(@PathVariable("id") Long flashSaleId) {
+        List<ProductResponseDTO> responses = flashSaleService.getFlashSaleDetails(flashSaleId);
+        if (responses.isEmpty()) {
+            return new ResponseEntity<>("Không tìm thấy sản phẩm nào trong flash sale này", HttpStatus.NOT_FOUND);
+        }
         return ResponseEntity.ok(responses);
     }
+
 
     @PostMapping("/add")
     public ResponseEntity<?> addFlashSale(@RequestBody FlashSaleRequest request) {

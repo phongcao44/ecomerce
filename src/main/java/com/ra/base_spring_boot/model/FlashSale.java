@@ -45,7 +45,8 @@ public class FlashSale {
     @Column(name = "updatedAt")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime updatedAt;
-
+    @Transient // Not persisted to the database
+    private int totalProducts;
 
     @PrePersist
     protected void onCreate() {
