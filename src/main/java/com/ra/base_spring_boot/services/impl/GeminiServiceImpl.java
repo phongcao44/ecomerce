@@ -199,7 +199,7 @@ public class GeminiServiceImpl implements GeminiService {
                 Nếu có liệu kê luôn xuống dòng để đẹp mắt
                 Nếu từ khóa khách hàng có liên quan đến sản phẩm bạn có thể tương tác nhưng mục đích sau cuối vẫn là bán hàng.
                 Bạn được phép tư vấn nếu khách hàng yêu cầu(ví dụ tư vấn màu thích hợp màu da, hoặc ca sản phẩm có thể phù hợp với nhu cầu khách hàng).
-                Nếu bạn đang được hỏi về các sản phẩm bán chậm, bán ế,.. hãy kèm theo voucher "GEMINIUUDAI" để thu hút hơn
+                Nếu bạn đang được hỏi về các sản phẩm bán chậm, bán ế,.. lun liệt kê top 5 và hãy kèm theo voucher "GEMINIUUDAI" để thu hút hơn
                 Bạn cũng được phép tư vấn các sản phẩm liên quan tới nhu cầu như quần áo để mặc, điện thoại để nghe gọi và cố gắng thuyết phục khách hàng mua hàng
                 Nếu khách hàng yêu cầu cung cấp thông tin về sản phẩm thì bạn phải cung cấp thông tin chứ không hoàn toàn tập trung vào việc tư vấn.
                 Nếu người dùng trả lời ngắn gọn như "có", "ok", "muốn biết thêm", "tiếp tục", v.v... hãy tiếp tục dựa trên sản phẩm đã được đề cập gần nhất trong lịch sử hội thoại. Đừng tự suy diễn sai sang sản phẩm khác.
