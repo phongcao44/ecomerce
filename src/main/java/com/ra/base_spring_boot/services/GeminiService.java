@@ -5,4 +5,5 @@ import com.ra.base_spring_boot.dto.resp.GeminiResponse;
 
 public interface GeminiService {
     GeminiResponse generateContent(GeminiRequest request);
+
 }
