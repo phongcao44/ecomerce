@@ -41,6 +41,17 @@ public class EmailService {
         mailSender.send(message);
     }
 
+    public void sendSimpleMail(String to, String subject, String body) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("nhutlmce@gmail.com");
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText(body);
+
+        mailSender.send(message);
+    }
+
+
     @Value("${spring.mail.username}")
     private String fromEmail;
 
