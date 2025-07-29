@@ -111,6 +111,11 @@ public class CartServiceImpl implements ICartService {
                 }
             }
 
+            // Fetch imageUrl using ProductServiceImpl logic
+            String imageUrl = product.getImages() != null && !product.getImages().isEmpty()
+                    ? product.getImages().get(0).getImageUrl()
+                    : String.format("https://picsum.photos/seed/%d/700/720", product.getId());
+
             return CartItemResponseDTO.builder()
                     .cartItemId(item.getId())
                     .productName(product.getName())
@@ -123,12 +128,11 @@ public class CartServiceImpl implements ICartService {
                     .discountType(discountType)
                     .discountOverrideByFlashSale(discountOverrideByFlashSale)
                     .totalPrice(discountedPrice.multiply(BigDecimal.valueOf(item.getQuantity())))
+                    .imageUrl(imageUrl)
                     .build();
         }).toList();
 
-
         if (items.isEmpty()) {
-            // Nếu không có sản phẩm nào, throw ra một lỗi tùy chỉnh
             throw new HttpNotFound("There are no products in the cart.");
         }
 
@@ -137,7 +141,6 @@ public class CartServiceImpl implements ICartService {
                 .items(items)
                 .build();
     }
-
 
     @Override
     public CartResponseDTO getUserCart(Long userId) {

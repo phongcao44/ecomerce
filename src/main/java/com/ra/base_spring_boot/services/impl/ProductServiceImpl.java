@@ -188,7 +188,6 @@ public class ProductServiceImpl implements IProductService {
             );
         }
 
-
         if (categoryId != null) {
             List<Long> categoryIds = getAllChildCategoryIds(categoryId);
             spec = spec.and((root, query, cb) -> root.get("category").get("id").in(categoryIds));
@@ -223,18 +222,17 @@ public class ProductServiceImpl implements IProductService {
         // Fetch paginated products
         Page<Product> productPage = productRepository.findAll(spec, pageable);
 
-        // Fetch active flash sales
-        List<FlashSale> activeFlashSales = flashSaleRepository.findAll().stream()
-                .filter(flashSale -> flashSale.getStatus() == UserStatus.ACTIVE
-                        && flashSale.getStartTime().isBefore(LocalDateTime.now())
-                        && flashSale.getEndTime().isAfter(LocalDateTime.now()))
-                .toList();
+        // Fetch active flash sale at current time
+        LocalDateTime now = LocalDateTime.now(); // Current time
+        Optional<FlashSale> activeFlashSale = flashSaleRepository.findByStartTimeLessThanEqualAndEndTimeGreaterThanEqual(now, now);
 
         List<FlashSaleItem> activeFlashSaleItems = new ArrayList<>();
-        for (FlashSale flashSale : activeFlashSales) {
-            activeFlashSaleItems.addAll(flashSaleItemRepository.findByFlashSaleId(flashSale.getId()));
+        if (activeFlashSale.isPresent()) {
+            // Fetch flash sale items for the active flash sale
+            activeFlashSaleItems = flashSaleItemRepository.findByFlashSaleId(activeFlashSale.get().getId());
         }
 
+        // Map flash sale items to a map for quick lookup
         Map<Long, FlashSaleItem> flashSaleItemMap = activeFlashSaleItems.stream()
                 .filter(item -> item.getVariant() != null)
                 .collect(Collectors.toMap(item -> item.getVariant().getId(), item -> item, (a, b) -> a));
@@ -353,8 +351,8 @@ public class ProductServiceImpl implements IProductService {
                     .lowestPrice(lowestPrice)
                     .discountedPrice(discountedPrice)
                     .isFlashSale(isFlashSale)
-                    .discountOverrideByFlashSale(discountOverrideByFlashSale) // Added discountOverrideByFlashSale
-                    .discountType(discountType) // Added discountType
+                    .discountOverrideByFlashSale(discountOverrideByFlashSale)
+                    .discountType(discountType)
                     .build();
         });
 

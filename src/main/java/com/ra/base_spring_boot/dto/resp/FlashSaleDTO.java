@@ -20,5 +20,5 @@ public class FlashSaleDTO {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private int totalProducts; // Trường mới
+    private int totalProducts;
 }
