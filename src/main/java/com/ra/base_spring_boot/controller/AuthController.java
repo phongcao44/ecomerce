@@ -2,11 +2,13 @@ package com.ra.base_spring_boot.controller;
 
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.*;
+import com.ra.base_spring_boot.dto.resp.AuthRedirectResponse;
 import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.IAuthService;
 import com.ra.base_spring_boot.services.IUserService;
 import com.ra.base_spring_boot.services.impl.FacebookUserService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -95,6 +97,33 @@ public class AuthController {
                 .code(200)
                 .data("Check your email to reset password")
                 .build());
+    }
+
+    @GetMapping("/google-login")
+    public ResponseEntity<?> redirectToGoogle(HttpServletRequest request) {
+        String redirectUrl = authService.getGoogleRedirectUrl(request);
+        return ResponseEntity.ok().body(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .message("API login Google")
+                        .data(new AuthRedirectResponse(redirectUrl))
+                        .build()
+        );
+    }
+
+    @Operation(summary = "Xử lý mã code từ Google và trả về JWT token")
+    @PostMapping("/google/code")
+    public ResponseEntity<?> handleGoogleCode(@RequestBody OAuth2CodeRequestDTO request) {
+        var response = authService.exchangeGoogleCodeForToken(request.getCode(), request.getRedirectUri());
+        return ResponseEntity.ok().body(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .message("Đăng nhập Google thành công")
+                        .data(response)
+                        .build()
+        );
     }
 
     @PostMapping("/reset-password")
