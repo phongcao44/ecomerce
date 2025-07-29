@@ -65,6 +65,7 @@ public class GeminiServiceImpl implements GeminiService {
                 .collect(Collectors.joining("\n"));
 
         // 3. Lấy chương trình flash sale
+<<<<<<< src/main/java/com/ra/base_spring_boot/services/impl/GeminiServiceImpl.java
 //        String flashSalePrompt = flashSaleService.getFlashSale().stream()
 //                .map(flashSale -> String.format(
 //                        "- Tên: %s\n  Mô tả: %s\n  Bắt đầu: %s\n  Kết thúc: %s\n  Trạng thái: %s",
@@ -75,6 +76,17 @@ public class GeminiServiceImpl implements GeminiService {
 //                        flashSale.getStatus()
 //                ))
 //                .collect(Collectors.joining("\n"));
+
+        String flashSalePrompt = flashSaleService.getFlashSale().stream()
+                .map(flashSale -> String.format(
+                        "- Tên: %s\n  Mô tả: %s\n  Bắt đầu: %s\n  Kết thúc: %s\n  Trạng thái: %s",
+                        flashSale.getName(),
+                        flashSale.getDescription(),
+                        flashSale.getStartTime(),
+                        flashSale.getEndTime(),
+                        flashSale.getStatus()
+                ))
+                .collect(Collectors.joining("\n"));
 
         // 4. Lấy thông tin sản phẩm
         List<ProductResponseDTO> products = productService.findAll();
@@ -125,6 +137,24 @@ public class GeminiServiceImpl implements GeminiService {
                     p.getTotalReviews()
             ));
         }
+        List<ProductResponseDTO> top5Products = productService.getTop5BestSellingProducts();
+        promptBuilder.append("Dưới đây là 5 sản phẩm bán chạy nhất trong hệ thống:\n");
+
+        for (int i = 0; i < top5Products.size(); i++) {
+            ProductResponseDTO p = top5Products.get(i);
+            promptBuilder.append(String.format(
+                    "%d. %s - Giá: %.0f VNĐ - Đã bán: %d lần - Đánh giá trung bình: %.1f⭐ - Lượt đánh giá: %d\n",
+                    i + 1,
+                    p.getName(),
+                    p.getDiscountedPrice() != null ? p.getDiscountedPrice().doubleValue() : p.getPrice().doubleValue(),
+                    p.getVariants().stream()
+                            .mapToInt(v -> v.getStockQuantity() != null ? v.getStockQuantity() : 0)
+                            .sum(),
+                    p.getAverageRating() != null ? p.getAverageRating() : 0.0,
+                    p.getTotalReviews() != null ? p.getTotalReviews() : 0
+            ));
+        }
+
         promptBuilder.append("\nBạn muốn xem thêm thông tin về sản phẩm nào không?\n\n");
         //lấy đồ ế lòi ra
         List<Top5Product> leastSelling = productService.getTop5LestSellingProducts();
@@ -195,7 +225,11 @@ public class GeminiServiceImpl implements GeminiService {
                 Nếu có liệu kê luôn xuống dòng để đẹp mắt
                 Nếu từ khóa khách hàng có liên quan đến sản phẩm bạn có thể tương tác nhưng mục đích sau cuối vẫn là bán hàng.
                 Bạn được phép tư vấn nếu khách hàng yêu cầu(ví dụ tư vấn màu thích hợp màu da, hoặc ca sản phẩm có thể phù hợp với nhu cầu khách hàng).
+<<<<<<< src/main/java/com/ra/base_spring_boot/services/impl/GeminiServiceImpl.java
                 Nếu bạn đang được hỏi về các sản phẩm bán chậm, bán ế,.. hãy kèm theo voucher "GEMINIUUDAI" để thu hút hơn
+=======
+                Nếu bạn đang được hỏi về các sản phẩm bán chậm, bán ế,.. lun liệt kê top 5 và hãy kèm theo voucher "GEMINIUUDAI" để thu hút hơn
+>>>>>>> src/main/java/com/ra/base_spring_boot/services/impl/GeminiServiceImpl.java
                 Bạn cũng được phép tư vấn các sản phẩm liên quan tới nhu cầu như quần áo để mặc, điện thoại để nghe gọi và cố gắng thuyết phục khách hàng mua hàng
                 Nếu khách hàng yêu cầu cung cấp thông tin về sản phẩm thì bạn phải cung cấp thông tin chứ không hoàn toàn tập trung vào việc tư vấn.
                 Nếu người dùng trả lời ngắn gọn như "có", "ok", "muốn biết thêm", "tiếp tục", v.v... hãy tiếp tục dựa trên sản phẩm đã được đề cập gần nhất trong lịch sử hội thoại. Đừng tự suy diễn sai sang sản phẩm khác.
@@ -249,6 +283,7 @@ public class GeminiServiceImpl implements GeminiService {
                 top5Products,
                 leastSelling,
 //                flashSalePrompt,
+                flashSalePrompt,
                 focusProductContext,
                 historyContext,
                 effectivePrompt);
