@@ -6,6 +6,7 @@ import com.ra.base_spring_boot.dto.req.FormLogin;
 import com.ra.base_spring_boot.dto.req.FormRegister;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
 import com.ra.base_spring_boot.model.User;
+import jakarta.servlet.http.HttpServletRequest;
 
 public interface IAuthService
 {
@@ -17,6 +18,10 @@ public interface IAuthService
     void logout(String token, User user);
 
     void forgotPassword(ForgotPasswordRequest request);
+
+    String getGoogleRedirectUrl(HttpServletRequest request);
+
+    Object exchangeGoogleCodeForToken(String code, String redirectUri);
 
     void changePassword(String email, ChangePasswordRequest request);
 

@@ -1,6 +1,5 @@
 package com.ra.base_spring_boot.security;
 
-import com.ra.base_spring_boot.advice.OAuth2SuccessHandler;
 import com.ra.base_spring_boot.model.constants.RoleName;
 import com.ra.base_spring_boot.security.exception.AccessDenied;
 import com.ra.base_spring_boot.security.exception.JwtEntryPoint;
@@ -72,17 +71,14 @@ public class SecurityConfig
                         .authenticationEntryPoint(jwtEntryPoint)
                         .accessDeniedHandler(accessDenied)
                 )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
-                .addFilterAfter(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> {
-                            userInfo
-                                    .oidcUserService(customOAuth2UserService) // Google
-                                    .userService(facebookUserService);    // Facebook
-                        })
-                        .successHandler(oAuth2SuccessHandler())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(
+                        exception -> exception
+                                .authenticationEntryPoint(jwtEntryPoint)
+                                .accessDeniedHandler(accessDenied)
                 )
+                .addFilterAfter(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
@@ -105,10 +101,6 @@ public class SecurityConfig
     public AuthenticationManager authenticationManager(AuthenticationConfiguration auth) throws Exception
     {
         return auth.getAuthenticationManager();
-    }
-    @Bean
-    public OAuth2SuccessHandler oAuth2SuccessHandler() {
-        return new OAuth2SuccessHandler(jwtProvider);
     }
 
 }
