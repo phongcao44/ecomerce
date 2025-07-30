@@ -65,7 +65,7 @@ public class GeminiServiceImpl implements GeminiService {
                 .collect(Collectors.joining("\n"));
 
         // 3. Lấy chương trình flash sale
-<<<<<<< src/main/java/com/ra/base_spring_boot/services/impl/GeminiServiceImpl.java
+//<<<<<<< src/main/java/com/ra/base_spring_boot/services/impl/GeminiServiceImpl.java
 //        String flashSalePrompt = flashSaleService.getFlashSale().stream()
 //                .map(flashSale -> String.format(
 //                        "- Tên: %s\n  Mô tả: %s\n  Bắt đầu: %s\n  Kết thúc: %s\n  Trạng thái: %s",
@@ -122,21 +122,21 @@ public class GeminiServiceImpl implements GeminiService {
             }
         });
         //lấy bestselling
-        List<Top5Product> top5Products = productService.getTop5LestSellingProducts();
-        promptBuilder.append("Dưới đây là 5 sản phẩm bán chạy nhất trong hệ thống:\n");
-
-        for (int i = 0; i < top5Products.size(); i++) {
-            Top5Product p = top5Products.get(i);
-            promptBuilder.append(String.format(
-                    "%d. %s - Giá: %.0f VNĐ - Đã bán: %d lần - Đánh giá trung bình: %.1f⭐ - Lượt xem: %d\n",
-                    i + 1,
-                    p.getProductName(),
-                    p.getPrice(),
-                    p.getPurchaseCount(),
-                    p.getAverageRating() != null ? p.getAverageRating() : 0,
-                    p.getTotalReviews()
-            ));
-        }
+//        List<Top5Product> top5Products = productService.getTop5LestSellingProducts();
+//        promptBuilder.append("Dưới đây là 5 sản phẩm bán chạy nhất trong hệ thống:\n");
+//
+//        for (int i = 0; i < top5Products.size(); i++) {
+//            Top5Product p = top5Products.get(i);
+//            promptBuilder.append(String.format(
+//                    "%d. %s - Giá: %.0f VNĐ - Đã bán: %d lần - Đánh giá trung bình: %.1f⭐ - Lượt xem: %d\n",
+//                    i + 1,
+//                    p.getProductName(),
+//                    p.getPrice(),
+//                    p.getPurchaseCount(),
+//                    p.getAverageRating() != null ? p.getAverageRating() : 0,
+//                    p.getTotalReviews()
+//            ));
+//        }
         List<ProductResponseDTO> top5Products = productService.getTop5BestSellingProducts();
         promptBuilder.append("Dưới đây là 5 sản phẩm bán chạy nhất trong hệ thống:\n");
 

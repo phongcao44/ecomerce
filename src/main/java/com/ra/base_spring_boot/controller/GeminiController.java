@@ -19,19 +19,19 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/gemini")
 @CrossOrigin(origins = "*")
 public class GeminiController {
-    @Autowired
-    private GeminiService geminiService;
-
-    @Autowired
-    private IColorService colorService;
-    @Autowired
-    private IProductService productService;
-
-
-    @PostMapping
-    public ResponseEntity<GeminiResponse> chat(@RequestBody GeminiRequest request) {
-        GeminiResponse response = geminiService.generateContent(request);
-        return ResponseEntity.ok(response);
-    }
+//    @Autowired
+//    private GeminiService geminiService;
+//
+//    @Autowired
+//    private IColorService colorService;
+//    @Autowired
+//    private IProductService productService;
+//
+//
+//    @PostMapping
+//    public ResponseEntity<GeminiResponse> chat(@RequestBody GeminiRequest request) {
+//        GeminiResponse response = geminiService.generateContent(request);
+//        return ResponseEntity.ok(response);
+//    }
 
 }
