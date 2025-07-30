@@ -18,6 +18,7 @@ import com.ra.base_spring_boot.services.IFlashSaleItemService;
 import com.ra.base_spring_boot.services.IFlashSaleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -41,7 +42,8 @@ public class FlashSaleController {
     public IProductRepository productRepository;
     @Autowired
     public IFlashSaleService flashSaleService;
-
+    @Autowired
+    public IFlashSaleItemService flashSaleItemService;
     @GetMapping("/flash_sale_items/detail/{id}")
     public ResponseEntity<?> getFlashSaleVariantDetailsByFlashSaleId(@PathVariable Long id) {
         try {
@@ -209,5 +211,11 @@ public class FlashSaleController {
             flashSaleItemRepository.delete(flashSaleItem.get());
             return new ResponseEntity<>("xóa goy", HttpStatus.OK);
         }
+    }
+    @GetMapping("/flash_sale_items/top1")
+    public ResponseEntity<?> getTop1(
+    ){
+      FlashSaleResponse flashSaleResponse =  flashSaleItemService.getTop1();
+      return new ResponseEntity<>(flashSaleResponse, HttpStatus.OK);
     }
 }

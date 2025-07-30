@@ -17,6 +17,7 @@ import java.util.List;
 @Data
 @Builder
 public class FlashSaleResponse {
+    private Long productId;
     private Long id;
     private String flashSaleName;
     private String flashSaleDescription;

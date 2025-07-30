@@ -131,7 +131,6 @@ public class RateServiceImpl implements IRateService {
     public List<?> getAllProductReviews() {
         List<ListProductReviewResponse> reviews = reviewRepo.findReviewSummariesGroupedByProduct();
         int total = reviews.size();
-
         return reviews.stream().map(
                 review -> ListProductReviewResponse.builder()
                         .productId(review.getProductId())
