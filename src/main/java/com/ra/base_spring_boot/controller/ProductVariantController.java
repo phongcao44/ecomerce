@@ -1,21 +1,17 @@
 package com.ra.base_spring_boot.controller;
 
 
-import com.ra.base_spring_boot.dto.DataError;
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.ProductVariantRequestDTO;
-import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
+import com.ra.base_spring_boot.dto.req.UpdateStockRequestDTO;
 import com.ra.base_spring_boot.dto.resp.ProductVariantDetailDTO;
 import com.ra.base_spring_boot.dto.resp.ProductVariantResponseDTO;
-import com.ra.base_spring_boot.model.ProductVariant;
 import com.ra.base_spring_boot.services.IProductVariantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -89,6 +85,20 @@ public class ProductVariantController {
                         .build()
         );
     }
+
+    @PutMapping("/admin/product-variants/update-stock/{id}")
+    public ResponseEntity<?> updateStockQuantity(@PathVariable Long id,
+                                                 @Valid @RequestBody UpdateStockRequestDTO request) {
+        ProductVariantResponseDTO response = productVariantService.updateStockQuantity(id, request.getStockQuantity());
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data(response)
+                        .build()
+        );
+    }
+
 
 
     @DeleteMapping("/admin/product-variants/delete/{id}")
