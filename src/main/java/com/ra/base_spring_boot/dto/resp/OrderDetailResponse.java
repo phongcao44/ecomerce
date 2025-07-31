@@ -16,11 +16,16 @@ import java.util.List;
 @Builder
 public class OrderDetailResponse {
     private Long orderId;
+    private String orderCode;
     private String status;
     private String paymentStatus;
     private String paymentMethod;
     private String fulfillmentStatus;
     private LocalDateTime createdAt;
+    private String note; // Thêm
+    private String cancellationReason; // Thêm
+    private LocalDateTime cancelledAt; // Thêm
+    private LocalDateTime updatedAt;
 
     private BigDecimal subTotal;
     private BigDecimal discountAmount;

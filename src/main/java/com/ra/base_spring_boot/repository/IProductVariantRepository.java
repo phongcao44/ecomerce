@@ -11,4 +11,6 @@ public interface IProductVariantRepository extends JpaRepository<ProductVariant,
     List<ProductVariant> findByProduct_NameIgnoreCase(String productName);
 
     Long Id(Long id);
+    boolean existsBySku(String sku);
+    boolean existsByBarcode(String barcode);
 }

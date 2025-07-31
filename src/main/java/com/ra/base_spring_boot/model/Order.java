@@ -18,13 +18,17 @@ import java.util.List;
 @Builder
 @Table(name = "orders")
 public class Order {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
     @JsonIgnore
     @JoinColumn(name = "user_id")
     private User user;
+
+    @Column(name = "order_code", nullable = false, unique = true, length = 20)
+    private String orderCode;
 
     @Column(name = "total_amount")
     private BigDecimal totalAmount;
@@ -40,6 +44,8 @@ public class Order {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private ShippingFee shippingFee;
@@ -48,7 +54,6 @@ public class Order {
     @JsonIgnore
     @JoinColumn(name = "shipping_address_id")
     private Address shippingAddress;
-
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> orderItems;
@@ -59,9 +64,20 @@ public class Order {
 
     @Column(name = "used_point")
     private Integer usedPoints;
+
     @Column(name = "discount_percent")
     private Double discountPercent;
+
     @Column(name = "discount_amount")
     private Double discountAmount;
+
+    @Column(name = "note", columnDefinition = "TEXT")
+    private String note;
+
+    @Column(name = "cancellation_reason", columnDefinition = "TEXT")
+    private String cancellationReason;
+
+    @Column(name = "cancelled_at")
+    private LocalDateTime cancelledAt;
 
 }

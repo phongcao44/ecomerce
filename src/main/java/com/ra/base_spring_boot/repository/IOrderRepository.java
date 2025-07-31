@@ -46,5 +46,5 @@ WHERE o.user.id = :userId
 """)
     List<Long> findPurchasedProductIdsByUser(@Param("userId") Long userId);
 
-
+    boolean existsByOrderCode(String orderCode);
 }

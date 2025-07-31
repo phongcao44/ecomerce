@@ -12,13 +12,16 @@ import com.ra.base_spring_boot.services.IProductService;
 import com.ra.base_spring_boot.services.IProductVariantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,7 +37,7 @@ public class ProductVariantServiceImpl implements IProductVariantService {
     @Autowired
     private ISizeRepository sizeRepository;
     @Autowired
-    private IFlashSaleItemRepository  flashSaleItemRepository;
+    private IFlashSaleItemRepository flashSaleItemRepository;
     @Autowired
     private IFlashSaleRepository flashSaleRepository;
 
@@ -95,7 +98,6 @@ public class ProductVariantServiceImpl implements IProductVariantService {
             return dto;
         }).collect(Collectors.toList());
     }
-
 
 
 //    @Override
@@ -171,7 +173,6 @@ public class ProductVariantServiceImpl implements IProductVariantService {
     }
 
 
-
     @Override
     public ProductVariantResponseDTO create(ProductVariantRequestDTO dto) {
         Product product = productRepository.findById(dto.getProductId())
@@ -192,24 +193,100 @@ public class ProductVariantServiceImpl implements IProductVariantService {
                     .orElseThrow(() -> new HttpNotFound("SizeId Not Found"));
         }
 
-        ProductVariant variant = ProductVariant.builder()
-                .product(product)
-                .color(color)
-                .size(size)
-                .stockQuantity(dto.getStockQuantity())
-                .priceOverride(dto.getPriceOverride())
-                .build();
+        String generatedSKU;
+        String generatedBarcode;
+        ProductVariant variant = null;
+        boolean isUnique = false;
+        int maxAttempts = 5; // Số lần thử tối đa để tránh vòng lặp vô hạn
 
-        variant = productVariantRepository.save(variant);
+        for (int attempt = 0; attempt < maxAttempts && !isUnique; attempt++) {
+            try {
+                generatedSKU = generateSKU(product, color, size);
+                generatedBarcode = generateEAN13Barcode();
+
+                // Kiểm tra trùng lặp trước khi lưu
+                if (productVariantRepository.existsBySku(generatedSKU)) {
+                    continue; // Nếu SKU đã tồn tại, thử lại
+                }
+                if (productVariantRepository.existsByBarcode(generatedBarcode)) {
+                    continue; // Nếu barcode đã tồn tại, thử lại
+                }
+
+                variant = ProductVariant.builder()
+                        .product(product)
+                        .color(color)
+                        .size(size)
+                        .stockQuantity(dto.getStockQuantity())
+                        .priceOverride(dto.getPriceOverride())
+                        .sku(generatedSKU)
+                        .barcode(generatedBarcode)
+                        .build();
+
+                variant = productVariantRepository.save(variant);
+                isUnique = true; // Thoát vòng lặp nếu lưu thành công
+            } catch (DataIntegrityViolationException e) {
+                // Xử lý lỗi trùng lặp do cơ sở dữ liệu
+                if (attempt == maxAttempts - 1) {
+                    throw new RuntimeException("Không thể tạo SKU hoặc barcode duy nhất sau " + maxAttempts + " lần thử");
+                }
+            }
+        }
 
         return ProductVariantResponseDTO.builder()
                 .id(variant.getId())
                 .productName(product.getName())
-                .colorName(color !=null ? color.getName() : null)
-                .sizeName(size !=null ? size.getSizeName() : null)
+                .colorName(color != null ? color.getName() : null)
+                .sizeName(size != null ? size.getSizeName() : null)
                 .stockQuantity(variant.getStockQuantity())
                 .priceOverride(variant.getPriceOverride())
+                .sku(variant.getSku())
+                .barcode(variant.getBarcode())
                 .build();
+    }
+    private String removeVietnameseDiacritics(String input) {
+        String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);
+        return normalized.replaceAll("\\p{M}", "") // remove accent marks
+                .replaceAll("[^a-zA-Z0-9]", "") // remove special characters and spaces
+                .toUpperCase(); // optional: uppercase
+    }
+
+
+    private String generateSKU(Product product, Color color, Size size) {
+        String colorCode = color != null ? removeVietnameseDiacritics(color.getName()) : "N";
+        String sizeCode = size != null ? removeVietnameseDiacritics(size.getSizeName()) : "N";
+        int randomSuffix = new Random().nextInt(90000) + 10000;
+
+        return String.format("SKU-%d-%s-%s-%d",
+                product.getId(),
+                colorCode,
+                sizeCode,
+                System.currentTimeMillis() % 100000
+        );
+    }
+
+
+    public String generateEAN13Barcode() {
+        String countryCode = "893"; // Mã Việt Nam theo chuẩn EAN
+        String manufacturerCode = String.format("%04d", new Random().nextInt(10_000));
+        String productCode = String.format("%05d", new Random().nextInt(100_000));
+
+        String base = countryCode + manufacturerCode + productCode;
+
+        int checksum = calculateEAN13Checksum(base);
+        return base + checksum;
+    }
+
+    private int calculateEAN13Checksum(String base12Digits) {
+        if (base12Digits.length() != 12) throw new IllegalArgumentException("Must be 12 digits");
+
+        int sum = 0;
+        for (int i = 0; i < 12; i++) {
+            int digit = Character.getNumericValue(base12Digits.charAt(i));
+            sum += (i % 2 == 0) ? digit : digit * 3;
+        }
+
+        int mod = sum % 10;
+        return (mod == 0) ? 0 : 10 - mod;
     }
 
 
@@ -281,10 +358,10 @@ public class ProductVariantServiceImpl implements IProductVariantService {
                 .price(product.getPrice())
                 .priceOverride(variant.getPriceOverride())
                 .stockQuantity(variant.getStockQuantity())
-                .colorName(color !=null ? color.getName() : null)
-                .colorHex(color !=null ? color.getHexCode() : null)
-                .sizeName(size !=null ? size.getSizeName() : null)
-                .sizeDescription(size !=null ? size.getDescription() : null)
+                .colorName(color != null ? color.getName() : null)
+                .colorHex(color != null ? color.getHexCode() : null)
+                .sizeName(size != null ? size.getSizeName() : null)
+                .sizeDescription(size != null ? size.getDescription() : null)
                 .build();
     }
 
@@ -295,7 +372,7 @@ public class ProductVariantServiceImpl implements IProductVariantService {
             Color color = variant.getColor();
             Size size = variant.getSize();
             String productName = (variant.getProduct() != null) ? variant.getProduct().getName() : "Chưa gán sản phẩm";
-            System.out.println(product.getId()+"=============");
+            System.out.println(product.getId() + "=============");
             return ProductVariantDetailDTO.builder()
                     .variantId(variant.getId())
                     .productName(productName)
