@@ -48,7 +48,12 @@ public class SecurityConfig
         return http
                 .cors(cf -> cf.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.setAllowedOrigins(List.of("http://localhost:5173"));
+//                    config.setAllowedOrigins(List.of("http://localhost:5173"));
+                    config.setAllowedOrigins(List.of(
+                            "http://localhost:5173",
+                            "https://dff5f19a4f17.ngrok-free.app" // <-- thêm domain FE
+                    ));
+
                     config.setAllowedMethods(List.of("*"));
                     config.setAllowCredentials(true);
                     config.setAllowedHeaders(List.of("*"));
@@ -60,6 +65,7 @@ public class SecurityConfig
                         .requestMatchers("/api/v1/admin/**")
                         .hasAnyAuthority(RoleName.ROLE_MODERATOR.toString(), RoleName.ROLE_ADMIN.toString())
                         .requestMatchers("/api/v1/user/review/**").permitAll()
+                        .requestMatchers("https://dff5f19a4f17.ngrok-free.app/**").permitAll()
                         .requestMatchers("/api/v1/user/review/edit").hasAuthority(RoleName.ROLE_USER.toString())
                         .requestMatchers("/api/v1/user/**").hasAuthority(RoleName.ROLE_USER.toString())
                         .requestMatchers("/api/v1/product-variants")
