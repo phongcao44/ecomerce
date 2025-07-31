@@ -13,4 +13,5 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UpdateOrderStatusRequest {
     private OrderStatus status;
+    private String cancellationReason;
 }

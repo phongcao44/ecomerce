@@ -12,6 +12,7 @@ import com.ra.base_spring_boot.dto.DataError;
 
 import com.ra.base_spring_boot.dto.req.AddressRequest;
 import com.ra.base_spring_boot.dto.req.UpdateOrderStatusRequest;
+import com.ra.base_spring_boot.dto.req.CancelOrderRequest;
 import com.ra.base_spring_boot.dto.resp.*;
 import com.ra.base_spring_boot.model.*;
 
@@ -65,6 +66,7 @@ import java.awt.*;
 import java.awt.Image;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -93,6 +95,7 @@ public class OrderController {
     @Autowired
     private IGmailService  gmailService;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private static final Logger logger = LoggerFactory.getLogger(OrderController.class);
 
     @GetMapping("/admin/order/paginate")
     public ResponseEntity<?> getAllPaginate(
@@ -145,6 +148,104 @@ public class OrderController {
         });
 
         return ResponseEntity.ok(responsePage);
+    }
+
+
+    @PutMapping("/user/order/cancel/{id}")
+    @Transactional
+    public ResponseEntity<?> cancelOrder(
+            @AuthenticationPrincipal MyUserDetails userDetails,
+            @PathVariable Long id,
+            @RequestBody CancelOrderRequest request
+    ) {
+        try {
+            // Kiểm tra quyền người dùng
+            Long userId = userDetails.getUser().getId();
+            Optional<Order> optionalOrder = iOrderRepository.findById(id);
+            if (optionalOrder.isEmpty()) {
+                logger.warn("Order not found: id={}", id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new DataError("Không tìm thấy đơn hàng", 404));
+            }
+
+            Order order = optionalOrder.get();
+
+            // Kiểm tra quyền sở hữu
+            if (!order.getUser().getId().equals(userId)) {
+                logger.warn("User {} attempted to cancel order {} without permission", userId, id);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new DataError("Không có quyền hủy đơn hàng", 403));
+            }
+
+            // Kiểm tra trạng thái hợp lệ để hủy (tham khảo từ edit)
+            if (order.getStatus() != OrderStatus.PENDING && order.getStatus() != OrderStatus.CONFIRMED) {
+                logger.warn("Cannot cancel order {}: invalid status {}", id, order.getStatus());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new DataError("Chỉ có thể hủy đơn hàng ở trạng thái PENDING hoặc CONFIRMED", 400));
+            }
+
+            // Kiểm tra lý do hủy
+            if (request.getCancellationReason() == null || request.getCancellationReason().trim().isEmpty()) {
+                logger.warn("Cancel order {} failed: missing cancellation reason", id);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new DataError("Lý do hủy đơn hàng là bắt buộc", 400));
+            }
+
+            // Cập nhật thông tin hủy
+            order.setStatus(OrderStatus.CANCELLED);
+            order.setCancellationReason(request.getCancellationReason());
+            order.setCancelledAt(LocalDateTime.now());
+            order.setUpdatedAt(LocalDateTime.now());
+
+            // Lưu đơn hàng
+            Order updatedOrder = orderService.save(order);
+            logger.info("Order {} cancelled by user {} with reason: {}", id, userId, request.getCancellationReason());
+
+            // Tạo response (tương tự edit)
+            User user = updatedOrder.getUser();
+            UserResponse userDto = UserResponse.builder()
+                    .id(user.getId())
+                    .username(user.getUsername())
+                    .email(user.getEmail())
+                    .build();
+
+            Address address = updatedOrder.getShippingAddress();
+            AddressResponse addressResponse = AddressResponse.builder()
+                    .id(address.getId())
+                    .userId(address.getUser().getId())
+                    .fulladdress(address.getFullAddress())
+                    .phone(address.getPhone())
+                    .province(address.getProvince())
+                    .recipient_name(address.getRecipientName())
+                    .ward(address.getWard())
+                    .build();
+
+            List<OrderItemDetailDTO> orderItemDetailResponses = updatedOrder.getOrderItems().stream()
+                    .map(OrderItemDetailDTO::fromOrderItem)
+                    .collect(Collectors.toList());
+
+            OrderResponse response = OrderResponse.builder()
+                    .orderId(updatedOrder.getId())
+                    .orderCode(updatedOrder.getOrderCode())
+                    .username(userDto.getUsername())
+                    .createdAt(updatedOrder.getCreatedAt())
+                    .paymentMethod(updatedOrder.getPaymentMethod())
+                    .status(updatedOrder.getStatus())
+                    .totalAmount(updatedOrder.getTotalAmount())
+                    .note(updatedOrder.getNote())
+                    .cancellationReason(updatedOrder.getCancellationReason())
+                    .cancelledAt(updatedOrder.getCancelledAt())
+                    .updatedAt(updatedOrder.getUpdatedAt())
+                    .shippingAddress(addressResponse)
+                    .orderItems(orderItemDetailResponses)
+                    .build();
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Error cancelling order {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new DataError(e.getMessage(), 400));
+        }
     }
 
 
@@ -206,15 +307,30 @@ public class OrderController {
 
             // Kiểm tra trạng thái hợp lệ
             if (currentStatus == OrderStatus.DELIVERED &&
-                    status != OrderStatus.RETURNED &&
-                    status != OrderStatus.CANCELLED) {
+                    status != OrderStatus.RETURNED) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new DataError("Đơn hàng đã giao chỉ được đổi sang RETURNED hoặc CANCELLED", 400));
+                        .body(new DataError("Đơn hàng đã giao chỉ được đổi sang RETURNED", 400));
             }
 
+            // Kiểm tra nếu trạng thái mới là CANCELLED
+            if (status == OrderStatus.CANCELLED) {
+                if (currentStatus == OrderStatus.DELIVERED || currentStatus == OrderStatus.RETURNED) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(new DataError("Đơn hàng đã giao hoặc đã trả không thể hủy", 400));
+                }
+                if (request.getCancellationReason() == null || request.getCancellationReason().trim().isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(new DataError("Lý do hủy đơn hàng là bắt buộc khi hủy đơn", 400));
+                }
+                order.setCancellationReason(request.getCancellationReason());
+                order.setCancelledAt(LocalDateTime.now());
+            } else {
+                order.setCancellationReason(null);
+                order.setCancelledAt(null);
+            }
 
-            // Cập nhật trạng thái
-         //   order.setStatus(status);
+            // Cập nhật updatedAt
+            order.setUpdatedAt(LocalDateTime.now());
 
             // Nếu chuyển sang DELIVERED → trừ kho
             if (status == OrderStatus.DELIVERED) {
@@ -226,46 +342,45 @@ public class OrderController {
                     if (newStock < 0) {
                         throw new RuntimeException("Sản phẩm " + variant.getId() + " không đủ tồn kho.");
                     }
-
                     variant.setStockQuantity(newStock);
-
                 }
-                order.setStatus(status);
 
                 // Gửi email mời đánh giá
                 String subject = "Cảm ơn bạn đã mua hàng tại Ecommer!";
                 String body = """
-            Xin chào %s,
+                        Xin chào %s,
 
-            Cảm ơn bạn đã đặt hàng tại cửa hàng của chúng tôi. 
-            Đơn hàng của bạn đã được giao thành công. Chúng tôi rất mong nhận được đánh giá từ bạn.
+                        Cảm ơn bạn đã đặt hàng tại cửa hàng của chúng tôi. 
+                        Đơn hàng của bạn (Mã: %s) đã được giao thành công. 
+                        Chúng tôi rất mong nhận được đánh giá từ bạn.
 
-            Vui lòng nhấn vào link sau để đánh giá sản phẩm:
-            https://ecomer/review?orderId=%d
+                        Vui lòng nhấn vào link sau để đánh giá sản phẩm:
+                        https://ecomer/review?orderId=%d
 
-            Trân trọng,
-            Đội ngũ Ecommer
-            """.formatted(order.getUser().getUsername(), order.getId());
+                        Trân trọng,
+                        Đội ngũ Ecommer
+                        """.formatted(order.getUser().getUsername(), order.getOrderCode(), order.getId());
 
                 try {
                     gmailService.sendEmailAfterDelayInMinutes(order.getUser().getEmail(), subject, body, 1);
                 } catch (Exception e) {
                     e.printStackTrace(); // Có thể log lỗi nếu cần
                 }
-            }
-            // Gửi SMS (sài khóa lại)
-            String phoneNumber = order.getShippingAddress().getPhone();
-            String smsMessage = "Cảm ơn bạn đã mua hàng tại Ecommer! Vui lòng đánh giá đơn hàng: https://ecomer/review?orderId=%d".formatted(order.getId());
-            scheduler.schedule(() -> {
-            try {
-                smsService.sendSms(phoneNumber, smsMessage);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            }, 1, TimeUnit.MINUTES);
-            //khóa sms tới đây nè
 
-            // Sau khi mọi thứ hợp lệ thì cập nhật trạng thái
+                // Gửi SMS
+                String phoneNumber = order.getShippingAddress().getPhone();
+                String smsMessage = "Cảm ơn bạn đã mua hàng tại Ecommer! Vui lòng đánh giá đơn hàng (Mã: %s): https://ecomer/review?orderId=%d"
+                        .formatted(order.getOrderCode(), order.getId());
+                scheduler.schedule(() -> {
+                    try {
+                        smsService.sendSms(phoneNumber, smsMessage);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }, 1, TimeUnit.MINUTES);
+            }
+
+            // Cập nhật trạng thái
             order.setStatus(status);
 
             // Lưu lại đơn hàng
@@ -299,41 +414,31 @@ public class OrderController {
             // Trả về OrderResponse
             OrderResponse response = OrderResponse.builder()
                     .orderId(updatedOrder.getId())
-
+                    .orderCode(updatedOrder.getOrderCode())
                     .username(userDto.getUsername())
-
-                    //.userId(user.getId())
-
                     .createdAt(updatedOrder.getCreatedAt())
                     .paymentMethod(updatedOrder.getPaymentMethod())
                     .status(updatedOrder.getStatus())
                     .totalAmount(updatedOrder.getTotalAmount())
-
+                    .note(updatedOrder.getNote())
+                    .cancellationReason(updatedOrder.getCancellationReason())
+                    .cancelledAt(updatedOrder.getCancelledAt())
+                    .updatedAt(updatedOrder.getUpdatedAt())
                     .shippingAddress(addressResponse)
                     .orderItems(orderItemDetailResponses)
                     .build();
+
+            // Tích điểm khi trạng thái là DELIVERED
             if (status == OrderStatus.DELIVERED) {
                 pointService.accumulatePoints(updatedOrder);
             }
 
             return ResponseEntity.ok(response);
-        }catch (Exception e) {
+        } catch (Exception e) {
             return new ResponseEntity<>(new DataError(e.getMessage(), 400), HttpStatus.BAD_REQUEST);
         }
     }
 
-//    @DeleteMapping("/admin/order/delete/{id}")
-//
-//                    .shippingAddress(addressResponse)
-//                    .orderItems(orderItemDetailResponses)
-//                    .build();
-//
-//            return ResponseEntity.ok(response);
-//        } catch (Exception e) {
-//            return new ResponseEntity<>(new DataError("Lỗi xử lý: " + e.getMessage(), 500), HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
-//
 
 
     @DeleteMapping("/order/delete/{id}")
@@ -447,10 +552,15 @@ public class OrderController {
 
         OrderDetailResponse response = OrderDetailResponse.builder()
                 .orderId(order.getId())
+                .orderCode(order.getOrderCode())
                 .status(order.getStatus().name())
                 .paymentStatus(order.getStatus().name())
                 .paymentMethod(order.getPaymentMethod().name())
                 .createdAt(order.getCreatedAt())
+                .note(order.getNote())
+                .cancellationReason(order.getCancellationReason())
+                .cancelledAt(order.getCancelledAt())
+                .updatedAt(order.getUpdatedAt())
                 .customer(customer)
                 .shippingAddress(address)
                 .items(itemList)
@@ -553,15 +663,15 @@ public class OrderController {
 //
         OrderDetailResponse response = OrderDetailResponse.builder()
                 .orderId(order.getId())
+                .orderCode(order.getOrderCode())
                 .status(order.getStatus().name())
                 .paymentStatus(order.getStatus().name())
                 .paymentMethod(order.getPaymentMethod().name())
-                // .fulfillmentStatus(order.getFulfillmentStatus())
                 .createdAt(order.getCreatedAt())
-                //  .subTotal(subTotal)
-                //  .discountAmount(discount)
-                //.shippingFee(shippingFee)
-                //   .totalAmount(totalAmount)
+                .note(order.getNote())
+                .cancellationReason(order.getCancellationReason())
+                .cancelledAt(order.getCancelledAt())
+                .updatedAt(order.getUpdatedAt())
                 .customer(customer)
                 .shippingAddress(address)
                 .items(itemList)
@@ -570,6 +680,7 @@ public class OrderController {
 
         return ResponseEntity.ok(response);
     }
+
 
     @GetMapping("/order/pdf/{id}")
     public void exportShippingLabel(@PathVariable Long id, HttpServletResponse response) throws Exception {

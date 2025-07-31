@@ -21,10 +21,13 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -401,12 +404,18 @@ public class CartServiceImpl implements ICartService {
 
         ShippingFee shippingFee = shippingFeeService.calculateAndSaveShippingFee(userId, address);
 
+
+        String orderCode = generateUniqueOrderCode();
+
         Order order = Order.builder()
                 .user(user)
                 .shippingAddress(address)
                 .paymentMethod(request.getPaymentMethod())
                 .status(OrderStatus.PENDING)
                 .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .orderCode(orderCode)
+                .note(request.getNote())
                 .shippingFee(shippingFee)
                 .build();
         orderRepository.save(order);
@@ -537,6 +546,17 @@ public class CartServiceImpl implements ICartService {
         return OrderCheckoutResponseDTO.fromOrder(order, orderItems);
     }
 
+    private String generateUniqueOrderCode() {
+        int maxAttempts = 3;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            String uuidPart = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 8).toUpperCase();
+            String orderCode = "ORD-" + uuidPart;
+            if (!orderRepository.existsByOrderCode(orderCode)) {
+                return orderCode;
+            }
+        }
+        throw new HttpBadRequest("Không thể tạo mã đơn hàng duy nhất sau " + maxAttempts + " lần thử.");
+    }
 
 //    @Override
 //    public OrderCheckoutResponseDTO checkoutByCartItemId(Long userId, Long cartItemId, OrderRequestSelectedDTO request) {

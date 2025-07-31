@@ -405,12 +405,14 @@ public class ProductServiceImpl implements IProductService {
             ProductVariantResponseDTO dto = ProductVariantResponseDTO.builder()
                     .id(variant.getId())
                     .productName(product.getName())
-                    .colorId(variant.getColor() != null ? variant.getColor().getId() : null) // Thêm colorId
+                    .colorId(variant.getColor() != null ? variant.getColor().getId() : null)
                     .colorName(variant.getColor() != null ? variant.getColor().getName() : null)
-                    .sizeId(variant.getSize() != null ? variant.getSize().getId() : null) // Thêm sizeId
+                    .sizeId(variant.getSize() != null ? variant.getSize().getId() : null)
                     .sizeName(variant.getSize() != null ? variant.getSize().getSizeName() : null)
                     .stockQuantity(variant.getStockQuantity())
                     .priceOverride(priceOriginal)
+                    .sku(variant.getSku()) // Thêm sku
+                    .barcode(variant.getBarcode()) // Thêm barcode
                     .build();
 
             if (flashSaleItemMap.containsKey(variant.getId())) {
@@ -522,7 +524,6 @@ public class ProductServiceImpl implements IProductService {
                 .discountType(discountType)
                 .build();
     }
-
     
     @Override
     public ProductResponseDTO save(ProductRequestDTO dto) {

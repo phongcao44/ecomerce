@@ -24,6 +24,8 @@ import java.util.List;
 public class OrderResponse {
     private Long orderId;
 
+    private String orderCode;
+
     private String username;
 
     private PaymentMethod paymentMethod;
@@ -35,6 +37,11 @@ public class OrderResponse {
     private PaymentResponse payment;
 
     private OrderStatus status;
+
+    private String note;
+    private String cancellationReason;
+    private LocalDateTime cancelledAt;
+    private LocalDateTime updatedAt;
 
     private BigDecimal totalAmount;
 

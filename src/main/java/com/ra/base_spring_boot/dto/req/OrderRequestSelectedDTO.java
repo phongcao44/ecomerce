@@ -27,4 +27,6 @@ public class OrderRequestSelectedDTO {
 
     // Dùng nếu user muốn dùng điểm
     private Integer usedPoints;
+
+    private String note;
 }
