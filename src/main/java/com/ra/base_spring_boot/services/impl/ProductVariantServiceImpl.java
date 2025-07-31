@@ -399,6 +399,30 @@ public class ProductVariantServiceImpl implements IProductVariantService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public ProductVariantResponseDTO updateStockQuantity(Long id, Integer stockQuantity) {
+        ProductVariant variant = productVariantRepository.findById(id)
+                .orElseThrow(() -> new HttpNotFound("ProductVariant not found with id: " + id));
+
+        variant.setStockQuantity(stockQuantity);
+        productVariantRepository.save(variant);
+
+        ProductVariantResponseDTO dto = new ProductVariantResponseDTO();
+        dto.setId(variant.getId());
+        dto.setSku(variant.getSku());
+        dto.setBarcode(variant.getBarcode());
+        dto.setProductName(variant.getProduct().getName());
+        dto.setColorId(variant.getColor().getId());
+        dto.setSizeId(variant.getSize().getId());
+        dto.setColorName(variant.getColor().getName());
+        dto.setSizeName(variant.getSize().getSizeName());
+        dto.setStockQuantity(variant.getStockQuantity());
+        dto.setPriceOverride(variant.getPriceOverride());
+
+        return dto;
+    }
+
+
     private ProductVariantDetailDTO mapVariantToDetailDTO(ProductVariant variant) {
         Product product = variant.getProduct();
         Color color = variant.getColor();
