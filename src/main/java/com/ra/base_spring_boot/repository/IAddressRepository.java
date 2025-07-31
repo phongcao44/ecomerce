@@ -16,4 +16,7 @@ public interface IAddressRepository extends JpaRepository<Address,Long> {
     Optional<Address> findByUserId(Long userId);
 
     Long user(User user);
+
+    @Query("SELECT o.shippingAddress FROM Order o WHERE o.id = :orderId")
+    Address findShippingAddressByOrderId(@Param("orderId") Long orderId);
 }
