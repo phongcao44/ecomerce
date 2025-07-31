@@ -21,10 +21,12 @@ public class ProductVariant {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    @ManyToOne @JoinColumn(name = "color_id")
+    @ManyToOne
+    @JoinColumn(name = "color_id")
     private Color color;
 
-    @ManyToOne @JoinColumn(name = "size_id")
+    @ManyToOne
+    @JoinColumn(name = "size_id")
     private Size size;
 
     @Column(name = "stock_quantity")
@@ -32,4 +34,10 @@ public class ProductVariant {
 
     @Column(name = "price_override")
     private BigDecimal priceOverride;
+
+    @Column(name = "sku", nullable = false, unique = true, length = 50)
+    private String sku;
+
+    @Column(name = "barcode", unique = true, length = 20)
+    private String barcode;
 }

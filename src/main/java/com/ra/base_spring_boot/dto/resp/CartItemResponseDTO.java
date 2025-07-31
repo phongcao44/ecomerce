@@ -31,4 +31,6 @@ public class CartItemResponseDTO {
     private BigDecimal discountAmount;        // Giá giảm được bao nhiêu
 
     private BigDecimal discountOverrideByFlashSale;
+
+    private String imageUrl;
 }

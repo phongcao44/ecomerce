@@ -12,9 +12,14 @@ import java.math.BigDecimal;
 public class ProductVariantResponseDTO {
     private Long id;
 
+    private String sku;
+
+    private String barcode;
+
     private String productName;
 
     private Long colorId;
+
     private Long sizeId;
 
     private String colorName;

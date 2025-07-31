@@ -21,10 +21,13 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -111,6 +114,11 @@ public class CartServiceImpl implements ICartService {
                 }
             }
 
+            // Fetch imageUrl using ProductServiceImpl logic
+            String imageUrl = product.getImages() != null && !product.getImages().isEmpty()
+                    ? product.getImages().get(0).getImageUrl()
+                    : String.format("https://picsum.photos/seed/%d/700/720", product.getId());
+
             return CartItemResponseDTO.builder()
                     .cartItemId(item.getId())
                     .productName(product.getName())
@@ -123,12 +131,11 @@ public class CartServiceImpl implements ICartService {
                     .discountType(discountType)
                     .discountOverrideByFlashSale(discountOverrideByFlashSale)
                     .totalPrice(discountedPrice.multiply(BigDecimal.valueOf(item.getQuantity())))
+                    .imageUrl(imageUrl)
                     .build();
         }).toList();
 
-
         if (items.isEmpty()) {
-            // Nếu không có sản phẩm nào, throw ra một lỗi tùy chỉnh
             throw new HttpNotFound("There are no products in the cart.");
         }
 
@@ -137,7 +144,6 @@ public class CartServiceImpl implements ICartService {
                 .items(items)
                 .build();
     }
-
 
     @Override
     public CartResponseDTO getUserCart(Long userId) {
@@ -398,12 +404,18 @@ public class CartServiceImpl implements ICartService {
 
         ShippingFee shippingFee = shippingFeeService.calculateAndSaveShippingFee(userId, address);
 
+
+        String orderCode = generateUniqueOrderCode();
+
         Order order = Order.builder()
                 .user(user)
                 .shippingAddress(address)
                 .paymentMethod(request.getPaymentMethod())
                 .status(OrderStatus.PENDING)
                 .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .orderCode(orderCode)
+                .note(request.getNote())
                 .shippingFee(shippingFee)
                 .build();
         orderRepository.save(order);
@@ -534,6 +546,17 @@ public class CartServiceImpl implements ICartService {
         return OrderCheckoutResponseDTO.fromOrder(order, orderItems);
     }
 
+    private String generateUniqueOrderCode() {
+        int maxAttempts = 3;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            String uuidPart = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 8).toUpperCase();
+            String orderCode = "ORD-" + uuidPart;
+            if (!orderRepository.existsByOrderCode(orderCode)) {
+                return orderCode;
+            }
+        }
+        throw new HttpBadRequest("Không thể tạo mã đơn hàng duy nhất sau " + maxAttempts + " lần thử.");
+    }
 
 //    @Override
 //    public OrderCheckoutResponseDTO checkoutByCartItemId(Long userId, Long cartItemId, OrderRequestSelectedDTO request) {

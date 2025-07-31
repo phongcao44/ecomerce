@@ -16,13 +16,16 @@ import com.ra.base_spring_boot.repository.IUserRepository;
 import com.ra.base_spring_boot.services.IAddressService;
 import com.ra.base_spring_boot.services.IRoleService;
 import com.ra.base_spring_boot.services.IUserService;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -44,6 +47,21 @@ public class UserServiceImpl implements IUserService {
     private final ConversionService conversionService;
     private final PointServiceImpl pointService;
     private final IAddressRepository iAddressRepository;
+
+    @Data
+    public static class ServiceException extends RuntimeException {
+        private final int status;
+        private final String message;
+        private final String timestamp;
+
+        public ServiceException(HttpStatus status, String message) {
+            super(message);
+            this.status = status.value();
+            this.message = message;
+            this.timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
+        }
+    }
+
     @Override
     public List<ViewUserResponse> findAll() {
         List<User> list = userRepository.findAll();
@@ -77,7 +95,6 @@ public class UserServiceImpl implements IUserService {
             );
         }
 
-
         return userRepository.findAll(spec, pageable)
                 .map(user -> new ViewUserResponse(
                         user.getId(),
@@ -92,7 +109,6 @@ public class UserServiceImpl implements IUserService {
                         user.getStatus()
                 ));
     }
-
 
     private ViewUserResponse convertToResponse(User user) {
         Set<String> roleNames = user.getRoles().stream()
@@ -153,7 +169,6 @@ public class UserServiceImpl implements IUserService {
         userRepository.save(user);
     }
 
-
     @Override
     public void save(User user) {
         userRepository.save(user);
@@ -182,26 +197,30 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public void deleteRole(long userId, long roleId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-        Role role = iRoleRepository.findById(roleId).orElseThrow(() -> new RuntimeException("Role not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ServiceException(HttpStatus.NOT_FOUND, "User not found"));
+        Role role = iRoleRepository.findById(roleId)
+                .orElseThrow(() -> new ServiceException(HttpStatus.NOT_FOUND, "Role not found"));
 
-        // Lấy user hiện tại đang thực hiện hành động
+        // Không cho phép xóa quyền ROLE_ADMIN khỏi bất kỳ user nào
+        if (role.getName().equals(RoleName.ROLE_ADMIN)) {
+            throw new ServiceException(HttpStatus.FORBIDDEN, "Không thể xóa quyền Quản Trị Viên (Admin)");
+        }
+
+        // Không cho phép xóa nếu user chỉ có đúng 1 quyền
+        if (user.getRoles().size() <= 1) {
+            throw new ServiceException(HttpStatus.FORBIDDEN, "Người dùng phải có ít nhất một quyền");
+        }
+
+        // Không cho phép tự xóa quyền của chính mình
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByEmail(currentUsername)
-                .orElseThrow(() -> new RuntimeException("Current user not found"));
-        //Không cho phép tự xóa chính mình
+                .orElseThrow(() -> new ServiceException(HttpStatus.NOT_FOUND, "Current user not found"));
         if (user.getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Admin cannot remove their own roles.");
+            throw new ServiceException(HttpStatus.FORBIDDEN, "Bạn không thể tự xóa quyền của mình");
         }
 
-        if (role.getName().equals(RoleName.ROLE_ADMIN)) {
-            boolean isTargetUserAdmin = user.getRoles().stream()
-                    .anyMatch(r -> r.getName().equals(RoleName.ROLE_ADMIN));
-
-            if (isTargetUserAdmin) {
-                throw new RuntimeException("Cannot remove ROLE_ADMIN from an admin user.");
-            }
-        }
+        // Xóa role khỏi user
         user.getRoles().remove(role);
         userRepository.save(user);
     }
@@ -284,6 +303,4 @@ public class UserServiceImpl implements IUserService {
                 .userEmail(userDetailRequest.getEmail())
                 .build();
     }
-
-
 }
