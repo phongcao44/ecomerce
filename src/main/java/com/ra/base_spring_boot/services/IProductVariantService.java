@@ -21,5 +21,7 @@ public interface IProductVariantService {
 
     List<ProductVariantDetailDTO> findAllVariantsByProductName(String productName);
 
+    ProductVariantResponseDTO updateStockQuantity(Long id, Integer stockQuantity);
+
     void delete(Long id);
 }

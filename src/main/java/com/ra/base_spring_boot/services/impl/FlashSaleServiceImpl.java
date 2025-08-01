@@ -165,9 +165,8 @@ public class FlashSaleServiceImpl implements IFlashSaleService {
         List<ProductResponseDTO> productResponses = flashSaleProducts.stream().map(product -> {
             List<ProductVariantResponseDTO> variantDTOs = product.getVariants() != null
                     ? product.getVariants().stream()
-                    .filter(variant -> flashSaleItemMap.containsKey(variant.getId())) // Chỉ lấy các variant thuộc FlashSale
                     .map(variant -> {
-                        BigDecimal priceOriginal = variant.getPriceOverride();
+                        BigDecimal priceOriginal = variant.getPriceOverride() != null ? variant.getPriceOverride() : BigDecimal.ZERO;
                         BigDecimal finalPrice = priceOriginal;
 
                         ProductVariantResponseDTO variantDTO = ProductVariantResponseDTO.builder()
@@ -175,21 +174,22 @@ public class FlashSaleServiceImpl implements IFlashSaleService {
                                 .productName(product.getName())
                                 .colorName(variant.getColor() != null ? variant.getColor().getName() : null)
                                 .sizeName(variant.getSize() != null ? variant.getSize().getSizeName() : null)
-                                .stockQuantity(variant.getStockQuantity())
+                                .stockQuantity(variant.getStockQuantity() != null ? variant.getStockQuantity() : 0)
                                 .priceOverride(priceOriginal)
                                 .build();
 
+                        // Áp dụng giảm giá nếu biến thể thuộc FlashSale
                         if (flashSaleItemMap.containsKey(variant.getId())) {
                             FlashSaleItem item = flashSaleItemMap.get(variant.getId());
                             variantDTO.setDiscountOverrideByFlashSale(item.getDiscountedPrice());
-                            variantDTO.setDiscountType(item.getDiscountType().name());
+                            variantDTO.setDiscountType(item.getDiscountType() != null ? item.getDiscountType().name() : null);
 
-                            if (item.getDiscountType() == DiscountType.PERCENTAGE) {
+                            if (item.getDiscountType() == DiscountType.PERCENTAGE && item.getDiscountedPrice() != null) {
                                 BigDecimal percent = item.getDiscountedPrice();
                                 BigDecimal discountAmount = priceOriginal.multiply(percent)
                                         .divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP);
                                 finalPrice = priceOriginal.subtract(discountAmount);
-                            } else if (item.getDiscountType() == DiscountType.AMOUNT) {
+                            } else if (item.getDiscountType() == DiscountType.AMOUNT && item.getDiscountedPrice() != null) {
                                 BigDecimal discountAmount = item.getDiscountedPrice();
                                 finalPrice = priceOriginal.subtract(discountAmount);
                             }
@@ -211,14 +211,15 @@ public class FlashSaleServiceImpl implements IFlashSaleService {
             double averageRating = reviews.stream().mapToDouble(Review::getRating).average().orElse(0.0);
 
             // Kiểm tra xem sản phẩm có thuộc FlashSale không
-            boolean isFlashSale = !variantDTOs.isEmpty();
+            boolean isFlashSale = !variantDTOs.isEmpty() && variantDTOs.stream()
+                    .anyMatch(dto -> flashSaleItemMap.containsKey(dto.getId()));
 
             // Tính giá thấp nhất
             BigDecimal lowestPrice = variantDTOs.stream()
                     .map(ProductVariantResponseDTO::getFinalPriceAfterDiscount)
                     .filter(Objects::nonNull)
                     .min(BigDecimal::compareTo)
-                    .orElse(product.getPrice());
+                    .orElse(product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO);
 
             // Tính discountedPrice (giá sau khi áp dụng giảm giá)
             BigDecimal discountedPrice = variantDTOs.stream()
@@ -227,7 +228,7 @@ public class FlashSaleServiceImpl implements IFlashSaleService {
                     .min(BigDecimal::compareTo)
                     .orElse(lowestPrice);
 
-            // Lấy discountOverrideByFlashSale và discountType từ variant có giá thấp nhất
+            // Lấy discountOverrideByFlashSale và discountType từ variant có giá thấp nhất trong FlashSale
             BigDecimal discountOverrideByFlashSale = null;
             String discountType = null;
             if (isFlashSale) {
@@ -246,11 +247,11 @@ public class FlashSaleServiceImpl implements IFlashSaleService {
                     .id(product.getId())
                     .name(product.getName())
                     .description(product.getDescription())
-                    .price(product.getPrice())
+                    .price(product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO)
                     .brand(product.getBrand())
                     .status(product.getStatus())
                     .stockQuantity(totalStock)
-                    .variantCount(variantDTOs.size())
+                    .variantCount(product.getVariants() != null ? product.getVariants().size() : 0) // Đếm tổng số biến thể
                     .variants(variantDTOs)
                     .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
                     .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)

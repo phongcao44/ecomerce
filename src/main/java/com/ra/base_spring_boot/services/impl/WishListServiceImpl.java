@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.services.impl;
 
+import com.ra.base_spring_boot.dto.req.WishlistItemResponseDTO;
 import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
 import com.ra.base_spring_boot.dto.resp.ProductVariantResponseDTO;
 import com.ra.base_spring_boot.dto.resp.WishListResponse;
@@ -105,7 +106,7 @@ public class WishListServiceImpl implements IWishListService {
 
 
     @Override
-    public List<ProductResponseDTO> findAllWishlist(long userId) {
+    public List<WishlistItemResponseDTO> findAllWishlist(long userId) {
         List<Wishlist> wishlists = iWishListRepository.findAllByUser_Id(userId);
 
         // Lấy các Flash Sale đang hoạt động
@@ -230,7 +231,7 @@ public class WishListServiceImpl implements IWishListService {
             }
 
             // Build ProductResponseDTO
-            return ProductResponseDTO.builder()
+            ProductResponseDTO productDTO = ProductResponseDTO.builder()
                     .id(product.getId())
                     .name(product.getName())
                     .description(product.getDescription())
@@ -254,6 +255,12 @@ public class WishListServiceImpl implements IWishListService {
                     .isFlashSale(isFlashSale)
                     .discountOverrideByFlashSale(discountOverrideByFlashSale)
                     .discountType(discountType)
+                    .build();
+
+            // Build WishlistItemResponseDTO
+            return WishlistItemResponseDTO.builder()
+                    .wishlistId(wishlist.getId())
+                    .product(productDTO)
                     .build();
         }).collect(Collectors.toList());
     }
