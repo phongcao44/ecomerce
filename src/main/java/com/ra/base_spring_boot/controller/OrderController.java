@@ -332,18 +332,18 @@ public class OrderController {
             // Cập nhật updatedAt
             order.setUpdatedAt(LocalDateTime.now());
 
-            // Nếu chuyển sang DELIVERED → trừ kho
+           //  Nếu chuyển sang DELIVERED → trừ kho
             if (status == OrderStatus.DELIVERED) {
-                for (var item : order.getOrderItems()) {
-                    ProductVariant variant = item.getVariant();
-                    int currentStock = variant.getStockQuantity();
-                    int newStock = currentStock - item.getQuantity();
-
-                    if (newStock < 0) {
-                        throw new RuntimeException("Sản phẩm " + variant.getId() + " không đủ tồn kho.");
-                    }
-                    variant.setStockQuantity(newStock);
-                }
+//                for (var item : order.getOrderItems()) {
+//                    ProductVariant variant = item.getVariant();
+//                    int currentStock = variant.getStockQuantity();
+//                    int newStock = currentStock - item.getQuantity();
+//
+//                    if (newStock < 0) {
+//                        throw new RuntimeException("Sản phẩm " + variant.getId() + " không đủ tồn kho.");
+//                    }
+//                    variant.setStockQuantity(newStock);
+//                }
 
                 // Gửi email mời đánh giá
                 String subject = "Cảm ơn bạn đã mua hàng tại Ecommer!";
