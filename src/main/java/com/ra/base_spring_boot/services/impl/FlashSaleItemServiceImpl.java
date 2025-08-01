@@ -3,6 +3,7 @@ package com.ra.base_spring_boot.services.impl;
 import com.ra.base_spring_boot.dto.resp.FlashSaleResponse;
 import com.ra.base_spring_boot.dto.resp.ListProductReviewResponse;
 import com.ra.base_spring_boot.model.*;
+import com.ra.base_spring_boot.model.constants.DiscountType;
 import com.ra.base_spring_boot.repository.IFlashSaleItemRepository;
 import com.ra.base_spring_boot.repository.IFlashSaleRepository;
 import com.ra.base_spring_boot.repository.IRateRepository;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -60,7 +62,16 @@ public class FlashSaleItemServiceImpl implements IFlashSaleItemService {
 
         // 4. Lấy ảnh sản phẩm (nếu có)
         String imageUrl = product.getImages().get(0).getImageUrl();
-
+        BigDecimal lowestPrice = BigDecimal.ZERO;
+        if(topItem.getDiscountType() == DiscountType.PERCENTAGE){
+            System.out.println("****************************");
+            BigDecimal originalPrice = variant.getPriceOverride();
+            BigDecimal percent = topItem.getDiscountedPrice();
+            BigDecimal discountMultiplier = BigDecimal.ONE.subtract(percent.divide(BigDecimal.valueOf(100)));
+            lowestPrice = originalPrice.multiply(discountMultiplier);
+        }else {
+            lowestPrice = variant.getPriceOverride().min(product.getPrice());
+        }
         // 5. Xây dựng response
         return FlashSaleResponse.builder()
                 .productId(product.getId())
@@ -74,8 +85,8 @@ public class FlashSaleItemServiceImpl implements IFlashSaleItemService {
                 .productName(product.getName())
                 .productDescription(product.getDescription())
                 .price(variant.getPriceOverride())
-                .discountedPrice(topItem.getDiscountedPrice())
-                .lowestPrice(variant.getPriceOverride().min(topItem.getDiscountedPrice()))
+                .discountedPrice(lowestPrice)
+                .lowestPrice(lowestPrice)
                 .discountOverrideByFlashSale(variant.getPriceOverride().subtract(topItem.getDiscountedPrice()))
                 .discountType(topItem.getDiscountType().name())
                 .brand(product.getBrand())
