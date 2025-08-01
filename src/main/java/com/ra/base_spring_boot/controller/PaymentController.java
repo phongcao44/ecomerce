@@ -93,7 +93,7 @@ public class PaymentController {
 
         Payment savedPayment = paymentRepository.save(payment);
 
-        return ResponseEntity.ok(savedPayment);
+        return ResponseEntity.ok("Đơn hàng được thanh toán thành công");
     }
 
     @GetMapping("/vnpay-payment/{orderId}")
