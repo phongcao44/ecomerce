@@ -234,9 +234,11 @@ public class OrderServiceImpl implements IOrderService {
 
        return orders.stream()
                .flatMap(order -> order.getOrderItems().stream()
-                       .filter(item -> !returnRequestRepository.existsByOrderItem(item)) // lọc item chưa bị trả hàng
+                   //    .filter(item -> !returnRequestRepository.existsByOrderItem(item)) // lọc item chưa bị trả hàng
                        .map(item -> {
                            Product product = item.getVariant().getProduct();
+                           boolean alreadyRequested = returnRequestRepository.existsByOrderItem(item);
+
                            String imageUrl = product.getImages() != null && !product.getImages().isEmpty()
                                    ? product.getImages().get(0).getImageUrl()
                                    : null;
@@ -250,7 +252,9 @@ public class OrderServiceImpl implements IOrderService {
                                    order.getStatus(),
                                    item.getQuantity(),
                                    imageUrl,
-                                   price
+                                   price,
+                                   alreadyRequested
+
                            );
                        })
                ).toList();

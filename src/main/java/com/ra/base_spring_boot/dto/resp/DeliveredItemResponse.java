@@ -19,4 +19,6 @@ public class DeliveredItemResponse {
     private Integer quantity;
     private String mediaUrl;
     private BigDecimal price;
+    private boolean alreadyRequested;
+
 }

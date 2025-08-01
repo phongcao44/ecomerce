@@ -3,11 +3,15 @@ package com.ra.base_spring_boot.controller;
 import com.google.gson.Gson;
 import com.ra.base_spring_boot.configuration.VnpayConfig;
 import com.ra.base_spring_boot.model.Order;
+import com.ra.base_spring_boot.model.OrderItem;
 import com.ra.base_spring_boot.model.Payment;
+import com.ra.base_spring_boot.model.ProductVariant;
 import com.ra.base_spring_boot.model.constants.PaymentMethod;
 import com.ra.base_spring_boot.model.constants.PaymentStatus;
 import com.ra.base_spring_boot.repository.IOrderRepository;
 import com.ra.base_spring_boot.repository.IPaymentRepository;
+import com.ra.base_spring_boot.repository.IProductRepository;
+import com.ra.base_spring_boot.repository.IProductVariantRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.ra.base_spring_boot.configuration.VnpayConfig.*;
 
@@ -34,6 +39,9 @@ public class PaymentController {
 
     @Autowired
     private IPaymentRepository paymentRepository;
+
+    @Autowired
+    private IProductVariantRepository productVariantRepository;
 
     @PostMapping("/cod-payment/{orderId}")
     public ResponseEntity<?> createPayment(@PathVariable("orderId") Long orderId) {
@@ -56,6 +64,27 @@ public class PaymentController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Đơn hàng đã có thanh toán");
         }
 
+       // Trừ kho cho các sản phẩm trong đơn hàng
+        for (var item : order.getOrderItems()) {
+            ProductVariant variant = item.getVariant();
+            int currentStock = variant.getStockQuantity();
+            int newStock = currentStock - item.getQuantity();
+
+            if (newStock < 0) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Sản phẩm mã " + variant.getId() + " không đủ tồn kho");
+            }
+
+            variant.setStockQuantity(newStock);
+        }
+
+        // Lưu thay đổi tồn kho
+        productVariantRepository.saveAll(
+                order.getOrderItems().stream()
+                        .map(OrderItem::getVariant)
+                        .collect(Collectors.toList())
+        );
+
         Payment payment = new Payment();
         payment.setOrder(order);
         payment.setPaymentMethod(PaymentMethod.COD);
@@ -64,7 +93,7 @@ public class PaymentController {
 
         Payment savedPayment = paymentRepository.save(payment);
 
-        return ResponseEntity.ok(savedPayment);
+        return ResponseEntity.ok("Đơn hàng được thanh toán thành công");
     }
 
     @GetMapping("/vnpay-payment/{orderId}")
