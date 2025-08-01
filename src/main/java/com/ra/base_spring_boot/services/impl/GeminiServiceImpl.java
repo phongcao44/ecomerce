@@ -137,23 +137,23 @@ public class GeminiServiceImpl implements GeminiService {
 //                    p.getTotalReviews()
 //            ));
 //        }
-        List<ProductResponseDTO> top5Products = productService.getTop5BestSellingProducts();
-        promptBuilder.append("Dưới đây là 5 sản phẩm bán chạy nhất trong hệ thống:\n");
+//        List<ProductResponseDTO> top5Products = productService.getTop5BestSellingProducts();
+//        promptBuilder.append("Dưới đây là 5 sản phẩm bán chạy nhất trong hệ thống:\n");
 
-        for (int i = 0; i < top5Products.size(); i++) {
-            ProductResponseDTO p = top5Products.get(i);
-            promptBuilder.append(String.format(
-                    "%d. %s - Giá: %.0f VNĐ - Đã bán: %d lần - Đánh giá trung bình: %.1f⭐ - Lượt đánh giá: %d\n",
-                    i + 1,
-                    p.getName(),
-                    p.getDiscountedPrice() != null ? p.getDiscountedPrice().doubleValue() : p.getPrice().doubleValue(),
-                    p.getVariants().stream()
-                            .mapToInt(v -> v.getStockQuantity() != null ? v.getStockQuantity() : 0)
-                            .sum(),
-                    p.getAverageRating() != null ? p.getAverageRating() : 0.0,
-                    p.getTotalReviews() != null ? p.getTotalReviews() : 0
-            ));
-        }
+//        for (int i = 0; i < top5Products.size(); i++) {
+//            ProductResponseDTO p = top5Products.get(i);
+//            promptBuilder.append(String.format(
+//                    "%d. %s - Giá: %.0f VNĐ - Đã bán: %d lần - Đánh giá trung bình: %.1f⭐ - Lượt đánh giá: %d\n",
+//                    i + 1,
+//                    p.getName(),
+//                    p.getDiscountedPrice() != null ? p.getDiscountedPrice().doubleValue() : p.getPrice().doubleValue(),
+//                    p.getVariants().stream()
+//                            .mapToInt(v -> v.getStockQuantity() != null ? v.getStockQuantity() : 0)
+//                            .sum(),
+//                    p.getAverageRating() != null ? p.getAverageRating() : 0.0,
+//                    p.getTotalReviews() != null ? p.getTotalReviews() : 0
+//            ));
+//        }
 
         promptBuilder.append("\nBạn muốn xem thêm thông tin về sản phẩm nào không?\n\n");
         //lấy đồ ế lòi ra
@@ -280,7 +280,7 @@ public class GeminiServiceImpl implements GeminiService {
                 imagePrompt,
                 SizePrompt,
                 specPrompt,
-                top5Products,
+//                top5Products,
                 leastSelling,
 //                flashSalePrompt,
                 flashSalePrompt,
