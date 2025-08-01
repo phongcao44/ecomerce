@@ -16,12 +16,10 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.Normalizer;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -115,17 +113,14 @@ public class ProductVariantServiceImpl implements IProductVariantService {
 
     @Override
     public List<ProductVariantResponseDTO> findByProductId(Long productId) {
-        // B1: Lấy danh sách Flash Sale đang hoạt động
-        List<FlashSale> activeFlashSales = flashSaleRepository.findAll().stream()
-                .filter(flashSale -> flashSale.getStatus() == UserStatus.ACTIVE
-                        && flashSale.getStartTime().isBefore(LocalDateTime.now())
-                        && flashSale.getEndTime().isAfter(LocalDateTime.now()))
-                .collect(Collectors.toList());
+        // B1: Fetch active flash sale at current time
+        LocalDateTime now = LocalDateTime.now();
+        Optional<FlashSale> activeFlashSale = flashSaleRepository.findByStartTimeLessThanEqualAndEndTimeGreaterThanEqual(now, now);
 
-        // B2: Lấy tất cả các item thuộc các Flash Sale đang hoạt động
+        // B2: Fetch flash sale items for the active flash sale
         List<FlashSaleItem> activeFlashSaleItems = new ArrayList<>();
-        for (FlashSale flashSale : activeFlashSales) {
-            activeFlashSaleItems.addAll(flashSaleItemRepository.findByFlashSaleId(flashSale.getId()));
+        if (activeFlashSale.isPresent()) {
+            activeFlashSaleItems = flashSaleItemRepository.findByFlashSaleId(activeFlashSale.get().getId());
         }
 
         // B3: Map variantId -> FlashSaleItem
@@ -133,10 +128,10 @@ public class ProductVariantServiceImpl implements IProductVariantService {
                 .filter(item -> item.getVariant() != null)
                 .collect(Collectors.toMap(item -> item.getVariant().getId(), item -> item, (a, b) -> a));
 
-        // B4: Lấy variants theo productId
+        // B4: Fetch variants by productId
         List<ProductVariant> variants = productVariantRepository.findByProductId(productId);
 
-        // B5: Build DTO y chang findAll
+        // B5: Build DTOs
         return variants.stream().map(variant -> {
             BigDecimal priceOriginal = variant.getPriceOverride();
             BigDecimal finalPrice = priceOriginal;
@@ -144,14 +139,13 @@ public class ProductVariantServiceImpl implements IProductVariantService {
             ProductVariantResponseDTO dto = ProductVariantResponseDTO.builder()
                     .id(variant.getId())
                     .productName(variant.getProduct().getName())
-                    .colorId(variant.getColor() != null ? variant.getColor().getId() : null) // thêm
+                    .colorId(variant.getColor() != null ? variant.getColor().getId() : null)
                     .colorName(variant.getColor() != null ? variant.getColor().getName() : null)
-                    .sizeId(variant.getSize() != null ? variant.getSize().getId() : null)     // thêm
+                    .sizeId(variant.getSize() != null ? variant.getSize().getId() : null)
                     .sizeName(variant.getSize() != null ? variant.getSize().getSizeName() : null)
                     .stockQuantity(variant.getStockQuantity())
-                    .priceOverride(variant.getPriceOverride())
+                    .priceOverride(priceOriginal)
                     .build();
-
 
             if (flashSaleItemMap.containsKey(variant.getId())) {
                 FlashSaleItem item = flashSaleItemMap.get(variant.getId());
@@ -160,7 +154,7 @@ public class ProductVariantServiceImpl implements IProductVariantService {
 
                 if (item.getDiscountType() == DiscountType.PERCENTAGE) {
                     BigDecimal percent = item.getDiscountedPrice();
-                    BigDecimal discountAmount = priceOriginal.multiply(percent).divide(BigDecimal.valueOf(100));
+                    BigDecimal discountAmount = priceOriginal.multiply(percent).divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP);
                     finalPrice = priceOriginal.subtract(discountAmount);
                 } else if (item.getDiscountType() == DiscountType.AMOUNT) {
                     BigDecimal discountAmount = item.getDiscountedPrice();
