@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ra.base_spring_boot.model.constants.PaymentMethod;
 import com.ra.base_spring_boot.model.constants.PaymentStatus;
 import jakarta.persistence.*;
@@ -21,6 +22,7 @@ public class Payment {
 
     @OneToOne
     @JoinColumn(name = "order_id")
+    @JsonIgnore
     private Order order;
 
     @Enumerated(EnumType.STRING)
