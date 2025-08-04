@@ -55,4 +55,8 @@ public interface IProductRepository extends JpaRepository<Product, Long>, JpaSpe
 
     Page<Product> findByNameContainingIgnoreCaseAndStatus(String keyword, ProductStatus status, Pageable pageable);
 
+    boolean existsBySlug(String slug);
+
+    Optional<Product> findBySlug(String slug);
+
 }

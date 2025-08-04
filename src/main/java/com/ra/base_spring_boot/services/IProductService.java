@@ -51,5 +51,7 @@ public interface IProductService {
     );
 
     ProductResponseDTO findByName(String productName);
+
+    ProductResponseDTO findBySlug(String slug);
 }
 

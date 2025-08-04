@@ -73,6 +73,15 @@ public class ProductController {
         return new ResponseEntity<>(new DataError("Product Not Found", 404), HttpStatus.NOT_FOUND);
     }
 
+    @GetMapping("/slug/{slug}")
+    public ResponseEntity<?> findBySlug(@PathVariable String slug) {
+        ProductResponseDTO product = productService.findBySlug(slug);
+        if (product != null) {
+            return ResponseEntity.ok(product);
+        }
+        return new ResponseEntity<>(new DataError("Product Not Found", 404), HttpStatus.NOT_FOUND);
+    }
+
 
     // phân trang Product, sắp xếp
     @GetMapping("/paginate")
@@ -161,7 +170,6 @@ public class ProductController {
         }
     }
 
-    //Huynh Gia Phu
     //list product by category
     @GetMapping("/user/products/by-category/{categoryId}")
     public ResponseEntity<?> getProductsByCategory(@PathVariable Long categoryId) {
