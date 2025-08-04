@@ -206,6 +206,11 @@ public class ProductController {
         return ResponseEntity.ok(responses);
     }
 
+    @GetMapping("/products/{id}/related")
+    public ResponseEntity<List<ProductResponseDTO>> getRelatedProducts(@PathVariable Long id) {
+        return ResponseEntity.ok(productService.getRelatedProducts(id));
+    }
+
 
     @GetMapping("/products/bestSell")
     public ResponseEntity<List<ProductResponseDTO>> getBestSellProduct() {
