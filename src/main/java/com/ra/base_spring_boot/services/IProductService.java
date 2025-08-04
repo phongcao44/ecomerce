@@ -51,5 +51,7 @@ public interface IProductService {
     );
 
     ProductResponseDTO findByName(String productName);
+
+    List<ProductResponseDTO> getRelatedProducts(Long productId);
 }
 

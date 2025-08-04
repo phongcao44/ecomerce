@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.repository;
 
+import com.ra.base_spring_boot.model.Category;
 import com.ra.base_spring_boot.model.Product;
 import com.ra.base_spring_boot.model.constants.OrderStatus;
 import com.ra.base_spring_boot.model.constants.ProductStatus;
@@ -55,4 +56,5 @@ public interface IProductRepository extends JpaRepository<Product, Long>, JpaSpe
 
     Page<Product> findByNameContainingIgnoreCaseAndStatus(String keyword, ProductStatus status, Pageable pageable);
 
+    List<Product> findTop4ByCategoryAndIdNot(Category category, Long id);
 }
