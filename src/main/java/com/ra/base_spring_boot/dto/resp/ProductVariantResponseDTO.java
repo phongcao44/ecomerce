@@ -34,6 +34,8 @@ public class ProductVariantResponseDTO {
 
     private String discountType;
 
+    private Integer soldQuantity;
+
     private BigDecimal finalPriceAfterDiscount;
 
 
