@@ -26,7 +26,7 @@ public class AbandonedCartService {
    @Scheduled(cron = "0 0 9 * * *") // Mỗi ngày lúc 9h sáng
     //@Scheduled(fixedRate = 30000L)
     public void notifyAbandonedCarts() {
-        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(1);
         List<Cart> abandonedCarts = cartRepository.findByCreatedAtBefore(thirtyDaysAgo);
 
         for (Cart cart : abandonedCarts) {

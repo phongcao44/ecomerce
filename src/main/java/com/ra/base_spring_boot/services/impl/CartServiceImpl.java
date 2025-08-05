@@ -121,6 +121,7 @@ public class CartServiceImpl implements ICartService {
 
             return CartItemResponseDTO.builder()
                     .cartItemId(item.getId())
+                    .variantId(variant.getId())
                     .productName(product.getName())
                     .color(variant.getColor() != null ? variant.getColor().getName() : null)
                     .size(variant.getSize() != null ? variant.getSize().getSizeName() : null)
@@ -183,7 +184,7 @@ public class CartServiceImpl implements ICartService {
                     .quantity(request.getQuantity())
                     .build();
         }
-
+        cart.setCreatedAt(LocalDateTime.now());
         cartItemRepository.save(item);
         return buildCartResponse(cart);
     }

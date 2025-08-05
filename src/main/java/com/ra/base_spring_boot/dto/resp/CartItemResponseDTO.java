@@ -12,6 +12,8 @@ import java.math.BigDecimal;
 public class CartItemResponseDTO {
     private Long cartItemId;
 
+    private Long variantId;
+
     private String productName;
 
     private String color;
