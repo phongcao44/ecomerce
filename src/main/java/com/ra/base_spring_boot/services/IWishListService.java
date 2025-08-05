@@ -15,5 +15,4 @@ public interface IWishListService {
     Wishlist addWishlist(long userID, long productId);
     void deleteWishlist(long userID,long wishlist);
     List<WishlistItemResponseDTO> findAllWishlist(long userID);
-
 }

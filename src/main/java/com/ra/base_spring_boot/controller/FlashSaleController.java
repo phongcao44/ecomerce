@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.controller;
 
+import org.springframework.data.domain.Page;
 import com.ra.base_spring_boot.dto.req.FlashSaleItemRequest;
 import com.ra.base_spring_boot.dto.req.FlashSaleRequest;
 import com.ra.base_spring_boot.dto.resp.FlashSaleItemRespone;
@@ -24,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -71,6 +73,23 @@ public class FlashSaleController {
     public ResponseEntity<?> getFlashSale() {
         List<FlashSale> flashSales = flashSaleRepository.findAll();
         return new ResponseEntity<>(flashSales, HttpStatus.OK);
+    }
+
+    @GetMapping("/{flashSaleId}/items")
+    public Page<ProductResponseDTO> getFlashSaleItems(
+            @PathVariable Long flashSaleId,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String brand,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) String discountRange,
+            @RequestParam(required = false) Integer minRating,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "asc") String orderBy) {
+        return flashSaleService.getFlashSaleItemsPaginate(
+                flashSaleId, categoryId, brand, minPrice, maxPrice, discountRange, minRating, page, limit, sortBy, orderBy);
     }
 
     @GetMapping("/detail/{id}")

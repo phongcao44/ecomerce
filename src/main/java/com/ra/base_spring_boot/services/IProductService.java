@@ -22,7 +22,9 @@ public interface IProductService {
     ProductResponseDTO save(ProductRequestDTO dto);
 
     ProductResponseDTO changeStatus(long id);
-        // cập nhật Product
+
+
+    // cập nhật Product
     ProductResponseDTO update(long id, ProductRequestDTO dto);
 
     // phân trang
@@ -50,6 +52,11 @@ public interface IProductService {
             String sortBy,
             String orderBy
     );
-     ProductResponseDTO findByName(String productName);
+
+    ProductResponseDTO findByName(String productName);
+
+    ProductResponseDTO findBySlug(String slug);
+
+    List<ProductResponseDTO> getRelatedProducts(Long productId);
 }
 

@@ -20,15 +20,15 @@ public class CartItemResponseDTO {
 
     private Integer quantity;
 
-    private BigDecimal originalPrice;         // Giá gốc
+    private BigDecimal originalPrice;
 
-    private BigDecimal discountedPrice;       // Giá sau giảm
+    private BigDecimal discountedPrice;
 
-    private BigDecimal totalPrice;            // discountedPrice * quantity
+    private BigDecimal totalPrice;
 
-    private String discountType;              // PERCENTAGE / AMOUNT
+    private String discountType;
 
-    private BigDecimal discountAmount;        // Giá giảm được bao nhiêu
+    private BigDecimal discountAmount;
 
     private BigDecimal discountOverrideByFlashSale;
 

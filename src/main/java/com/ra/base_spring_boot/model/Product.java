@@ -1,8 +1,6 @@
 package com.ra.base_spring_boot.model;
 
-
 import com.ra.base_spring_boot.model.constants.ProductStatus;
-import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Where;
@@ -18,12 +16,13 @@ import java.util.List;
 @Setter
 @Builder
 @Table(name = "products")
-@Where(clause = "deleted = false") // ẩn bảng ghi đã xóa
+@Where(clause = "deleted = false")
 public class Product {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name")
+    @Column(name = "name", unique = true)
     private String name;
 
     @Column(name = "description")
@@ -34,9 +33,15 @@ public class Product {
 
     @Column(name = "brand")
     private String brand;
-    
+
+    @Column(name = "slug", unique = true)
+    private String slug;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
@@ -58,5 +63,11 @@ public class Product {
 
     @Column(name = "deleted")
     private Boolean deleted = false;
-}
 
+    @PreUpdate
+    public void validateUpdatedAt() {
+        if (updatedAt != null && createdAt != null && !updatedAt.isAfter(createdAt)) {
+            throw new IllegalStateException("updatedAt must be after createdAt");
+        }
+    }
+}
