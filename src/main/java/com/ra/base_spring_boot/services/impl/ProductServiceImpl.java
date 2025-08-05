@@ -241,6 +241,7 @@ public class ProductServiceImpl implements IProductService {
     public Page<ProductResponseDTO> getProductsPaginate(
             String keyword,
             Long categoryId,
+            String categorySlug,
             String status,
             String brandName,
             BigDecimal priceMin,
@@ -273,9 +274,21 @@ public class ProductServiceImpl implements IProductService {
             );
         }
 
-        if (categoryId != null) {
-            List<Long> categoryIds = getAllChildCategoryIds(categoryId);
-            spec = spec.and((root, query, cb) -> root.get("category").get("id").in(categoryIds));
+        if (categoryId != null || (categorySlug != null && !categorySlug.trim().isEmpty())) {
+            Long resolvedCategoryId = categoryId;
+            if (resolvedCategoryId == null && categorySlug != null) {
+                Optional<Category> category = categoryRepository.findBySlug(categorySlug);
+                if (category.isPresent()) {
+                    resolvedCategoryId = category.get().getId();
+                } else {
+                    log.warn("Invalid category slug: {}", categorySlug);
+                    return Page.empty(pageable);
+                }
+            }
+            if (resolvedCategoryId != null) {
+                List<Long> categoryIds = getAllChildCategoryIds(resolvedCategoryId);
+                spec = spec.and((root, query, cb) -> root.get("category").get("id").in(categoryIds));
+            }
         }
 
         if (status != null && !status.trim().isEmpty()) {
@@ -350,17 +363,32 @@ public class ProductServiceImpl implements IProductService {
         LocalDateTime now = LocalDateTime.now();
         Optional<FlashSale> activeFlashSaleOptional = flashSaleRepository.findByStartTimeLessThanEqualAndEndTimeGreaterThanEqual(now, now);
         List<FlashSaleItem> activeFlashSaleItems = activeFlashSaleOptional.map(flashSale ->
-//                flashSaleItemRepository.findFlashSaleItemById(flashSale.getId())
-                        flashSaleItemRepository.findByFlashSaleId(flashSale.getId())
+                flashSaleItemRepository.findByFlashSaleId(flashSale.getId())
         ).orElse(List.of());
 
         // Map flash sale items to a map for quick lookup
         Map<Long, FlashSaleItem> flashSaleItemMap = activeFlashSaleItems.stream()
-                .filter(item -> item.getVariant() != null && item.getVariant().getProduct() != null)
+                .filter(item -> item.getVariant() != null)
                 .collect(Collectors.toMap(
                         item -> item.getVariant().getId(),
                         item -> item,
                         (a, b) -> a
+                ));
+
+        // Fetch order items for variant-level sold quantities
+        List<Long> allVariantIds = productPage.getContent().stream()
+                .filter(product -> product.getVariants() != null)
+                .flatMap(product -> product.getVariants().stream())
+                .map(ProductVariant::getId)
+                .toList();
+        List<OrderItem> orderItems = allVariantIds.isEmpty()
+                ? List.of()
+                : orderItemRepository.findByVariantIdIn(allVariantIds);
+        Map<Long, Integer> variantSoldQuantities = orderItems.stream()
+                .filter(item -> item.getOrder() != null && item.getOrder().getStatus() == OrderStatus.DELIVERED)
+                .collect(Collectors.groupingBy(
+                        item -> item.getVariant().getId(),
+                        Collectors.summingInt(item -> item.getQuantity() != null ? item.getQuantity() : 0)
                 ));
 
         // Map products to DTOs
@@ -370,20 +398,6 @@ public class ProductServiceImpl implements IProductService {
             if (soldQuantity == null) {
                 soldQuantity = 0;
             }
-
-            // Fetch order items for variant-level sold quantities
-            List<Long> variantIds = product.getVariants() != null
-                    ? product.getVariants().stream().map(ProductVariant::getId).toList()
-                    : List.of();
-            List<OrderItem> orderItems = variantIds.isEmpty()
-                    ? List.of()
-                    : orderItemRepository.findByVariantIdIn(variantIds);
-            Map<Long, Integer> variantSoldQuantities = orderItems.stream()
-                    .filter(item -> item.getOrder() != null && item.getOrder().getStatus() == OrderStatus.DELIVERED)
-                    .collect(Collectors.groupingBy(
-                            item -> item.getVariant().getId(),
-                            Collectors.summingInt(item -> item.getQuantity() != null ? item.getQuantity() : 0)
-                    ));
 
             // Map variants to DTOs
             List<ProductVariantResponseDTO> variantDTOs = product.getVariants() != null
@@ -408,6 +422,8 @@ public class ProductServiceImpl implements IProductService {
                     }
                 }
 
+                int variantSoldQuantity = variantSoldQuantities.getOrDefault(variant.getId(), 0);
+
                 return ProductVariantResponseDTO.builder()
                         .id(variant.getId())
                         .sku(variant.getSku())
@@ -421,7 +437,7 @@ public class ProductServiceImpl implements IProductService {
                         .priceOverride(priceOriginal)
                         .discountOverrideByFlashSale(finalPrice)
                         .discountType(discountType)
-                        .soldQuantity(variantSoldQuantities.getOrDefault(variant.getId(), 0))
+                        .soldQuantity(variantSoldQuantity)
                         .finalPriceAfterDiscount(finalPrice)
                         .build();
             }).toList()
@@ -509,10 +525,6 @@ public class ProductServiceImpl implements IProductService {
                     .variants(variantDTOs)
                     .build();
         });
-    }
-
-    private boolean isFavoriteProduct(Product product, Long userId, List<Long> favoriteIds) {
-        return userId != null && favoriteIds.contains(product.getId());
     }
 
     public List<Long> getAllChildCategoryIds(Long categoryId) {
@@ -1534,4 +1546,6 @@ public class ProductServiceImpl implements IProductService {
 
         return relatedProductDTOs;
     }
+
+
 }

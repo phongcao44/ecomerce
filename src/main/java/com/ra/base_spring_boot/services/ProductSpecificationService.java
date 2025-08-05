@@ -15,5 +15,7 @@ public interface ProductSpecificationService {
 
     List<ProductSpecificationResponseDTO> getByProductId(Long productId);
 
+    List<ProductSpecificationResponseDTO> getByProductIdForUser(Long productId);
+
     void delete(Long id);
 }
