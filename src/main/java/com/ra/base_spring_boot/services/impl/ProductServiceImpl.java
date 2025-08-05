@@ -2,11 +2,8 @@ package com.ra.base_spring_boot.services.impl;
 
 
 import com.ra.base_spring_boot.dto.req.ProductRequestDTO;
-import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
-import com.ra.base_spring_boot.dto.resp.ProductVariantResponseDTO;
-import com.ra.base_spring_boot.exception.HttpForbiden;
+import com.ra.base_spring_boot.dto.resp.*;
 import com.ra.base_spring_boot.exception.HttpNotFound;
-import com.ra.base_spring_boot.dto.resp.Top5Product;
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.model.constants.DiscountType;
 import com.ra.base_spring_boot.model.constants.OrderStatus;
@@ -14,8 +11,9 @@ import com.ra.base_spring_boot.model.constants.ProductStatus;
 import com.ra.base_spring_boot.model.constants.UserStatus;
 import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.services.IProductService;
-import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.Subquery;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.criteria.*;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,11 +23,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.stereotype.Repository;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import java.math.RoundingMode;
@@ -43,6 +36,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements IProductService {
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Autowired
     private final IProductRepository productRepository;
