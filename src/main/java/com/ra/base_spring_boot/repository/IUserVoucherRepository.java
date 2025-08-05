@@ -12,6 +12,6 @@ public interface IUserVoucherRepository extends CrudRepository<UserVoucher, Long
     boolean existsByUserAndVoucher(User user, Voucher voucher);
     boolean existsByUserIdAndVoucherId(Long userId, Long voucherId);
     Optional<UserVoucher> findByUserAndVoucher(User user, Voucher voucher);
-
+    List<UserVoucher> findByUserIdAndUsedFalse(Long userId);
     List<UserVoucher> findAllByUser(User user);
 }

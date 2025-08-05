@@ -48,6 +48,7 @@ public class VoucherServiceImpl implements IVoucherService {
         User user = iUserRepository.findById(userId)
                 .orElseThrow(()->new RuntimeException("User not found"));
         List<UserVoucher> userVouchers = iUserVoucherRepository.findAllByUser(user);
+
         return userVouchers.stream()
                 .map(uv -> {
                     Voucher v = uv.getVoucher();
@@ -265,4 +266,39 @@ public class VoucherServiceImpl implements IVoucherService {
                         .build()
         ).collect(Collectors.toList());
 
-}}
+}
+
+    @Override
+    public List<UserVoucher> getUnusedVouchersForUser(Long userId) {
+        return iUserVoucherRepository.findByUserIdAndUsedFalse(userId);
+    }
+
+    @Override
+    public List<VoucherResponse> findUnusedVouchersByUserId(Long userId) {
+        List<UserVoucher> unusedUserVouchers = getUnusedVouchersForUser(userId);
+
+        LocalDateTime now = LocalDateTime.now();
+
+        return unusedUserVouchers.stream()
+                .filter(userVoucher -> {
+                    Voucher v = userVoucher.getVoucher();
+                    return v.isActive() && v.getEndDate() != null && v.getEndDate().isAfter(now);
+                })
+                .map(userVoucher -> {
+                    Voucher v = userVoucher.getVoucher();
+                    return VoucherResponse.builder()
+                            .id(v.getId())
+                            .code(v.getCode())
+                            .discountPercent(v.getDiscountPercent() != null ? v.getDiscountPercent() : 0.0)
+                            .maxDiscount(v.getMaxDiscount())
+                            .discountAmount(v.getDiscountAmount() != null ? v.getDiscountAmount() : 0.0)
+                            .startDate(v.getStartDate())
+                            .endDate(v.getEndDate())
+                            .minOrderAmount(v.getMinOrderAmount())
+                            .collectible(v.isCollectible())
+                            .active(v.isActive())
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+}
