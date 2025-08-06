@@ -25,6 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 
 import java.util.List;
 
@@ -62,6 +63,7 @@ public class SecurityConfig
                 }))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(url -> url
+                        .requestMatchers("/ws/**").permitAll() // 👈 Cho phép kết nối WebSocket
                         .requestMatchers("/api/v1/admin/**")
                         .hasAnyAuthority(RoleName.ROLE_MODERATOR.toString(), RoleName.ROLE_ADMIN.toString())
                         .requestMatchers("/api/v1/user/review/**").permitAll()
@@ -71,7 +73,9 @@ public class SecurityConfig
                         .requestMatchers("/api/v1/product-variants")
                         .hasAnyAuthority(RoleName.ROLE_ADMIN.toString(), RoleName.ROLE_USER.toString())
                         .requestMatchers("/", "/auth/**", "/oauth2/**").permitAll()
+
                         .anyRequest().permitAll()
+
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(jwtEntryPoint)
@@ -87,6 +91,7 @@ public class SecurityConfig
                 .addFilterAfter(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
 
     @Bean
     public PasswordEncoder passwordEncoder()

@@ -1,12 +1,10 @@
 package com.ra.base_spring_boot.controller;
 
+import com.ra.base_spring_boot.dto.resp.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import com.ra.base_spring_boot.dto.req.FlashSaleItemRequest;
 import com.ra.base_spring_boot.dto.req.FlashSaleRequest;
-import com.ra.base_spring_boot.dto.resp.FlashSaleItemRespone;
-import com.ra.base_spring_boot.dto.resp.FlashSaleResponse;
-import com.ra.base_spring_boot.dto.resp.FlashSaleVariantDetailResponse;
-import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
 import com.ra.base_spring_boot.model.FlashSale;
 import com.ra.base_spring_boot.model.FlashSaleItem;
 import com.ra.base_spring_boot.model.Product;
@@ -22,6 +20,7 @@ import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -30,7 +29,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1/flash_sale")
 public class FlashSaleController {
@@ -112,7 +111,9 @@ public class FlashSaleController {
                 .status(request.getStatus())
                 .build();
         flashSaleRepository.save(flashSale);
-        return new ResponseEntity<>(flashSale, HttpStatus.CREATED);
+
+        return ResponseEntity.ok("Flash sale created and event sent.");
+//        return new ResponseEntity<>(flashSale, HttpStatus.CREATED);
     }
 
     @PutMapping("/edit/{id}")
@@ -125,6 +126,7 @@ public class FlashSaleController {
         flashSale.setEndTime(request.getEndTime());
         flashSale.setStatus(request.getStatus());
         flashSaleRepository.save(flashSale);
+
         return ResponseEntity.ok(flashSale);
     }
 

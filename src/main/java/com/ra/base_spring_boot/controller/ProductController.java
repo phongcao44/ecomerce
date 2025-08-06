@@ -3,11 +3,8 @@ package com.ra.base_spring_boot.controller;
 import com.ra.base_spring_boot.dto.DataError;
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.ProductRequestDTO;
-import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
-import com.ra.base_spring_boot.dto.resp.ProductUserResponse;
-import com.ra.base_spring_boot.dto.resp.ProductViewResponse;
+import com.ra.base_spring_boot.dto.resp.*;
 
-import com.ra.base_spring_boot.dto.resp.Top5Product;
 import com.ra.base_spring_boot.model.Category;
 import com.ra.base_spring_boot.model.Product;
 import com.ra.base_spring_boot.model.ProductView;
@@ -22,6 +19,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -242,6 +240,37 @@ public class ProductController {
         List<Top5Product> topProduct = productService.getTop5LestSellingProducts();
         return ResponseEntity.ok(topProduct);
     }
+    @GetMapping("/products/topSale")
+    public ResponseEntity<Page<ProductResponseDTO>> filterProducts(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String brand,
+            @RequestParam(required = false) BigDecimal priceMin,
+            @RequestParam(required = false) BigDecimal priceMax,
+            @RequestParam(required = false) Integer minRating,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int limit,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String orderBy
+    ) {
+        Page<ProductResponseDTO> result = productService.getProductsPaginate(
+                keyword,
+                categoryId,
+                status,
+                brand,
+                priceMin,
+                priceMax,
+                minRating,
+                page,
+                limit,
+                sortBy,
+                orderBy
+        );
+        return ResponseEntity.ok(result);
+    }
+
+
 }
 
 

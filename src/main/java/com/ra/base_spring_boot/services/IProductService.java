@@ -1,8 +1,11 @@
 package com.ra.base_spring_boot.services;
 
 import com.ra.base_spring_boot.dto.req.ProductRequestDTO;
+import com.ra.base_spring_boot.dto.resp.ProductFilter;
+import com.ra.base_spring_boot.dto.resp.ProductFliterReponse;
 import com.ra.base_spring_boot.dto.resp.ProductResponseDTO;
 import com.ra.base_spring_boot.dto.resp.Top5Product;
+import com.ra.base_spring_boot.model.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
