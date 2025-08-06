@@ -46,6 +46,10 @@ public class VoucherController {
     public List<VoucherResponse> getVouchers(@AuthenticationPrincipal MyUserDetails userDetails) {
         return voucherService.findVoucherByUserId(userDetails.getUser().getId());
     }
+    @GetMapping("user/voucher/viewVoucherFalse")
+    public List<VoucherResponse> getUnusedVouchers(@AuthenticationPrincipal MyUserDetails userDetails) {
+        return voucherService.findUnusedVouchersByUserId(userDetails.getUser().getId());
+    }
     @PutMapping("admin/voucher/update/{voucherId}")
     public ResponseEntity<VoucherResponse> update(
             @RequestBody VoucherRequest request,

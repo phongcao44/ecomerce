@@ -28,5 +28,10 @@ public interface IFlashSaleItemRepository extends JpaRepository<FlashSaleItem, L
 """, nativeQuery = true)
     FlashSaleItem findTopDiscountItemByFlashSaleId(@Param("flashSaleId") Long flashSaleId);
 
+    // Trong FlashSaleItemRepository
+    boolean existsByFlashSaleIdAndVariantId(Long flashSaleId, Long variantId);
+
+    boolean existsByFlashSaleIdAndVariantIdAndIdNot(Long flashSaleId, Long variantId, Long id);
+
 }
 

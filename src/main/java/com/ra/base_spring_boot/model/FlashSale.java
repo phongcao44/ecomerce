@@ -26,7 +26,7 @@ public class FlashSale {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "startTime")
+    @Column(name = "startTime" )
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime startTime;
 

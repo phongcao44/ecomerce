@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.text.Normalizer;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,18 +40,19 @@ public class CategoryController {
 
     // list danh mục cha
     @GetMapping("/categories/list/parent")
-        public ResponseEntity<Page<CategoryResponse>> getCategories(@RequestParam(name = "page",defaultValue = "0") int page,
-                                                              @RequestParam(name = "limit",defaultValue = "3") int limit,
-                                                              @RequestParam(name = "sortBy",defaultValue = "id") String sortBy,
-                                                              @RequestParam(name = "orderBy", defaultValue = "asc") String orderBy
+    public ResponseEntity<Page<CategoryResponse>> getCategories(@RequestParam(name = "page", defaultValue = "0") int page,
+                                                                @RequestParam(name = "limit", defaultValue = "3") int limit,
+                                                                @RequestParam(name = "sortBy", defaultValue = "id") String sortBy,
+                                                                @RequestParam(name = "orderBy", defaultValue = "asc") String orderBy
     ) {
-        Sort sort =  orderBy.equalsIgnoreCase("asc")
+        Sort sort = orderBy.equalsIgnoreCase("asc")
                 ? Sort.by(sortBy).ascending()
-                :Sort.by(sortBy).descending();
+                : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, limit, sort);
         Page<CategoryResponse> categoryPage = categoryService.pageable(pageable);
         return new ResponseEntity<>(categoryPage, HttpStatus.OK);
-        }
+    }
+
     //list tìm cha va ong noi
     @GetMapping("/list/son_of_parent/{sonId}")
     public ResponseEntity<?> getson(@PathVariable Long sonId) {
@@ -60,7 +62,8 @@ public class CategoryController {
         }
         return ResponseEntity.ok(parentLine);
     }
-        // danh mục con của cha
+
+    // danh mục con của cha
     @GetMapping("/categories/list/son/{parentId}")
     public ResponseEntity<?> getSubCategories(@PathVariable Long parentId) {
         List<CategoryResponse> children = categoryService.pageablesub(parentId);
@@ -75,15 +78,15 @@ public class CategoryController {
     //tìm kiếm
     @GetMapping("/categories/search")
     //search?keyword=""
-    public ResponseEntity<?> searchCategory(@RequestParam("keyword") String keyword){
+    public ResponseEntity<?> searchCategory(@RequestParam("keyword") String keyword) {
         List<?> category = categoryService.searchCategory(keyword);
         CategoryResponse categoryResponse = new CategoryResponse(
 
         );
-        if(category.isEmpty()){
-            return new ResponseEntity<>(new DataError("sản phẩm không tồn tại",404),HttpStatus.NOT_FOUND);
+        if (category.isEmpty()) {
+            return new ResponseEntity<>(new DataError("sản phẩm không tồn tại", 404), HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(category,HttpStatus.OK);
+        return new ResponseEntity<>(category, HttpStatus.OK);
     }
 
     private Map uploadImageToCloudinary(MultipartFile file) {
@@ -96,13 +99,19 @@ public class CategoryController {
         }
     }
     //add danh mục dùng chung
+
+
     @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> addCategory(@ModelAttribute CategoryRequest categoryRequest) {
         Category category = new Category();
 
+        // Generate slug from name
+        String slug = generateSlug(categoryRequest.getName());
+
         // Upload ảnh từ categoryRequest.getImage()
         Map uploadResult = uploadImageToCloudinary(categoryRequest.getImage());
         category.setName(categoryRequest.getName());
+        category.setSlug(slug);
         category.setDescription(categoryRequest.getDescription());
         category.setIcon(uploadResult.get("secure_url").toString());
 
@@ -121,11 +130,25 @@ public class CategoryController {
         return ResponseEntity.ok("Thêm thành công rồi");
     }
 
-
-
+    private String generateSlug(String name) {
+        String slug = Normalizer.normalize(name, Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "") // remove accents
+                .toLowerCase()
+                .replaceAll("[^a-z0-9\\s-]", "")     // Remove special characters
+                .replaceAll("\\s+", "-")             // Replace spaces with hyphens
+                .replaceAll("-+", "-")               // Merge multiple hyphens
+                .replaceAll("^-|-$", "");            // Remove hyphen at the ends
+        // Ensure uniqueness by appending a number if needed
+        String baseSlug = slug;
+        int counter = 1;
+        while (categoryRepository.existsBySlug(slug)) {
+            slug = baseSlug + "-" + counter++;
+        }
+        return slug;
+    }
     //add danh mục dùng rieeng cho con
     @PostMapping("/admin/categories/add/son/{parentId}")
-    public ResponseEntity<?> addCategorySon(@PathVariable Long parentId,@RequestBody AddParentCategoryRequest categoryRequest){
+    public ResponseEntity<?> addCategorySon(@PathVariable Long parentId, @RequestBody AddParentCategoryRequest categoryRequest) {
         // Kiểm tra cha có tồn tại không
         Optional<Category> parentCategory = categoryRepository.findById(parentId);
         if (parentCategory.isEmpty()) {
@@ -145,7 +168,7 @@ public class CategoryController {
 
     //add danh muc danh tieng cho cha
     @PostMapping("/admin/categories/add/parent")
-    public ResponseEntity<?> addCategoryParent(@RequestBody AddParentCategoryRequest addParentCategoryRequestRequest){
+    public ResponseEntity<?> addCategoryParent(@RequestBody AddParentCategoryRequest addParentCategoryRequestRequest) {
         // Tạo danh mục cha
         if (categoryRepository.existsByName(addParentCategoryRequestRequest.getName())) {
             throw new IllegalArgumentException("Tên danh mục đã tồn tại");
@@ -246,7 +269,6 @@ public class CategoryController {
 
         return ResponseEntity.ok("Cập nhật danh mục con thành công");
     }
-
 
 
     //dele cha

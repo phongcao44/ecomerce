@@ -12,6 +12,8 @@ public class CategoryFlatResponse {
 
     private String name;
 
+    private String slug;
+
     private String description;
 
     private int level;

@@ -3,6 +3,7 @@ package com.ra.base_spring_boot.services;
 import com.ra.base_spring_boot.dto.req.VoucherRequest;
 import com.ra.base_spring_boot.dto.resp.VoucherResponse;
 import com.ra.base_spring_boot.model.User;
+import com.ra.base_spring_boot.model.UserVoucher;
 
 import java.util.List;
 
@@ -17,4 +18,8 @@ public interface IVoucherService {
     void collectVoucher(Long userId, String code);
     List<VoucherResponse> getCollectibleVouchers(Long userId);
     List<VoucherResponse> getAllVouchers();
+    List<UserVoucher> getUnusedVouchersForUser(Long userId);
+    List<VoucherResponse> findUnusedVouchersByUserId(Long userId);
+
 }
+

@@ -90,6 +90,7 @@ public class ProductController {
             @RequestParam(defaultValue = "desc") String orderBy,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String categorySlug,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String brandName,
             @RequestParam(required = false) BigDecimal priceMin,
@@ -97,7 +98,7 @@ public class ProductController {
             @RequestParam(required = false) Integer minRating
     ) {
         Page<ProductResponseDTO> products = productService.getProductsPaginate(
-                keyword, categoryId, status, brandName, priceMin, priceMax, minRating, page, limit, sortBy, orderBy
+                keyword, categoryId, categorySlug, status, brandName, priceMin, priceMax, minRating, page, limit, sortBy, orderBy
         );
 
         return ResponseEntity.ok(

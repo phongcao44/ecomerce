@@ -57,7 +57,7 @@ public class FlashSaleController {
 
     @GetMapping("/active")
     public ResponseEntity<?> getActiveFlashSale() {
-        LocalDateTime now = LocalDateTime.now(); // Current time: 01:45 PM +07, July 26, 2025
+        LocalDateTime now = LocalDateTime.now();
         Optional<FlashSale> activeFlashSale = flashSaleRepository.findByStartTimeLessThanEqualAndEndTimeGreaterThanEqual(now, now);
 
         if (activeFlashSale.isPresent()) {
@@ -177,52 +177,162 @@ public class FlashSaleController {
 
     @PostMapping("/flash_sale_items/add")
     public ResponseEntity<?> addFlashSaleItems(@RequestBody FlashSaleItemRequest request) {
-        //laays flash sale
-        FlashSale flashSale = flashSaleRepository.findById(request.getFlashSaleId()).
-                orElseThrow(() -> new RuntimeException("Không tìm thấy flash sale"));
-        //lay variant
-        ProductVariant variant = productVariantRepository.findById(request.getVariantId()).
-                orElseThrow(() -> new RuntimeException("không thấy productID này"));
-        //lấy product
-        Product product = productRepository.findById(request.getProductId()).
-                orElseThrow(() -> new RuntimeException("khonng tim thay productid"));
-        //tạo flashsaleitem mới
-        FlashSaleItem flashSaleItem = FlashSaleItem.builder()
-                .flashSale(flashSale)
-                .variant(variant)
-                .product(product)
-                .quantityLimit(request.getQuantity())
-                .soldQuantity(0)
-                .discountedPrice(request.getPrice())
-                .discountType(request.getDiscountType()).build();
-        flashSaleItemRepository.save(flashSaleItem);
-        return new ResponseEntity<>("thêm tành công", HttpStatus.OK);
-    }
-    @PostMapping("/flash_sale_items/edit/{id}")
-    public ResponseEntity<?> editFlashSaleItems(@RequestBody FlashSaleItemRequest request, @PathVariable Long id) {
-        Optional<FlashSaleItem> flashSaleItem = flashSaleItemRepository.findById(id);
-        if (flashSaleItem.isEmpty()) {
-            return new ResponseEntity<>("Không tìm thấy sản phẩm nào trong flash sale này", HttpStatus.NOT_FOUND);
-        }else{
-            FlashSaleItem editflashSaleItem = flashSaleItem.get();
-            // Tạo mới Variant và Product với ID từ request(khóa 9 thì tạo mới)
-            ProductVariant variant = new ProductVariant();
-            variant.setId(request.getVariantId());
-            editflashSaleItem.setVariant(variant);
+        try {
+            // Lấy flash sale
+            FlashSale flashSale = flashSaleRepository.findById(request.getFlashSaleId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy flash sale"));
 
-            Product product = new Product();
-            product.setId(request.getProductId());
-            editflashSaleItem.setProduct(product);
-            //(thuộc tính thi gán lại)
-            editflashSaleItem.setQuantityLimit(request.getQuantity());
-            editflashSaleItem.setSoldQuantity(request.getSoldQuantity());
-            editflashSaleItem.setDiscountedPrice(request.getPrice());
-            editflashSaleItem.setDiscountType(request.getDiscountType());
+            // Lấy variant
+            ProductVariant variant = productVariantRepository.findById(request.getVariantId())
+                    .orElseThrow(() -> new RuntimeException("Không thấy productVariant này"));
 
-            FlashSaleItem updatedFlashSaleItem = flashSaleItemRepository.save(editflashSaleItem);
-            return new ResponseEntity<>(updatedFlashSaleItem, HttpStatus.OK);
+            // Lấy product
+            Product product = productRepository.findById(request.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy product này"));
+
+            // Validation: Kiểm tra xem variant đã tồn tại trong flash sale này chưa
+            boolean variantExists = flashSaleItemRepository.existsByFlashSaleIdAndVariantId(
+                    request.getFlashSaleId(), request.getVariantId());
+
+            if (variantExists) {
+                return new ResponseEntity<>("Biến thể sản phẩm này đã tồn tại trong flash sale",
+                        HttpStatus.CONFLICT);
+            }
+
+            // Validation: Kiểm tra variant có thuộc về product không
+            if (!variant.getProduct().getId().equals(request.getProductId())) {
+                return new ResponseEntity<>("Biến thể sản phẩm không thuộc về sản phẩm này",
+                        HttpStatus.BAD_REQUEST);
+            }
+
+            // Validation: Kiểm tra flash sale còn active không
+            if (flashSale.getEndTime().isBefore(LocalDateTime.now())) {
+                return new ResponseEntity<>("Flash sale đã kết thúc, không thể thêm sản phẩm mới",
+                        HttpStatus.BAD_REQUEST);
+            }
+
+            // Validation: Kiểm tra số lượng hợp lệ
+            if (request.getQuantity() <= 0) {
+                return new ResponseEntity<>("Số lượng phải lớn hơn 0", HttpStatus.BAD_REQUEST);
+            }
+
+            // Validation: Kiểm tra giá giảm hợp lệ
+            if (request.getPrice() == null || request.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                return new ResponseEntity<>("Giá sản phẩm phải lớn hơn 0", HttpStatus.BAD_REQUEST);
+            }
+
+            // Tạo flashsaleitem mới
+            FlashSaleItem flashSaleItem = FlashSaleItem.builder()
+                    .flashSale(flashSale)
+                    .variant(variant)
+                    .product(product)
+                    .quantityLimit(request.getQuantity())
+                    .soldQuantity(0)
+                    .discountedPrice(request.getPrice())
+                    .discountType(request.getDiscountType())
+                    .build();
+
+            flashSaleItemRepository.save(flashSaleItem);
+            return new ResponseEntity<>("Thêm thành công", HttpStatus.OK);
+
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Có lỗi xảy ra: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @PostMapping("/flash_sale_items/edit/{id}")
+    public ResponseEntity<?> editFlashSaleItems(@RequestBody FlashSaleItemRequest request,
+                                                @PathVariable Long id) {
+        try {
+            Optional<FlashSaleItem> flashSaleItemOpt = flashSaleItemRepository.findById(id);
+
+            if (flashSaleItemOpt.isEmpty()) {
+                return new ResponseEntity<>("Không tìm thấy sản phẩm nào trong flash sale này",
+                        HttpStatus.NOT_FOUND);
+            }
+
+            FlashSaleItem existingFlashSaleItem = flashSaleItemOpt.get();
+
+            // Lấy variant và product mới
+            ProductVariant newVariant = productVariantRepository.findById(request.getVariantId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy productVariant này"));
+
+            Product newProduct = productRepository.findById(request.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy product này"));
+
+            // Validation: Kiểm tra variant có thuộc về product không
+            if (!newVariant.getProduct().getId().equals(request.getProductId())) {
+                return new ResponseEntity<>("Biến thể sản phẩm không thuộc về sản phẩm này",
+                        HttpStatus.BAD_REQUEST);
+            }
+
+            // Validation: Nếu thay đổi variant, kiểm tra variant mới có bị trùng không
+            if (!existingFlashSaleItem.getVariant().getId().equals(request.getVariantId())) {
+                boolean variantExists = flashSaleItemRepository.existsByFlashSaleIdAndVariantIdAndIdNot(
+                        existingFlashSaleItem.getFlashSale().getId(),
+                        request.getVariantId(),
+                        id);
+
+                if (variantExists) {
+                    return new ResponseEntity<>("Biến thể sản phẩm này đã tồn tại trong flash sale",
+                            HttpStatus.CONFLICT);
+                }
+            }
+
+            // Validation: Kiểm tra flash sale còn active không
+            if (existingFlashSaleItem.getFlashSale().getEndTime().isBefore(LocalDateTime.now())) {
+                return new ResponseEntity<>("Flash sale đã kết thúc, không thể chỉnh sửa",
+                        HttpStatus.BAD_REQUEST);
+            }
+
+            // Validation: Kiểm tra số lượng hợp lệ
+            if (request.getQuantity() <= 0) {
+                return new ResponseEntity<>("Số lượng phải lớn hơn 0", HttpStatus.BAD_REQUEST);
+            }
+
+            // Validation: Số lượng mới không được nhỏ hơn số lượng đã bán
+            if (request.getQuantity() < existingFlashSaleItem.getSoldQuantity()) {
+                return new ResponseEntity<>(
+                        String.format("Số lượng giới hạn (%d) không được nhỏ hơn số lượng đã bán (%d)",
+                                request.getQuantity(), existingFlashSaleItem.getSoldQuantity()),
+                        HttpStatus.BAD_REQUEST);
+            }
+
+            // Validation: Kiểm tra sold quantity hợp lệ
+            if (request.getSoldQuantity() < 0 || request.getSoldQuantity() > request.getQuantity()) {
+                return new ResponseEntity<>("Số lượng đã bán không hợp lệ", HttpStatus.BAD_REQUEST);
+            }
+
+            // Validation: Kiểm tra giá giảm hợp lệ
+            if (request.getPrice() == null || request.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                return new ResponseEntity<>("Giá sản phẩm phải lớn hơn 0", HttpStatus.BAD_REQUEST);
+            }
+
+            // Cập nhật thông tin
+            existingFlashSaleItem.setVariant(newVariant);
+            existingFlashSaleItem.setProduct(newProduct);
+            existingFlashSaleItem.setQuantityLimit(request.getQuantity());
+            existingFlashSaleItem.setSoldQuantity(request.getSoldQuantity());
+            existingFlashSaleItem.setDiscountedPrice(request.getPrice());
+            existingFlashSaleItem.setDiscountType(request.getDiscountType());
+
+            FlashSaleItem updatedFlashSaleItem = flashSaleItemRepository.save(existingFlashSaleItem);
+            return new ResponseEntity<>(updatedFlashSaleItem, HttpStatus.OK);
+
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Có lỗi xảy ra: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+
+
     @DeleteMapping("/flash_sale_items/delete/{id}")
     public ResponseEntity<?> deleteFlashSaleItems(@PathVariable Long id) {
         Optional<FlashSaleItem> flashSaleItem = flashSaleItemRepository.findById(id);

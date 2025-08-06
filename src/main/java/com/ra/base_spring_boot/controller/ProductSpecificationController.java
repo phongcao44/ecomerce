@@ -9,33 +9,38 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/admin/product-specifications")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class ProductSpecificationController {
 
     private final ProductSpecificationService productSpecificationService;
 
-    @GetMapping("/list")
+    @GetMapping("/admin/product-specifications/list")
     public List<ProductSpecificationResponseDTO> getAll() {
         return productSpecificationService.getAll();
     }
 
-    @GetMapping("/product/{id}")
+    @GetMapping("/admin/product-specifications/product/{id}")
     public List<ProductSpecificationResponseDTO> getByProduct(@PathVariable Long id) {
         return productSpecificationService.getByProductId(id);
     }
 
-    @PostMapping("/add")
+    @GetMapping("/product-specifications/product/{id}")
+    public List<ProductSpecificationResponseDTO> getByProductForUser(@PathVariable Long id) {
+        return productSpecificationService.getByProductId(id);
+    }
+
+    @PostMapping("/admin/product-specifications/add")
     public ProductSpecificationResponseDTO create(@RequestBody ProductSpecificationRequestDTO dto) {
         return productSpecificationService.create(dto);
     }
 
-    @PutMapping("/update/{id}")
+    @PutMapping("/admin/product-specifications/update/{id}")
     public ProductSpecificationResponseDTO update(@PathVariable Long id, @RequestBody ProductSpecificationRequestDTO dto) {
         return productSpecificationService.update(id, dto);
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/admin/product-specifications/delete/{id}")
     public void delete(@PathVariable Long id) {
         productSpecificationService.delete(id);
     }
