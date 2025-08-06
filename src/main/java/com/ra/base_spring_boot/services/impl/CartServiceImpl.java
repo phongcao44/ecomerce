@@ -529,7 +529,7 @@ public class CartServiceImpl implements ICartService {
 
             // Ghi lại vào đơn hàng
             order.setUsedPoints(used);
-            total = total.subtract(BigDecimal.valueOf(used * 1000.0));
+            total = total.subtract(BigDecimal.valueOf(used));
         }
 
 
