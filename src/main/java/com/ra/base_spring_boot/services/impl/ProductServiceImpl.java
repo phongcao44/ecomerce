@@ -599,22 +599,22 @@ public class ProductServiceImpl implements IProductService {
         // Map variants to DTOs
         List<ProductVariantResponseDTO> variantDTOs = product.getVariants() != null
                 ? product.getVariants().stream().map(variant -> {
-            BigDecimal priceOriginal = variant.getPriceOverride();
+            BigDecimal priceOriginal = variant.getPriceOverride() != null ? variant.getPriceOverride() : BigDecimal.ZERO;
             BigDecimal finalPrice = priceOriginal;
-            BigDecimal discountOverride = BigDecimal.ZERO;
+            BigDecimal discountValue = BigDecimal.ZERO;
             String discountType = null;
 
             if (flashSaleItemMap.containsKey(variant.getId())) {
                 FlashSaleItem item = flashSaleItemMap.get(variant.getId());
-                discountOverride = item.getDiscountedPrice();
-                discountType = item.getDiscountType().name();
+                discountValue = item.getDiscountedPrice() != null ? item.getDiscountedPrice() : BigDecimal.ZERO;
+                discountType = item.getDiscountType() != null ? item.getDiscountType().name() : null;
 
-                if (item.getDiscountType() == DiscountType.PERCENTAGE) {
+                if (item.getDiscountType() == DiscountType.PERCENTAGE && item.getDiscountedPrice() != null) {
                     BigDecimal percent = item.getDiscountedPrice();
                     BigDecimal discountAmount = priceOriginal.multiply(percent)
                             .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
                     finalPrice = priceOriginal.subtract(discountAmount);
-                } else if (item.getDiscountType() == DiscountType.AMOUNT) {
+                } else if (item.getDiscountType() == DiscountType.AMOUNT && item.getDiscountedPrice() != null) {
                     finalPrice = priceOriginal.subtract(item.getDiscountedPrice());
                 }
             }
@@ -623,19 +623,19 @@ public class ProductServiceImpl implements IProductService {
 
             return ProductVariantResponseDTO.builder()
                     .id(variant.getId())
+                    .sku(variant.getSku())
+                    .barcode(variant.getBarcode())
                     .productName(product.getName())
                     .colorId(variant.getColor() != null ? variant.getColor().getId() : null)
                     .colorName(variant.getColor() != null ? variant.getColor().getName() : null)
                     .sizeId(variant.getSize() != null ? variant.getSize().getId() : null)
                     .sizeName(variant.getSize() != null ? variant.getSize().getSizeName() : null)
-                    .stockQuantity(variant.getStockQuantity())
+                    .stockQuantity(variant.getStockQuantity() != null ? variant.getStockQuantity() : 0)
                     .priceOverride(priceOriginal)
-                    .discountOverrideByFlashSale(discountOverride)
+                    .discountOverrideByFlashSale(discountValue)
                     .discountType(discountType)
-                    .finalPriceAfterDiscount(finalPrice)
                     .soldQuantity(variantSoldQuantity)
-                    .sku(variant.getSku())
-                    .barcode(variant.getBarcode())
+                    .finalPriceAfterDiscount(finalPrice)
                     .build();
         }).toList()
                 : List.of();
@@ -654,7 +654,7 @@ public class ProductServiceImpl implements IProductService {
                 .orElse(0.0);
 
         // Check if any variant is in a flash sale
-        boolean isFlashSale = variantDTOs.stream()
+        boolean isFlashSale = !variantDTOs.isEmpty() && variantDTOs.stream()
                 .anyMatch(dto -> flashSaleItemMap.containsKey(dto.getId()));
 
         // Calculate lowest price and discounted price
@@ -664,29 +664,24 @@ public class ProductServiceImpl implements IProductService {
                 .min(BigDecimal::compareTo)
                 .orElse(product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO);
 
-        BigDecimal discountedPrice = isFlashSale
-                ? variantDTOs.stream()
-                .map(ProductVariantResponseDTO::getFinalPriceAfterDiscount)
-                .filter(Objects::nonNull)
-                .min(BigDecimal::compareTo)
-                .orElse(lowestPrice)
-                : null;
-
-        BigDecimal discountOverrideByFlashSale = isFlashSale
-                ? variantDTOs.stream()
-                .map(ProductVariantResponseDTO::getDiscountOverrideByFlashSale)
-                .filter(Objects::nonNull)
-                .min(BigDecimal::compareTo)
-                .orElse(BigDecimal.ZERO)
-                : null;
-
-        String discountType = isFlashSale
-                ? variantDTOs.stream()
-                .filter(dto -> dto.getDiscountType() != null)
-                .map(ProductVariantResponseDTO::getDiscountType)
-                .findFirst()
-                .orElse(null)
-                : null;
+        BigDecimal discountedPrice = null;
+        BigDecimal originalPrice = null;
+        BigDecimal discountOverrideByFlashSale = null;
+        String discountType = null;
+        if (isFlashSale) {
+            ProductVariantResponseDTO lowestFlashSaleVariant = variantDTOs.stream()
+                    .filter(dto -> flashSaleItemMap.containsKey(dto.getId()))
+                    .filter(dto -> dto.getFinalPriceAfterDiscount() != null)
+                    .min(Comparator.comparing(ProductVariantResponseDTO::getFinalPriceAfterDiscount))
+                    .orElse(null);
+            if (lowestFlashSaleVariant != null) {
+                FlashSaleItem item = flashSaleItemMap.get(lowestFlashSaleVariant.getId());
+                discountedPrice = item.getDiscountedPrice() != null ? item.getDiscountedPrice() : BigDecimal.ZERO;
+                originalPrice = lowestFlashSaleVariant.getPriceOverride();
+                discountOverrideByFlashSale = lowestFlashSaleVariant.getFinalPriceAfterDiscount();
+                discountType = lowestFlashSaleVariant.getDiscountType();
+            }
+        }
 
         // Derive slug
         String slug = product.getSlug() != null ? product.getSlug() : generateSlug(product.getName());
@@ -695,10 +690,12 @@ public class ProductServiceImpl implements IProductService {
                 .id(product.getId())
                 .name(product.getName())
                 .description(product.getDescription())
+                .price(product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO)
                 .lowestPrice(lowestPrice)
                 .brand(product.getBrand())
                 .isFlashSale(isFlashSale)
                 .discountedPrice(discountedPrice)
+                .originalPrice(originalPrice)
                 .discountOverrideByFlashSale(discountOverrideByFlashSale)
                 .discountType(discountType)
                 .soldQuantity(soldQuantity)
@@ -718,6 +715,7 @@ public class ProductServiceImpl implements IProductService {
                 .returnPolicyTitle(product.getReturnPolicy() != null ? product.getReturnPolicy().getTitle() : null)
                 .returnPolicyContent(product.getReturnPolicy() != null ? product.getReturnPolicy().getContent() : null)
                 .createdAt(product.getCreatedAt())
+                .variants(variantDTOs) // Include variants in the response
                 .build();
     }
 

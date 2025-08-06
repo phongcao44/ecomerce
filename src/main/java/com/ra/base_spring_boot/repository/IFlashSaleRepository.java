@@ -13,8 +13,13 @@ import java.util.Optional;
 public interface IFlashSaleRepository extends JpaRepository<FlashSale, Long> {
     List<FlashSaleItem> findFlashSaleItemById(Long id);
 
-    @Query(value = "SELECT f FROM FlashSale f WHERE f.startTime <= :startTime AND f.endTime >= :endTime ORDER BY f.startTime DESC LIMIT 1")
+    @Query("SELECT f FROM FlashSale f " +
+            "WHERE f.startTime <= :startTime " +
+            "AND f.endTime >= :endTime " +
+            "AND f.status = 'ACTIVE' " +
+            "ORDER BY f.startTime DESC")
     Optional<FlashSale> findByStartTimeLessThanEqualAndEndTimeGreaterThanEqual(
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime);
+
 }
