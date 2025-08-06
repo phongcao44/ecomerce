@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface ICategoryRepository extends JpaRepository<Category,Long> {
+public interface ICategoryRepository extends JpaRepository<Category, Long> {
     Page<Category> findAllByParentIsNull(Pageable pageable);
 
     List<Category> findAllByParentId(Long parentId);
@@ -21,6 +21,10 @@ public interface ICategoryRepository extends JpaRepository<Category,Long> {
     List<Category> findByParentIsNull();
 
     boolean existsByName(String name);
+
+    boolean existsBySlug(String slug);
+
+    Optional<Category> findBySlug(String slug);
 
     List<Category> findByParentId(Long parentId);
 }

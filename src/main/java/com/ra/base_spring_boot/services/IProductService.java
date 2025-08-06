@@ -39,6 +39,7 @@ public interface IProductService {
     Page<ProductResponseDTO> getProductsPaginate(
             String keyword,
             Long categoryId,
+            String categorySlug,
             String status,
             String brandName,
             BigDecimal priceMin,

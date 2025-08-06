@@ -35,7 +35,6 @@ public class CategoryServiceImpl implements ICategoryService {
     }
 
 
-
     @Override
     public Page<CategoryResponse> pageable(Pageable pageable) {
         Page<Category> categoryPage = categoryRepository.findAllByParentIsNull(pageable);
@@ -47,8 +46,9 @@ public class CategoryServiceImpl implements ICategoryService {
                                 .id(category.getId())
                                 .name(category.getName())
                                 .description(category.getDescription())
-                                .parentId(null)// chỉ lấy cha
+                                .parentId(null) // chỉ lấy cha
                                 .image(category.getIcon())
+                                .slug(category.getSlug())
                                 .build()
                 ).collect(Collectors.toList());
         return new PageImpl<>(responesedto, pageable, responesedto.size());
@@ -56,18 +56,18 @@ public class CategoryServiceImpl implements ICategoryService {
 
     @Override
     public Category save(Category category) {
-
         return categoryRepository.save(category);
     }
 
     @Override
     public List<CategoryResponse> pageablesub(Long parentId) {
         List<Category> subcategory = categoryRepository.findAllByParentId(parentId);
-        System.out.println(subcategory.get(0).getIcon() +"==================");
+        System.out.println(subcategory.get(0).getIcon() + "==================");
         return subcategory.stream().map(category ->
                 CategoryResponse.builder()
                         .id(category.getId())
                         .name(category.getName())
+                        .slug(category.getSlug())
                         .description(category.getDescription())
                         .parentId(category.getParent() != null ? category.getParent().getId() : null)
                         .image(category.getIcon())
@@ -101,6 +101,7 @@ public class CategoryServiceImpl implements ICategoryService {
             categoryMap.put(cat.getId(), CategoryDetailResponse.builder()
                     .id(cat.getId())
                     .name(cat.getName())
+                    .slug(cat.getSlug())
                     .description(cat.getDescription())
                     .image(cat.getIcon())
                     .parentId(cat.getParent() != null ? cat.getParent().getId() : null)
@@ -132,6 +133,7 @@ public class CategoryServiceImpl implements ICategoryService {
             result.add(CategoryResponse.builder()
                     .id(current.getId())
                     .name(current.getName())
+                    .slug(current.getSlug())
                     .description(current.getDescription())
                     .parentId(current.getParent() != null ? current.getParent().getId() : null)
                     .level(getCategoryLevel(current))
@@ -160,11 +162,12 @@ public class CategoryServiceImpl implements ICategoryService {
             flatList.add(CategoryFlatResponse.builder()
                     .id(category.getId())
                     .name(category.getName())
+                    .slug(category.getSlug())
                     .description(category.getDescription())
                     .level(level)
                     .parentId(category.getParent() != null ? category.getParent().getId() : null)
                     .parentName(category.getParent() != null ? category.getParent().getName() : null)
-                            .image(category.getIcon())
+                    .image(category.getIcon())
                     .build());
         }
 

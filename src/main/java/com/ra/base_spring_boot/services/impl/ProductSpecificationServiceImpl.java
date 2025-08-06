@@ -94,6 +94,19 @@ public class ProductSpecificationServiceImpl implements ProductSpecificationServ
     }
 
     @Override
+    public List<ProductSpecificationResponseDTO> getByProductIdForUser(Long productId) {
+        return productSpecificationRepository.findAllByProduct_Id(productId).stream()
+                .map(spec -> ProductSpecificationResponseDTO.builder()
+                        .id(spec.getId())
+                        .productId(spec.getProduct().getId())
+                        .productName(spec.getProduct().getName())
+                        .specKey(spec.getSpecKey())
+                        .specValue(spec.getSpecValue())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public void delete(Long id) {
         ProductSpecification spec = productSpecificationRepository.findById(id)
                 .orElseThrow(() -> new HttpNotFound("ProductSpecification Not Found"));
